@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { DeviceType } from "@/types";
 import { 
-  Smartphone, Tablet, Laptop, Watch, ChevronRight, Search, X
+  Smartphone, Tablet, Laptop, Watch, ChevronRight
 } from "lucide-react";
 
 interface DeviceSelectorProps {
@@ -57,14 +57,14 @@ export default function DeviceGridSelector({ onSelect, selected }: DeviceSelecto
   const [hoveredId, setHoveredId] = useState<DeviceType | null>(null);
 
   return (
-    <div className="p-4">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
+    <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-[0_16px_32px_-28px_rgba(15,23,42,0.7)] backdrop-blur">
+      <div className="mb-5 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shadow-blue-500/25">
           <Smartphone className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h3 className="font-semibold text-slate-900">¿Qué dispositivo?</h3>
-          <p className="text-xs text-slate-500">Toca para seleccionar</p>
+          <h3 className="font-semibold tracking-tight text-slate-900">¿Qué dispositivo recibes?</h3>
+          <p className="text-xs text-slate-500">Selecciona la familia del equipo</p>
         </div>
       </div>
 
@@ -81,9 +81,9 @@ export default function DeviceGridSelector({ onSelect, selected }: DeviceSelecto
               onMouseEnter={() => setHoveredId(device.id)}
               onMouseLeave={() => setHoveredId(null)}
               className={`
-                relative overflow-hidden rounded-2xl p-4 text-left transition-all duration-300
+                relative overflow-hidden rounded-2xl border border-white/30 p-4 text-left transition-all duration-300
                 ${device.gradient}
-                ${isSelected ? "ring-4 ring-emerald-400 ring-offset-2 scale-[1.02]" : "hover:scale-[1.02] hover:shadow-xl"}
+                ${isSelected ? "scale-[1.02] ring-4 ring-emerald-400 ring-offset-2 shadow-2xl" : "hover:scale-[1.02] hover:shadow-xl"}
                 ${isHovered && !isSelected ? "ring-2 ring-white/50" : ""}
               `}
             >
@@ -105,7 +105,7 @@ export default function DeviceGridSelector({ onSelect, selected }: DeviceSelecto
               </div>
               
               {/* Nombre */}
-              <h4 className="text-white font-bold text-lg">{device.name}</h4>
+              <h4 className="text-lg font-bold text-white">{device.name}</h4>
               <p className="text-white/70 text-xs">{device.description}</p>
               
               {/* Flecha指示 */}
