@@ -1,15 +1,26 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatCLP } from "@/lib/currency";
-import type { Customer, Service, DeviceType } from "@/types";
+import type { Customer, DeviceType, Service } from "@/types";
+import {
+  AlertCircle,
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  CheckCircle2,
+  FileText,
+  Loader2,
+  Lock,
+  Save,
+  Shield,
+  Smartphone,
+  UserCheck,
+  Wrench,
+} from "lucide-react";
 
+import CustomerSearch from "./CustomerSearch";
 import DeviceGridSelector from "./DeviceGridSelector";
 import QuickChecklist from "./QuickChecklist";
-import CustomerSearch from "./CustomerSearch";
-import { 
-  UserCheck, Smartphone, Wrench, FileText, Calendar, Save, 
-  ChevronRight, CheckCircle2, Plus, Minus, X, Loader2
-} from "lucide-react";
 
 interface QuickOrderWizardProps {
   technicianId: string;
@@ -37,102 +48,129 @@ const PROBLEM_QUICK_OPTIONS = [
 ];
 
 const PRIORITY_OPTIONS = [
-  { id: "baja", label: "Normal", color: "bg-slate-100 text-slate-700", icon: "✓" },
-  { id: "media", label: "Urgente", color: "bg-amber-100 text-amber-700", icon: "⚠" },
-  { id: "urgente", label: "Crítico", color: "bg-rose-100 text-rose-700", icon: "🔴" },
+  { id: "baja", label: "Normal", note: "Tiempo estándar", color: "bg-slate-100 text-slate-700" },
+  {
+    id: "media",
+    label: "Urgente",
+    note: "Atención preferente",
+    color: "bg-amber-100 text-amber-700",
+  },
+  { id: "urgente", label: "Crítico", note: "Prioridad máxima", color: "bg-rose-100 text-rose-700" },
 ];
+
+const STEPS = [
+  { num: 1, label: "Checklist", icon: CheckCircle2 },
+  { num: 2, label: "Desbloqueo", icon: Lock },
+  { num: 3, label: "Servicios", icon: Wrench },
+  { num: 4, label: "Resumen", icon: FileText },
+  { num: 5, label: "Confirmación", icon: Shield },
+] as const;
 
 export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWizardProps) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  
-  // Paso 1: Cliente
+
   const [customer, setCustomer] = useState<Customer | null>(null);
-  
-  // Paso 2: Dispositivo
   const [deviceType, setDeviceType] = useState<DeviceType | null>(null);
   const [deviceModel, setDeviceModel] = useState("");
-  
-  // Paso 3: Checklist (simplificado)
   const [checklistData, setChecklistData] = useState<Record<string, string>>({});
-  
-  // Paso 4: Problema
   const [problemType, setProblemType] = useState<string>("");
   const [problemDescription, setProblemDescription] = useState("");
   const [priority, setPriority] = useState<"baja" | "media" | "urgente">("media");
-  
-  // Paso 5: Servicios
-  const [services, setServices] = useState<Service[]>([]);
+
   const [selectedServices, setSelectedServices] = useState<Service[]>([]);
   const [servicePrices, setServicePrices] = useState<Record<string, number>>({});
   const [loadingServices, setLoadingServices] = useState(true);
   const [serviceCategories, setServiceCategories] = useState<ServiceCategory[]>([]);
-  
-  // Paso 6: Resumen
+
   const [commitmentDate, setCommitmentDate] = useState("");
   const [warrantyDays] = useState(30);
-  
-  // Cargar servicios
+
   useEffect(() => {
     async function loadServices() {
       setLoadingServices(true);
       const { data } = await supabase.from("services").select("*").order("name");
-      
+
       if (data) {
-        // Agrupar por categorías simples
         const categories: Record<string, ServiceCategory> = {
-          pantalla: { id: "pantalla", name: "🖥️ Pantalla", icon: "🖥️", services: [] },
-          bateria: { id: "bateria", name: "🔋 Batería", icon: "🔋", services: [] },
-          componentes: { id: "componentes", name: "🔌 Componentes", icon: "🔌", services: [] },
-          software: { id: "software", name: "💻 Software", icon: "💻", services: [] },
-          limpieza: { id: "limpieza", name: "🧹 Limpieza", icon: "🧹", services: [] },
-          otro: { id: "otro", name: "❓ Otros", icon: "❓", services: [] },
+          bateria: { id: "bateria", name: "Batería", icon: "🔋", services: [] },
+          camara: { id: "camara", name: "Cámara", icon: "📸", services: [] },
+          pantalla: { id: "pantalla", name: "Pantalla", icon: "📱", services: [] },
+          software: { id: "software", name: "Software", icon: "⚙️", services: [] },
+          mantenimiento: { id: "mantenimiento", name: "Mantenimiento", icon: "🛠️", services: [] },
+          carga: { id: "carga", name: "Carga", icon: "⚡", services: [] },
+          otro: { id: "otro", name: "Otros", icon: "📦", services: [] },
         };
-        
-        data.forEach(service => {
+
+        const prices: Record<string, number> = {};
+
+        data.forEach((service) => {
           const name = service.name.toLowerCase();
           let category = "otro";
-          if (name.includes("pantalla")) category = "pantalla";
-          else if (name.includes("batería") || name.includes("bateria")) category = "bateria";
-          else if (name.includes("cámara") || name.includes("camara") || name.includes("altavo") || name.includes("botón") || name.includes("boton") || name.includes("carga") || name.includes("sensor")) category = "componentes";
-          else if (name.includes("software") || name.includes("actualiz") || name.includes("ios") || name.includes("android")) category = "software";
-          else if (name.includes("limp")) category = "limpieza";
-          
+          if (name.includes("bater")) category = "bateria";
+          else if (name.includes("cámara") || name.includes("camara")) category = "camara";
+          else if (name.includes("pantalla") || name.includes("display")) category = "pantalla";
+          else if (
+            name.includes("software") ||
+            name.includes("actualiz") ||
+            name.includes("ios") ||
+            name.includes("android")
+          )
+            category = "software";
+          else if (
+            name.includes("limpieza") ||
+            name.includes("mantenimiento") ||
+            name.includes("diagnóstico") ||
+            name.includes("diagnostico")
+          )
+            category = "mantenimiento";
+          else if (name.includes("carga") || name.includes("conector") || name.includes("pin"))
+            category = "carga";
+
           categories[category].services.push(service);
-          // Inicializar precio
-          servicePrices[service.id] = service.default_price || 0;
+          prices[service.id] = service.default_price || 0;
         });
-        
-        setServiceCategories(Object.values(categories).filter(c => c.services.length > 0));
-        setServices(data);
+
+        setServicePrices(prices);
+        setServiceCategories(Object.values(categories).filter((c) => c.services.length > 0));
       }
       setLoadingServices(false);
     }
+
     loadServices();
   }, []);
 
   const toggleService = (service: Service) => {
-    const isSelected = selectedServices.find(s => s.id === service.id);
-    if (isSelected) {
-      setSelectedServices(prev => prev.filter(s => s.id !== service.id));
-    } else {
-      setSelectedServices(prev => [...prev, service]);
-    }
+    setSelectedServices((prev) =>
+      prev.some((s) => s.id === service.id)
+        ? prev.filter((s) => s.id !== service.id)
+        : [...prev, service],
+    );
   };
 
-  const totalServices = selectedServices.reduce((sum, s) => {
-    return sum + (servicePrices[s.id] || s.default_price || 0);
-  }, 0);
+  const totalServices = useMemo(
+    () =>
+      selectedServices.reduce(
+        (sum, service) => sum + (servicePrices[service.id] || service.default_price || 0),
+        0,
+      ),
+    [selectedServices, servicePrices],
+  );
 
   const canProceed = () => {
     switch (step) {
-      case 1: return !!customer;
-      case 2: return !!deviceType && !!deviceModel;
-      case 3: return true; // Checklist siempre opcional en modo rápido
-      case 4: return !!problemType || !!problemDescription;
-      case 5: return selectedServices.length > 0;
-      case 6: return true;
-      default: return false;
+      case 1:
+        return Boolean(customer && deviceType && deviceModel.trim());
+      case 2:
+        return true;
+      case 3:
+        return selectedServices.length > 0;
+      case 4:
+        return Boolean(problemType || problemDescription || selectedServices.length > 0);
+      case 5:
+        return true;
+      default:
+        return false;
     }
   };
 
@@ -144,11 +182,12 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
 
     setLoading(true);
     try {
-      // Generar número de orden
       const today = new Date();
-      const orderNum = `ORD-${today.getFullYear()}${(today.getMonth()+1).toString().padStart(2,"0")}${today.getDate().toString().padStart(2,"0")}-${Date.now().toString().slice(-4)}`;
-      
-      // Crear orden
+      const orderNum = `ORD-${today.getFullYear()}${(today.getMonth() + 1).toString().padStart(2, "0")}${today
+        .getDate()
+        .toString()
+        .padStart(2, "0")}-${Date.now().toString().slice(-4)}`;
+
       const { data: order, error: orderError } = await supabase
         .from("work_orders")
         .insert({
@@ -159,7 +198,7 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
           device_model: deviceModel,
           problem_description: problemDescription || problemType,
           checklist_data: checklistData,
-          priority: priority,
+          priority,
           commitment_date: commitmentDate || null,
           warranty_days: warrantyDays,
           total_repair_cost: totalServices,
@@ -170,20 +209,16 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
 
       if (orderError) throw orderError;
 
-      // Crear servicios asociados
-      const orderServices = selectedServices.map(s => ({
+      const orderServices = selectedServices.map((service) => ({
         order_id: order.id,
-        service_id: s.id,
-        service_name: s.name,
+        service_id: service.id,
+        service_name: service.name,
         quantity: 1,
-        unit_price: servicePrices[s.id] || s.default_price || 0,
-        total_price: servicePrices[s.id] || s.default_price || 0,
+        unit_price: servicePrices[service.id] || service.default_price || 0,
+        total_price: servicePrices[service.id] || service.default_price || 0,
       }));
 
-      const { error: servicesError } = await supabase
-        .from("order_services")
-        .insert(orderServices);
-
+      const { error: servicesError } = await supabase.from("order_services").insert(orderServices);
       if (servicesError) throw servicesError;
 
       onSaved();
@@ -195,410 +230,404 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
     }
   };
 
-  const steps = [
-    { num: 1, icon: UserCheck, label: "Cliente" },
-    { num: 2, icon: Smartphone, label: "Equipo" },
-    { num: 3, icon: CheckCircle2, label: "Estado" },
-    { num: 4, icon: FileText, label: "Problema" },
-    { num: 5, icon: Wrench, label: "Servicios" },
-    { num: 6, icon: Save, label: "Listo" },
-  ];
-
-  const StepIcon = ({ step: s, current }: { step: typeof steps[0], current: boolean }) => {
-    const Icon = s.icon;
-    const isCompleted = step > s.num;
-    
-    return (
-      <div className={`
-        flex h-11 w-11 items-center justify-center rounded-2xl transition-all
-        ${isCompleted ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30" : current ? "bg-white text-indigo-700 shadow-lg shadow-indigo-900/30" : "bg-white/10 text-slate-300"}
-      `}>
-        {isCompleted ? <CheckCircle2 className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
-      </div>
-    );
-  };
+  const stepTitle = {
+    1: "Checklist inicial y equipo",
+    2: "Sección de desbloqueo",
+    3: "Selección de servicios",
+    4: "Resumen y confirmación",
+    5: "Listo para crear orden",
+  }[step];
 
   return (
-<<<<<<< codex/improve-design-of-service-module-572yzr
-    <div className="mx-auto max-w-4xl overflow-hidden rounded-3xl border border-indigo-100 bg-white shadow-[0_35px_90px_-35px_rgba(79,70,229,0.45)]">
-      {/* Header con pasos */}
-      <div className="relative border-b border-indigo-300/20 bg-gradient-to-r from-indigo-800 via-violet-800 to-fuchsia-700 p-6">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.22),transparent_45%),radial-gradient(circle_at_80%_0%,rgba(255,255,255,0.22),transparent_35%)]" />
-        <div className="mb-4 flex items-center justify-between">
-          <div className="relative">
-            <p className="text-xs uppercase tracking-[0.2em] text-white/60">Servicio Técnico</p>
-            <h1 className="text-xl font-semibold text-white">Asistente de Recepción</h1>
-          </div>
-          <span className="relative rounded-full border border-white/30 bg-white/15 px-3 py-1 text-xs font-medium text-white">
-            Paso {step} de {steps.length}
-          </span>
-        </div>
-        <div className="relative flex items-start justify-between gap-2">
-=======
-    <div className="mx-auto max-w-3xl overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-[0_30px_80px_-40px_rgba(15,23,42,0.65)]">
-      {/* Header con pasos */}
-      <div className="border-b border-slate-700/30 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-900 p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-white/60">Servicio Técnico</p>
-            <h1 className="text-lg font-semibold text-white">Asistente de Recepción</h1>
-          </div>
-          <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs text-white/80">
-            Paso {step} de {steps.length}
-          </span>
-        </div>
-        <div className="flex items-center justify-between">
->>>>>>> main
-          {steps.map((s, i) => (
-            <div key={s.num} className="flex flex-1 items-center">
-              <div className="flex flex-col items-center gap-2">
-                <StepIcon step={s} current={step === s.num} />
-                <span className={`text-[10px] font-semibold uppercase tracking-wide ${step === s.num ? "text-white" : "text-white/60"}`}>
-                  {s.label}
-                </span>
-              </div>
-              {i < steps.length - 1 && (
-                <div className={`mx-2 mt-5 h-1 flex-1 rounded-full ${step > s.num ? "bg-emerald-400" : "bg-white/25"}`} />
-              )}
-            </div>
-          ))}
-        </div>
-<<<<<<< codex/improve-design-of-service-module-572yzr
-        <p className="relative mt-3 text-center text-sm text-white/80">
-=======
-        <p className="mt-3 text-center text-sm text-white/70">
->>>>>>> main
-          {steps.find(s => s.num === step)?.label}
-        </p>
-      </div>
+    <div className="mx-auto flex h-[calc(100vh-7rem)] max-h-[980px] w-full max-w-[1450px] overflow-hidden rounded-3xl border border-indigo-100 bg-slate-50 shadow-[0_30px_70px_-42px_rgba(79,70,229,0.55)]">
+      <aside className="hidden w-[290px] flex-col border-r border-indigo-100/80 bg-white p-5 lg:flex">
+        <h3 className="text-2xl font-semibold text-slate-900">Tu progreso</h3>
+        <p className="mt-1 text-sm text-slate-500">Flujo guiado sin scroll</p>
 
-<<<<<<< codex/improve-design-of-service-module-572yzr
-      <div className="min-h-[460px] bg-gradient-to-b from-white via-indigo-50/20 to-slate-100/70 p-6">
-=======
-      <div className="min-h-[460px] bg-gradient-to-b from-white to-slate-50/70 p-6">
->>>>>>> main
-        {/* Paso 1: Cliente */}
-        {step === 1 && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center">
-                <UserCheck className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">¿Quién es el cliente?</h2>
-                <p className="text-sm text-slate-500">Busca por nombre, RUT, email o teléfono</p>
-              </div>
-            </div>
-            
-            <CustomerSearch
-              selectedCustomer={customer}
-              onCustomerSelect={setCustomer}
-            />
-            
-            {customer && (
-              <div className="mt-4 p-4 bg-emerald-50 rounded-xl border border-emerald-200 flex items-center gap-3">
-                <CheckCircle2 className="w-6 h-6 text-emerald-600" />
-                <div>
-                  <p className="font-semibold text-emerald-900">{customer.name}</p>
-                  <p className="text-sm text-emerald-700">{customer.email} • {customer.phone}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Paso 2: Dispositivo */}
-        {step === 2 && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center">
-                <Smartphone className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">¿Qué dispositivo?</h2>
-                <p className="text-sm text-slate-500">Selecciona el tipo de equipo</p>
-              </div>
-            </div>
-            
-            {!deviceType ? (
-              <DeviceGridSelector onSelect={setDeviceType} selected={deviceType} />
-            ) : (
-              <div className="space-y-4">
-                <div className="p-4 bg-purple-50 rounded-xl border border-purple-200 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Smartphone className="w-8 h-8 text-purple-600" />
-                    <span className="font-semibold text-purple-900 capitalize">{deviceType.replace("_", " ")}</span>
-                  </div>
-                  <button onClick={() => setDeviceType(null)} className="text-purple-600 hover:text-purple-800">
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">Modelo específico</label>
-                  <input
-                    type="text"
-                    value={deviceModel}
-                    onChange={(e) => setDeviceModel(e.target.value)}
-                    placeholder="Ej: iPhone 14 Pro, Samsung S23 Ultra..."
-                    className="w-full border border-slate-300 rounded-xl px-4 py-3 text-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Paso 3: Checklist rápido */}
-        {step === 3 && deviceType && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
-                <CheckCircle2 className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">Estado del equipo</h2>
-                <p className="text-sm text-slate-500">Revisión rápida (opcional)</p>
-              </div>
-            </div>
-            
-            <QuickChecklist
-              deviceType={deviceType}
-              checklistData={checklistData}
-              onChecklistChange={setChecklistData}
-            />
-          </div>
-        )}
-
-        {/* Paso 4: Problema */}
-        {step === 4 && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-500 to-amber-600 flex items-center justify-center">
-                <FileText className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">¿Qué le pasa?</h2>
-                <p className="text-sm text-slate-500">Selecciona o describe el problema</p>
-              </div>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {PROBLEM_QUICK_OPTIONS.map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => setProblemType(opt.id)}
-                  className={`p-3 rounded-xl border-2 text-center transition-all ${
-                    problemType === opt.id
-                      ? "border-amber-500 bg-amber-100 shadow-sm"
-                      : "border-slate-200 bg-white hover:border-amber-300"
-                  }`}
-                >
-                  <span className="text-sm font-medium text-slate-700">{opt.label}</span>
-                </button>
-              ))}
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Descripción adicional</label>
-              <textarea
-                value={problemDescription}
-                onChange={(e) => setProblemDescription(e.target.value)}
-                placeholder="Detalles adicionales del problema..."
-                className="w-full border border-slate-300 rounded-xl px-4 py-3 min-h-[80px] focus:ring-2 focus:ring-amber-500"
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Prioridad</label>
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                {PRIORITY_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    onClick={() => setPriority(opt.id as any)}
-                    className={`rounded-xl py-2.5 text-sm font-medium transition-all ${
-                      priority === opt.id
-                        ? opt.color
-                        : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+        <div className="mt-5 space-y-2 rounded-2xl border border-slate-200 p-3">
+          {STEPS.map((item) => {
+            const isCurrent = step === item.num;
+            const isDone = step > item.num;
+            return (
+              <div
+                key={item.num}
+                className={`flex items-center justify-between rounded-xl border px-3 py-2 ${
+                  isCurrent ? "border-brand-light bg-brand-light/10" : "border-transparent"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
+                      isDone || isCurrent
+                        ? "bg-brand-light text-white"
+                        : "bg-slate-100 text-slate-500"
                     }`}
                   >
-                    {opt.label}
-                  </button>
-                ))}
+                    {item.num}
+                  </span>
+                  <span
+                    className={`text-sm ${isCurrent ? "font-semibold text-slate-900" : "text-slate-600"}`}
+                  >
+                    {item.label}
+                  </span>
+                </div>
+                {isDone && <Check className="text-brand-light h-4 w-4" />}
               </div>
+            );
+          })}
+        </div>
+
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <p className="text-xs font-semibold tracking-wide text-slate-500 uppercase">
+            Resumen rápido
+          </p>
+          <p className="mt-3 text-sm font-semibold text-slate-900">
+            {deviceModel || "Equipo sin modelo"}
+          </p>
+          <p className="text-xs text-slate-500 capitalize">
+            {deviceType?.replace("_", " ") || "Tipo pendiente"}
+          </p>
+          <div className="mt-3 space-y-1 text-xs text-slate-600">
+            <p>Cliente: {customer?.name || "No seleccionado"}</p>
+            <p>Servicios: {selectedServices.length}</p>
+            <p>Total: {selectedServices.length ? formatCLP(totalServices) : "-"}</p>
+          </div>
+        </div>
+
+        <div className="mt-auto rounded-2xl border border-indigo-100 bg-indigo-50 p-4 text-xs text-indigo-700">
+          <p className="font-semibold">Tu información está segura</p>
+          <p className="mt-1">Usamos encriptación de nivel bancario para proteger los datos.</p>
+        </div>
+      </aside>
+
+      <section className="flex min-w-0 flex-1 flex-col bg-white">
+        <div className="border-b border-indigo-100 px-6 py-4">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => step > 1 && setStep(step - 1)}
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+            >
+              <ArrowLeft className="h-4 w-4" /> Volver
+            </button>
+            <div className="hidden gap-3 md:flex">
+              {STEPS.map((item, idx) => {
+                const isCurrent = step === item.num;
+                const isDone = step > item.num;
+                return (
+                  <div key={item.num} className="flex items-center gap-3">
+                    <span
+                      className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${
+                        isDone || isCurrent
+                          ? "bg-brand-light text-white"
+                          : "border border-slate-200 text-slate-400"
+                      }`}
+                    >
+                      {isDone ? <Check className="h-4 w-4" /> : item.num}
+                    </span>
+                    <span
+                      className={`text-sm ${isCurrent ? "text-brand-dark font-semibold" : "text-slate-500"}`}
+                    >
+                      {item.label}
+                    </span>
+                    {idx < STEPS.length - 1 && <span className="h-px w-7 bg-slate-200" />}
+                  </div>
+                );
+              })}
             </div>
           </div>
-        )}
+          <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-900">{stepTitle}</h2>
+        </div>
 
-        {/* Paso 5: Servicios */}
-        {step === 5 && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-rose-500 to-rose-600 flex items-center justify-center">
-                <Wrench className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">Servicios</h2>
-                <p className="text-sm text-slate-500">Selecciona los servicios a realizar</p>
-              </div>
-            </div>
-            
-            {loadingServices ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
-              </div>
-            ) : (
-              <div className="max-h-[350px] space-y-3 overflow-y-auto pr-2">
-                {serviceCategories.map((category) => (
-                  <div key={category.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
-                    <div className="bg-gradient-to-r from-slate-50 to-white px-3 py-2 text-sm font-medium text-slate-700">
-                      {category.name}
-                    </div>
-                    <div className="divide-y divide-slate-100">
-                      {category.services.map((service) => {
-                        const isSelected = selectedServices.find(s => s.id === service.id);
-                        const price = servicePrices[service.id] || service.default_price || 0;
-                        
-                        return (
-                          <button
-                            key={service.id}
-                            type="button"
-                            onClick={() => toggleService(service)}
-                            className={`w-full flex items-center justify-between p-3 text-left transition-all ${
-                              isSelected ? "bg-rose-50" : "hover:bg-slate-50"
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className={`w-5 h-5 rounded border-2 flex items-center justify-center ${
-                                isSelected ? "border-rose-500 bg-rose-500" : "border-slate-300"
-                              }`}>
-                                {isSelected && <CheckCircle2 className="w-3 h-3 text-white" />}
-                              </div>
-                              <span className={`text-sm ${isSelected ? "font-medium text-rose-900" : "text-slate-700"}`}>
-                                {service.name}
-                              </span>
-                            </div>
-                            <span className={`text-sm font-medium ${isSelected ? "text-rose-600" : "text-slate-500"}`}>
-                              {formatCLP(price)}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+          {step === 1 && (
+            <div className="grid gap-5 xl:grid-cols-[1.2fr_1fr]">
+              <div className="space-y-4 rounded-2xl border border-slate-200 p-4">
+                <div className="flex items-center gap-3">
+                  <div className="text-brand-light rounded-xl bg-indigo-100 p-2">
+                    <UserCheck className="h-5 w-5" />
                   </div>
-                ))}
+                  <div>
+                    <h3 className="text-xl font-semibold text-slate-900">Cliente y recepción</h3>
+                    <p className="text-sm text-slate-500">
+                      Selecciona cliente, tipo y modelo del equipo.
+                    </p>
+                  </div>
+                </div>
+                <CustomerSearch selectedCustomer={customer} onCustomerSelect={setCustomer} />
+                <DeviceGridSelector onSelect={setDeviceType} selected={deviceType} />
+                <input
+                  value={deviceModel}
+                  onChange={(e) => setDeviceModel(e.target.value)}
+                  placeholder="Modelo específico (ej: iPhone 11)"
+                  className="focus:border-brand-light focus:ring-brand-light/20 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm focus:ring-2 focus:outline-none"
+                />
               </div>
-            )}
-            
-            {selectedServices.length > 0 && (
-              <div className="rounded-2xl bg-slate-900 p-4 shadow-lg">
-                <div className="flex justify-between items-center">
-                  <span className="text-white/70">Total servicios:</span>
-                  <span className="text-white font-bold text-lg">{formatCLP(totalServices)}</span>
+
+              <div className="rounded-2xl border border-indigo-100 bg-indigo-50/50 p-4">
+                <h4 className="font-semibold text-slate-900">Checklist visual</h4>
+                <p className="mt-1 text-sm text-slate-600">
+                  Desde este paso se mantiene visible el equipo para evitar confusión.
+                </p>
+                <div className="mt-4 space-y-2 text-sm">
+                  <div className="rounded-xl border border-white bg-white p-3">
+                    Cliente: {customer?.name || "Pendiente"}
+                  </div>
+                  <div className="rounded-xl border border-white bg-white p-3">
+                    Tipo: {deviceType?.replace("_", " ") || "Pendiente"}
+                  </div>
+                  <div className="rounded-xl border border-white bg-white p-3">
+                    Modelo: {deviceModel || "Pendiente"}
+                  </div>
                 </div>
               </div>
-            )}
-          </div>
-        )}
+            </div>
+          )}
 
-        {/* Paso 6: Resumen */}
-        {step === 6 && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center">
-                <Save className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h2 className="text-xl font-bold text-slate-900">Resumen</h2>
-                <p className="text-sm text-slate-500">Confirma los datos de la orden</p>
+          {step === 2 && (
+            <div className="grid gap-5 xl:grid-cols-[1.4fr_1fr]">
+              <QuickChecklist
+                deviceType={deviceType || "iphone"}
+                checklistData={checklistData}
+                onChecklistChange={setChecklistData}
+              />
+              <div className="rounded-2xl border border-indigo-100 bg-indigo-50 p-4">
+                <h4 className="text-base font-semibold text-indigo-900">Seguro e inmutable</h4>
+                <ul className="mt-3 space-y-2 text-sm text-indigo-800">
+                  <li>✓ Validación en recepción sin fricción.</li>
+                  <li>✓ El estado inicial queda guardado para respaldo.</li>
+                  <li>✓ Puedes ampliar en diagnóstico después.</li>
+                </ul>
               </div>
             </div>
-            
-            <div className="space-y-3">
-              <div className="rounded-xl border border-slate-200/80 bg-white p-3 shadow-sm">
-                <p className="text-xs text-slate-500">Cliente</p>
-                <p className="font-medium">{customer?.name}</p>
-              </div>
-              
-              <div className="rounded-xl border border-slate-200/80 bg-white p-3 shadow-sm">
-                <p className="text-xs text-slate-500">Dispositivo</p>
-                <p className="font-medium capitalize">{deviceType?.replace("_", " ")} - {deviceModel}</p>
-              </div>
-              
-              <div className="rounded-xl border border-slate-200/80 bg-white p-3 shadow-sm">
-                <p className="text-xs text-slate-500">Problema</p>
-                <p className="font-medium">{problemType || problemDescription || "No especificado"}</p>
-              </div>
-              
-              <div className="rounded-xl border border-slate-200/80 bg-white p-3 shadow-sm">
-                <p className="text-xs text-slate-500">Servicios ({selectedServices.length})</p>
-                <div className="space-y-1 mt-1">
-                  {selectedServices.map(s => (
-                    <p key={s.id} className="text-sm">• {s.name}</p>
+          )}
+
+          {step === 3 && (
+            <div className="space-y-4">
+              {loadingServices ? (
+                <div className="flex items-center justify-center py-14 text-slate-500">
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Cargando servicios...
+                </div>
+              ) : (
+                <>
+                  <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    {serviceCategories.map((category) => (
+                      <div key={category.id} className="rounded-2xl border border-slate-200 p-3">
+                        <p className="text-sm font-semibold text-slate-900">
+                          {category.icon} {category.name}
+                        </p>
+                        <div className="mt-3 space-y-2">
+                          {category.services.slice(0, 4).map((service) => {
+                            const selected = selectedServices.some((s) => s.id === service.id);
+                            return (
+                              <button
+                                type="button"
+                                key={service.id}
+                                onClick={() => toggleService(service)}
+                                className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left text-sm transition ${
+                                  selected
+                                    ? "border-brand-light bg-brand-light/10"
+                                    : "border-slate-200 hover:border-slate-300"
+                                }`}
+                              >
+                                <span className="truncate pr-2">{service.name}</span>
+                                <span className="font-medium text-slate-700">
+                                  {formatCLP(
+                                    servicePrices[service.id] || service.default_price || 0,
+                                  )}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="border-brand-light/40 bg-brand-light/5 rounded-2xl border border-dashed p-4">
+                    <p className="text-sm font-semibold text-slate-900">
+                      Servicios seleccionados ({selectedServices.length})
+                    </p>
+                    {selectedServices.length === 0 ? (
+                      <p className="mt-2 text-sm text-slate-500">
+                        Aún no has seleccionado servicios.
+                      </p>
+                    ) : (
+                      <ul className="mt-2 grid gap-2 md:grid-cols-2">
+                        {selectedServices.map((s) => (
+                          <li
+                            key={s.id}
+                            className="rounded-lg bg-white px-3 py-2 text-sm text-slate-700"
+                          >
+                            {s.name}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="grid gap-5 xl:grid-cols-[1.5fr_1fr]">
+              <div className="space-y-4 rounded-2xl border border-slate-200 p-4">
+                <h3 className="text-lg font-semibold text-slate-900">Problema y prioridad</h3>
+                <div className="grid gap-2 sm:grid-cols-3">
+                  {PROBLEM_QUICK_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setProblemType(opt.label)}
+                      className={`rounded-xl border px-3 py-2 text-sm font-medium ${
+                        problemType === opt.label
+                          ? "border-brand-light bg-brand-light/10 text-brand-dark"
+                          : "border-slate-200 text-slate-700"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+
+                <textarea
+                  value={problemDescription}
+                  onChange={(e) => setProblemDescription(e.target.value)}
+                  placeholder="Detalle adicional (opcional)"
+                  className="focus:border-brand-light min-h-[100px] w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:outline-none"
+                />
+
+                <div className="grid gap-2 sm:grid-cols-3">
+                  {PRIORITY_OPTIONS.map((opt) => (
+                    <button
+                      type="button"
+                      key={opt.id}
+                      onClick={() => setPriority(opt.id as "baja" | "media" | "urgente")}
+                      className={`rounded-xl border px-3 py-2 text-left ${priority === opt.id ? "border-slate-900" : "border-slate-200"}`}
+                    >
+                      <p
+                        className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${opt.color}`}
+                      >
+                        {opt.label}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">{opt.note}</p>
+                    </button>
                   ))}
                 </div>
               </div>
-              
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
-                <p className="text-xs text-emerald-600">Total</p>
-                <p className="font-bold text-emerald-700 text-xl">{formatCLP(totalServices)}</p>
+
+              <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4">
+                <p className="text-sm font-semibold text-emerald-900">¡Todo listo!</p>
+                <p className="mt-1 text-sm text-emerald-800">
+                  Estás a un paso de completar el registro del dispositivo.
+                </p>
+                <div className="mt-4 rounded-xl border border-white bg-white p-3">
+                  <p className="text-xs text-slate-500">Total estimado</p>
+                  <p className="text-xl font-semibold text-slate-900">
+                    {formatCLP(totalServices || 0)}
+                  </p>
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
 
-      {/* Footer con navegación */}
-<<<<<<< codex/improve-design-of-service-module-572yzr
-      <div className="flex gap-3 border-t border-indigo-100 bg-white p-4">
-=======
-      <div className="flex gap-3 border-t border-slate-200 bg-white p-4">
->>>>>>> main
-        {step > 1 && (
+          {step === 5 && (
+            <div className="grid gap-4 lg:grid-cols-[1.5fr_1fr]">
+              <div className="space-y-3 rounded-2xl border border-slate-200 p-4">
+                <h3 className="text-xl font-semibold text-slate-900">Resumen y confirmación</h3>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div className="rounded-xl border border-slate-200 p-3">
+                    <p className="text-xs text-slate-500">Cliente</p>
+                    <p className="font-medium text-slate-900">{customer?.name}</p>
+                  </div>
+                  <div className="rounded-xl border border-slate-200 p-3">
+                    <p className="text-xs text-slate-500">Dispositivo</p>
+                    <p className="font-medium text-slate-900 capitalize">
+                      {deviceType?.replace("_", " ")} - {deviceModel}
+                    </p>
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-200 p-3">
+                  <p className="text-xs text-slate-500">
+                    Servicios seleccionados ({selectedServices.length})
+                  </p>
+                  <ul className="mt-2 space-y-1 text-sm text-slate-700">
+                    {selectedServices.map((service) => (
+                      <li key={service.id} className="flex items-center justify-between">
+                        <span>{service.name}</span>
+                        <span>
+                          {formatCLP(servicePrices[service.id] || service.default_price || 0)}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="border-brand-light/30 bg-brand-light/5 rounded-xl border p-3">
+                  <p className="text-xs text-slate-500">Monto total</p>
+                  <p className="text-2xl font-semibold text-slate-900">
+                    {formatCLP(totalServices)}
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-sm font-semibold text-slate-900">Detalles adicionales</p>
+                <label className="mt-3 block text-xs text-slate-600">Fecha compromiso</label>
+                <input
+                  type="date"
+                  value={commitmentDate}
+                  onChange={(e) => setCommitmentDate(e.target.value)}
+                  className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                />
+                <div className="mt-3 rounded-xl bg-white p-3 text-sm text-slate-700">
+                  Garantía: {warrantyDays} días
+                </div>
+                <div className="mt-3 inline-flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 p-2 text-xs text-amber-800">
+                  <AlertCircle className="mt-0.5 h-4 w-4" /> Al confirmar, se crea la orden y sus
+                  servicios.
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between border-t border-slate-200 bg-white px-6 py-4">
           <button
             type="button"
-            onClick={() => setStep(step - 1)}
-            className="rounded-xl border border-slate-300 px-4 py-2 font-medium text-slate-700 transition hover:bg-slate-50"
+            onClick={() => step > 1 && setStep(step - 1)}
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            disabled={step === 1 || loading}
           >
-            Atrás
+            <ArrowLeft className="h-4 w-4" /> Volver
           </button>
-        )}
-        
-        <div className="flex-1" />
-        
-        {step < 6 ? (
-          <button
-            type="button"
-            onClick={() => setStep(step + 1)}
-            disabled={!canProceed()}
-            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-light to-brand-dark px-6 py-2.5 font-medium text-white shadow-md shadow-brand-light/30 transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Siguiente
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={loading}
-            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-2.5 font-medium text-white shadow-md shadow-emerald-500/30 transition hover:shadow-lg"
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Creando...
-              </>
-            ) : (
-              <>
-                <Save className="w-4 h-4" />
-                Crear Orden
-              </>
-            )}
-          </button>
-        )}
-      </div>
+
+          {step < 5 ? (
+            <button
+              type="button"
+              onClick={() => setStep(step + 1)}
+              disabled={!canProceed() || loading}
+              className="from-brand-light to-brand-dark inline-flex items-center gap-2 rounded-xl bg-gradient-to-r px-5 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Continuar <ArrowRight className="h-4 w-4" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={loading}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+            >
+              {loading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {loading ? "Creando orden..." : "Confirmar y finalizar"}
+            </button>
+          )}
+        </div>
+      </section>
     </div>
   );
 }
