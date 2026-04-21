@@ -324,7 +324,7 @@ export default function DeviceChecklist({
 
   const pendingItems = allItems.filter((itemName) => !checklistData[itemName]);
   const completedItems = allItems.filter((itemName) => Boolean(checklistData[itemName]));
-  const visibleItems = editingCompletedItem
+  const baseVisibleItems = editingCompletedItem
     ? [...pendingItems, editingCompletedItem].filter((item, index, arr) => arr.indexOf(item) === index)
     : pendingItems;
   const filteredVisibleItems = visibleItems.filter((itemName) => {
