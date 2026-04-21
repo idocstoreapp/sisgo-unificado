@@ -365,11 +365,11 @@ export function OrderWizardProvider({
     const brandId = Number(selectedBrandByDevice[device.id]);
     const lineId = Number(selectedSeriesByDevice[device.id]);
     const form = customCatalogFormByDevice[device.id] ?? { model: "", variant: "" };
-    if (!brandId || !lineId || !form.model.trim()) { alert("Debes seleccionar marca/lÃ­nea y escribir el modelo."); return; }
+    if (!brandId || !lineId || !form.model.trim()) { alert("Debes seleccionar marca/línea y escribir el modelo."); return; }
     const typeId = getTypeIdForDevice(device);
     const brand = catalog.brands.find((b) => b.id === brandId);
     const line = catalog.productLines.find((l) => l.id === lineId);
-    if (!typeId || !brand || !line) { alert("Error catÃ¡logo"); return; }
+    if (!typeId || !brand || !line) { alert("Error catálogo"); return; }
     try {
       const chain = await ensureCatalogChain({ deviceTypeId: typeId, brandName: brand.name, lineName: line.name, modelName: form.model.trim(), variantName: form.variant.trim() || undefined });
       const displName = buildDeviceDisplayName({ brandName: brand.name, lineName: line.name, modelName: form.model.trim(), variantName: form.variant.trim() });
@@ -423,12 +423,21 @@ export function OrderWizardProvider({
     return null;
   };
 
+  const iconByTypeCode: Record<string, string> = {
+    celular: "📱",
+    tablet: "📲",
+    notebook: "💻",
+    smartwatch: "⌚",
+    consola: "🎮",
+    otro: "🔧",
+  };
+
   const wizardTypeOptions = catalog.deviceTypes.filter(t => t.is_active).map(t => ({
     id: mapCatalogCodeToDeviceType(t.code),
     rawCode: t.code,
     label: t.name,
     description: t.name,
-    icon: "ðŸ“±",
+    icon: iconByTypeCode[t.code] ?? "🔧",
     imageUrl: t.image_url || "https://dummyimage.com/480x260/e2e8f0/475569&text=Tipo"
   }));
 
@@ -459,4 +468,3 @@ export function useOrderWizard() {
   if (!context) throw new Error("useOrderWizard must be used within an OrderWizardProvider");
   return context;
 }
-

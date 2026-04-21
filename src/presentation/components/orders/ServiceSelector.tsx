@@ -99,14 +99,14 @@ export default function ServiceSelector({
 
   const hasSelectedDevice = Boolean(deviceType && deviceModel.trim());
   const fallbackServiceCategories = [
-    { key: "pantalla", label: "Pantalla", icon: "ðŸ–¥ï¸", pattern: /pantalla|glass|tactil/i },
-    { key: "bateria", label: "BaterÃ­a", icon: "ðŸ”‹", pattern: /bateria|baterÃ­a/i },
-    { key: "camara", label: "CÃ¡mara", icon: "ðŸ“·", pattern: /camara|cÃ¡mara|face id/i },
-    { key: "carga", label: "Carga", icon: "ðŸ”Œ", pattern: /carga|conector|pin|base/i },
-    { key: "software", label: "Software", icon: "ðŸ§ ", pattern: /software|reseteo|google|frp|actualizaciÃ³n|actualizacion|virus/i },
-    { key: "mantenimiento", label: "MantenciÃ³n", icon: "ðŸ§°", pattern: /limpieza|mantencion|manten|diagnostico|diagnÃ³stico|baÃ±o quimico/i },
-    { key: "placa", label: "Placa", icon: "ðŸ§©", pattern: /placa|fpc|sensores|sim|flex/i },
-    { key: "otros", label: "Otros", icon: "âš™ï¸", pattern: /.*/i },
+    { key: "pantalla", label: "Pantalla", icon: "🖥️", pattern: /pantalla|glass|tactil/i },
+    { key: "bateria", label: "Batería", icon: "🔋", pattern: /bateria|batería/i },
+    { key: "camara", label: "Cámara", icon: "📷", pattern: /camara|cámara|face id/i },
+    { key: "carga", label: "Carga", icon: "🔌", pattern: /carga|conector|pin|base/i },
+    { key: "software", label: "Software", icon: "🧠", pattern: /software|reseteo|google|frp|actualización|actualizacion|virus/i },
+    { key: "mantenimiento", label: "Mantención", icon: "🧰", pattern: /limpieza|mantencion|manten|diagnostico|diagnóstico|baño quimico/i },
+    { key: "placa", label: "Placa", icon: "🧩", pattern: /placa|fpc|sensores|sim|flex/i },
+    { key: "otros", label: "Otros", icon: "⚙️", pattern: /.*/i },
   ];
 
   const categorizedByDb = availableServices.reduce<Record<string, { key: string; label: string; icon: string; imageUrl: string | null; services: Service[] }>>((acc, service) => {
@@ -116,7 +116,7 @@ export default function ServiceSelector({
       acc[key] = {
         key,
         label: service.category as string,
-        icon: "ðŸ› ï¸",
+        icon: "🛠️",
         imageUrl: service.category_image_url || null,
         services: [],
       };
@@ -141,16 +141,16 @@ export default function ServiceSelector({
   const selectedCategoryData = servicesByCategory.find((category) => category.key === selectedCategory);
 
   function handleServiceSelect(service: Service) {
-    // Validar que el servicio no estÃ© ya en la lista (protecciÃ³n contra duplicados)
+    // Validar que el servicio no esté ya en la lista (protección contra duplicados)
     if (selectedServices.find((s) => s.id === service.id)) {
-      console.warn(`[ServiceSelector] Servicio ${service.name} (${service.id}) ya estÃ¡ en la lista. Ignorando duplicado.`);
+      console.warn(`[ServiceSelector] Servicio ${service.name} (${service.id}) ya está en la lista. Ignorando duplicado.`);
       setSearchTerm("");
       setShowResults(false);
       if (inputRef.current) inputRef.current.focus();
       return;
     }
 
-    // Agregar el servicio solo si no estÃ¡ duplicado
+    // Agregar el servicio solo si no está duplicado
     onServicesChange([...selectedServices, service]);
     setSearchTerm("");
     setShowResults(false);
@@ -169,7 +169,7 @@ export default function ServiceSelector({
     }
 
     if (loading) {
-      console.warn("[ServiceSelector] handleCreateService ya estÃ¡ en ejecuciÃ³n. Ignorando llamada duplicada.");
+      console.warn("[ServiceSelector] handleCreateService ya está en ejecución. Ignorando llamada duplicada.");
       return;
     }
 
@@ -251,7 +251,7 @@ export default function ServiceSelector({
         <div className="mb-3 rounded-2xl border border-slate-100 bg-gradient-to-b from-white to-slate-50/60 p-3">
           {!selectedCategory && (
             <>
-              <p className="text-xs font-semibold text-slate-700 mb-2">Â¿QuÃ© tipo de servicio necesitas?</p>
+              <p className="text-xs font-semibold text-slate-700 mb-2">¿Qué tipo de servicio necesitas?</p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {servicesByCategory
                   .filter((category) => category.services.length > 0)
@@ -326,7 +326,7 @@ export default function ServiceSelector({
       {showResults && searchTerm && filteredServices.length > 0 && (
         <div className="absolute z-20 w-full mt-1 bg-white border border-slate-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
           {filteredServices.map((service) => {
-            // Verificar si el servicio ya estÃ¡ seleccionado (protecciÃ³n adicional)
+            // Verificar si el servicio ya está seleccionado (protección adicional)
             const isAlreadySelected = selectedServices.some(s => s.id === service.id);
             
             return (
@@ -356,7 +356,7 @@ export default function ServiceSelector({
 
       {showResults && searchTerm && filteredServices.length === 0 && !showNewServiceForm && (
         <div className="absolute z-20 w-full mt-1 bg-white border border-slate-200 rounded-md shadow-lg p-4">
-          <p className="text-slate-600 text-center mb-2">No se encontrÃ³ el servicio</p>
+          <p className="text-slate-600 text-center mb-2">No se encontró el servicio</p>
           <button
             type="button"
             onClick={() => {

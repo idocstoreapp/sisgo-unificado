@@ -6,7 +6,7 @@ interface PatternDrawerProps {
   onClose: () => void;
 }
 
-// Posiciones de los 9 puntos del patrÃ³n (grid 3x3)
+// Posiciones de los 9 puntos del patrón (grid 3x3)
 const PATTERN_POSITIONS = [
   { id: 1, x: 50, y: 50 },
   { id: 2, x: 150, y: 50 },
@@ -35,14 +35,14 @@ export default function PatternDrawer({ onPatternComplete, onClose }: PatternDra
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Asegurar tamaÃ±o del canvas
+    // Asegurar tamaño del canvas
     canvas.width = 300;
     canvas.height = 300;
 
     const draw = () => {
       ctx.clearRect(0, 0, 300, 300);
 
-      // Dibujar lÃ­neas del patrÃ³n
+      // Dibujar líneas del patrón
       ctx.strokeStyle = "#3b82f6";
       ctx.lineWidth = 4;
       for (let i = 0; i < pattern.length - 1; i++) {
@@ -56,7 +56,7 @@ export default function PatternDrawer({ onPatternComplete, onClose }: PatternDra
         }
       }
 
-      // Dibujar lÃ­nea actual si hay
+      // Dibujar línea actual si hay
       if (currentPoint && pattern.length > 0) {
         const lastPoint = PATTERN_POSITIONS.find(p => p.id === pattern[pattern.length - 1]);
         if (lastPoint) {
@@ -71,13 +71,13 @@ export default function PatternDrawer({ onPatternComplete, onClose }: PatternDra
       PATTERN_POSITIONS.forEach((point) => {
         const isSelected = pattern.includes(point.id);
         
-        // CÃ­rculo exterior
+        // Círculo exterior
         ctx.fillStyle = isSelected ? "#3b82f6" : "#e5e7eb";
         ctx.beginPath();
         ctx.arc(point.x, point.y, POINT_RADIUS, 0, 2 * Math.PI);
         ctx.fill();
 
-        // CÃ­rculo interior
+        // Círculo interior
         ctx.fillStyle = isSelected ? "#ffffff" : "#9ca3af";
         ctx.beginPath();
         ctx.arc(point.x, point.y, POINT_RADIUS - 8, 0, 2 * Math.PI);
@@ -129,7 +129,7 @@ export default function PatternDrawer({ onPatternComplete, onClose }: PatternDra
     if (isDrawing && pattern.length >= 4) {
       onPatternComplete(pattern);
     } else if (isDrawing) {
-      alert("El patrÃ³n debe tener al menos 4 puntos");
+      alert("El patrón debe tener al menos 4 puntos");
       setPattern([]);
     }
     setIsDrawing(false);
@@ -149,7 +149,7 @@ export default function PatternDrawer({ onPatternComplete, onClose }: PatternDra
     handleEnd();
   }
 
-  // Eventos tÃ¡ctiles
+  // Eventos táctiles
   function handleTouchStart(e: React.TouchEvent<HTMLCanvasElement>) {
     e.preventDefault();
     const touch = e.touches[0];
@@ -171,17 +171,17 @@ export default function PatternDrawer({ onPatternComplete, onClose }: PatternDra
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={onClose}>
       <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-slate-900">Dibujar PatrÃ³n de Desbloqueo</h3>
+          <h3 className="text-xl font-bold text-slate-900">Dibujar Patrón de Desbloqueo</h3>
           <button
             onClick={onClose}
             className="text-slate-500 hover:text-slate-700 text-2xl"
           >
-            Ã—
+            ×
           </button>
         </div>
 
         <p className="text-sm text-slate-600 mb-4">
-          Dibuja tu patrÃ³n conectando al menos 4 puntos
+          Dibuja tu patrón conectando al menos 4 puntos
         </p>
 
         <div className="flex justify-center mb-4">

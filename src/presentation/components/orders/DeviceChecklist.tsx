@@ -13,10 +13,10 @@ type QuickCategory = "fisico" | "funcional";
 type QuickState = "ok" | "detalles" | "no_probado" | null;
 
 const DEFAULT_STATUS_OPTIONS = [
-  { value: "ok", label: "âœ“ Funcionando" },
-  { value: "damaged", label: "âš  DaÃ±ado" },
-  { value: "replaced", label: "â™» Reparado" },
-  { value: "no_probado", label: "âœ— No probado" },
+  { value: "ok", label: "✓ Funcionando" },
+  { value: "damaged", label: "⚠ Dañado" },
+  { value: "replaced", label: "↻ Reparado" },
+  { value: "no_probado", label: "✗ No probado" },
 ];
 
 const STATUS_STYLES: Record<string, string> = {
@@ -175,7 +175,7 @@ export default function DeviceChecklist({
   }
 
   function handleItemChange(itemName: string, value: string) {
-    if (value === "") return; // No permitir valores vacÃ­os
+    if (value === "") return; // No permitir valores vacíos
     onChecklistChange({
       ...checklistData,
       [itemName]: value,
@@ -359,7 +359,7 @@ export default function DeviceChecklist({
   }, [deviceType, allItems.join("|")]);
 
   useEffect(() => {
-    // Deshabilitado scroll automÃ¡tico para evitar que la pÃ¡gina se mueva al
+    // Deshabilitado scroll automático para evitar que la página se mueva al
     // aparecer el checklist o al marcar items. El usuario ya ve el panel, no
     // es necesario desplazar la vista.
     // const firstPending = allItems.find((itemName) => !checklistData[itemName]);
@@ -411,7 +411,7 @@ export default function DeviceChecklist({
 
   return (
     <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-5">
-      <h3 className="mb-4 text-lg font-semibold text-slate-900 md:text-xl">Checklist de VerificaciÃ³n *</h3>
+      <h3 className="mb-4 text-lg font-semibold text-slate-900 md:text-xl">Checklist de Verificación *</h3>
 
       {completedItems.length > 0 && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
@@ -440,7 +440,7 @@ export default function DeviceChecklist({
         <div className="mb-4 rounded-2xl border border-slate-100 bg-gradient-to-r from-white to-slate-50 p-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-slate-700">
-              Â¿No puedes probar ninguna funciÃ³n ahora? Puedes marcar todo como <span className="font-semibold">No probado</span> y continuar al siguiente paso.
+              ¿No puedes probar ninguna función ahora? Puedes marcar todo como <span className="font-semibold">No probado</span> y continuar al siguiente paso.
             </p>
             <button
               type="button"
@@ -564,7 +564,7 @@ export default function DeviceChecklist({
 
               <div className="mt-3 flex items-center justify-between gap-2">
                 <span className="text-xs text-slate-500">
-                  {selectedValue ? "Toca otro estado para cambiar rÃ¡pido." : "Selecciona un estado."}
+                  {selectedValue ? "Toca otro estado para cambiar rápido." : "Selecciona un estado."}
                 </span>
                 {isCustom && (
                   <button
@@ -572,7 +572,7 @@ export default function DeviceChecklist({
                     className="rounded-md bg-gray-500 px-2 py-1 text-xs text-white hover:bg-gray-600"
                     type="button"
                   >
-                    âœ•
+                    ✕
                   </button>
                 )}
               </div>
@@ -671,13 +671,13 @@ export default function DeviceChecklist({
                   type="text"
                   value={modalChecklistName}
                   onChange={(e) => setModalChecklistName(e.target.value)}
-                  placeholder="Ej: Pantalla, Bocina, CÃ¡mara..."
+                  placeholder="Ej: Pantalla, Bocina, Cámara..."
                   className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
                 />
               </div>
 
               <div>
-                <p className="mb-2 text-sm font-medium text-slate-700">Estados (puedes quitar o agregar mÃ¡s)</p>
+                <p className="mb-2 text-sm font-medium text-slate-700">Estados (puedes quitar o agregar más)</p>
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -711,7 +711,7 @@ export default function DeviceChecklist({
                         className="text-gray-600 hover:text-gray-700"
                         title="Eliminar estado"
                       >
-                        âœ•
+                        ✕
                       </button>
                     </span>
                   ))}

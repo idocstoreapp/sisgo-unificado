@@ -1,10 +1,10 @@
 ﻿"use client";
 /**
  * DeviceSelector - Wizard visual de 5 niveles para seleccionar dispositivos
- * Basado EXACTAMENTE en sistema-gestion-ordenes/src/react/components/OrderForm.tsx (lÃ­neas 100-700)
+ * Basado EXACTAMENTE en sistema-gestion-ordenes/src/react/components/OrderForm.tsx (líneas 100-700)
  * 
- * Flujo: Tipo â†’ Marca â†’ LÃ­nea â†’ Modelo â†’ Variante
- * Cada nivel muestra imÃ¡genes y avanza automÃ¡ticamente al seleccionar
+ * Flujo: Tipo → Marca → Línea → Modelo → Variante
+ * Cada nivel muestra imágenes y avanza automáticamente al seleccionar
  */
 
 "use client";
@@ -22,7 +22,7 @@ interface DeviceSelectorProps {
   onClose: () => void;
 }
 
-// Interfaces del catÃ¡logo
+// Interfaces del catálogo
 interface CatalogDeviceType {
   id: number;
   code: string;
@@ -72,7 +72,7 @@ export default function DeviceSelector({ onSelect, onClose }: DeviceSelectorProp
   const [selectedModel, setSelectedModel] = useState<CatalogModel | null>(null);
   const [selectedVariant, setSelectedVariant] = useState<CatalogVariant | null>(null);
 
-  // Datos del catÃ¡logo
+  // Datos del catálogo
   const [deviceTypes, setDeviceTypes] = useState<CatalogDeviceType[]>([]);
   const [brands, setBrands] = useState<CatalogBrand[]>([]);
   const [lines, setLines] = useState<CatalogProductLine[]>([]);
@@ -128,7 +128,7 @@ export default function DeviceSelector({ onSelect, onClose }: DeviceSelectorProp
     setLoading(false);
   }
 
-  // Cargar lÃ­neas cuando se selecciona marca
+  // Cargar líneas cuando se selecciona marca
   useEffect(() => {
     if (selectedBrand) {
       loadLines(selectedBrand.id);
@@ -150,7 +150,7 @@ export default function DeviceSelector({ onSelect, onClose }: DeviceSelectorProp
     setLoading(false);
   }
 
-  // Cargar modelos cuando se selecciona lÃ­nea
+  // Cargar modelos cuando se selecciona línea
   useEffect(() => {
     if (selectedLine) {
       loadModels(selectedLine.id);
@@ -258,7 +258,7 @@ export default function DeviceSelector({ onSelect, onClose }: DeviceSelectorProp
             <h2 className="text-2xl font-bold text-gray-900">Seleccionar Dispositivo</h2>
             {selectedType && (
               <p className="text-sm text-gray-600 mt-1">
-                Paso {step}/5: {step === 1 ? "Tipo" : step === 2 ? "Marca" : step === 3 ? "LÃ­nea" : step === 4 ? "Modelo" : "Variante"}
+                Paso {step}/5: {step === 1 ? "Tipo" : step === 2 ? "Marca" : step === 3 ? "Línea" : step === 4 ? "Modelo" : "Variante"}
               </p>
             )}
           </div>
@@ -266,7 +266,7 @@ export default function DeviceSelector({ onSelect, onClose }: DeviceSelectorProp
             onClick={onClose}
             className="px-4 py-2 text-gray-600 hover:text-gray-900"
           >
-            âœ•
+            ✕
           </button>
         </div>
 
@@ -301,7 +301,7 @@ export default function DeviceSelector({ onSelect, onClose }: DeviceSelectorProp
         {/* Step 1: Device Type */}
         {step === 1 && !loading && (
           <div>
-            <h3 className="text-lg font-semibold mb-4">Â¿QuÃ© tipo de dispositivo es?</h3>
+            <h3 className="text-lg font-semibold mb-4">¿Qué tipo de dispositivo es?</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {deviceTypes.map((type) => (
                 <button
@@ -317,7 +317,7 @@ export default function DeviceSelector({ onSelect, onClose }: DeviceSelectorProp
                     />
                   ) : (
                     <div className="w-full h-32 bg-gray-100 rounded-lg mb-3 flex items-center justify-center text-4xl">
-                      ðŸ“±
+                      📱
                     </div>
                   )}
                   <p className="font-semibold text-center">{type.name}</p>
@@ -335,7 +335,7 @@ export default function DeviceSelector({ onSelect, onClose }: DeviceSelectorProp
                 onClick={() => { setStep(1); setSelectedType(null); }}
                 className="text-blue-600 hover:underline mr-4"
               >
-                â† Cambiar tipo
+                ← Cambiar tipo
               </button>
               <h3 className="text-lg font-semibold">Selecciona la marca</h3>
             </div>
@@ -354,7 +354,7 @@ export default function DeviceSelector({ onSelect, onClose }: DeviceSelectorProp
                     />
                   ) : (
                     <div className="w-16 h-16 bg-gray-100 rounded-full mb-2 flex items-center justify-center text-2xl">
-                      ðŸ·ï¸
+                      🏷️
                     </div>
                   )}
                   <p className="font-semibold text-center text-sm">{brand.name}</p>
@@ -372,9 +372,9 @@ export default function DeviceSelector({ onSelect, onClose }: DeviceSelectorProp
                 onClick={() => { setStep(2); setSelectedBrand(null); }}
                 className="text-blue-600 hover:underline mr-4"
               >
-                â† Cambiar marca
+                ← Cambiar marca
               </button>
-              <h3 className="text-lg font-semibold">Selecciona la lÃ­nea de producto</h3>
+              <h3 className="text-lg font-semibold">Selecciona la línea de producto</h3>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {lines.map((line) => (
@@ -391,7 +391,7 @@ export default function DeviceSelector({ onSelect, onClose }: DeviceSelectorProp
                     />
                   ) : (
                     <div className="w-full h-24 bg-gray-100 rounded-lg mb-2 flex items-center justify-center text-2xl">
-                      ðŸ“±
+                      📱
                     </div>
                   )}
                   <p className="font-semibold text-center">{line.name}</p>
@@ -409,7 +409,7 @@ export default function DeviceSelector({ onSelect, onClose }: DeviceSelectorProp
                 onClick={() => { setStep(3); setSelectedLine(null); }}
                 className="text-blue-600 hover:underline mr-4"
               >
-                â† Cambiar lÃ­nea
+                ← Cambiar línea
               </button>
               <h3 className="text-lg font-semibold">Selecciona el modelo</h3>
             </div>
@@ -442,7 +442,7 @@ export default function DeviceSelector({ onSelect, onClose }: DeviceSelectorProp
                 onClick={() => { setStep(4); setSelectedVariant(null); }}
                 className="text-blue-600 hover:underline mr-4"
               >
-                â† Cambiar modelo
+                ← Cambiar modelo
               </button>
               <h3 className="text-lg font-semibold">Selecciona la variante</h3>
             </div>
@@ -466,7 +466,7 @@ export default function DeviceSelector({ onSelect, onClose }: DeviceSelectorProp
             onClick={() => setShowManualEntry(!showManualEntry)}
             className="text-blue-600 hover:underline text-sm"
           >
-            {showManualEntry ? "Ocultar entrada manual" : "Â¿No encuentras tu dispositivo? Ingresar manualmente"}
+            {showManualEntry ? "Ocultar entrada manual" : "¿No encuentras tu dispositivo? Ingresar manualmente"}
           </button>
           
           {showManualEntry && (
