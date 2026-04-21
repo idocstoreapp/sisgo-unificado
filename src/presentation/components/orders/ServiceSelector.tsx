@@ -217,11 +217,11 @@ export default function ServiceSelector({
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <div className="flex gap-2 mb-2">
+      <div className="mb-2 flex gap-2">
         <input
           ref={inputRef}
           type="text"
-          className="flex-1 border border-slate-300 rounded-md px-3 py-2"
+          className="flex-1 rounded-xl border border-indigo-200 px-3 py-2 shadow-sm focus:border-indigo-400 focus:outline-none"
           placeholder="Buscar o escribir nombre de servicio..."
           value={searchTerm}
           onChange={(e) => {
@@ -235,7 +235,7 @@ export default function ServiceSelector({
         <button
           type="button"
           onClick={() => setShowNewServiceForm(true)}
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 whitespace-nowrap"
+          className="whitespace-nowrap rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 font-medium text-white shadow-md shadow-indigo-500/30 hover:brightness-110"
         >
           + Nuevo
         </button>
@@ -248,7 +248,7 @@ export default function ServiceSelector({
       )}
 
       {hasSelectedDevice && (
-        <div className="mb-3 p-3 rounded-md border border-slate-200 bg-slate-50">
+        <div className="mb-3 rounded-2xl border border-indigo-100 bg-gradient-to-b from-white to-indigo-50/60 p-3">
           {!selectedCategory && (
             <>
               <p className="text-xs font-semibold text-slate-700 mb-2">Â¿QuÃ© tipo de servicio necesitas?</p>
@@ -260,7 +260,7 @@ export default function ServiceSelector({
                       key={`category-${category.key}`}
                       type="button"
                       onClick={() => setSelectedCategory(category.key)}
-                      className="px-3 py-2 rounded-xl border border-slate-300 bg-white text-slate-700 text-xs hover:bg-slate-100 text-left"
+                      className="rounded-2xl border border-indigo-200 bg-white px-3 py-2 text-left text-xs text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-400 hover:bg-indigo-50"
                     >
                       {category.imageUrl ? (
                         <img src={category.imageUrl} alt={category.label} className="h-10 w-full object-cover rounded-md mb-1" loading="lazy" />
@@ -282,7 +282,7 @@ export default function ServiceSelector({
                 <button
                   type="button"
                   onClick={() => setSelectedCategory(null)}
-                  className="text-xs underline text-slate-600"
+                  className="text-xs font-medium underline text-indigo-700"
                 >
                   Cambiar tipo
                 </button>
@@ -293,7 +293,7 @@ export default function ServiceSelector({
                     key={`category-service-${service.id}`}
                     type="button"
                     onClick={() => handleServiceSelect(service)}
-                    className="px-3 py-1.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-800 text-xs hover:bg-emerald-100"
+                    className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs text-emerald-800 shadow-sm hover:bg-emerald-100"
                   >
                     {service.image_url ? <img src={service.image_url} alt={service.name} className="inline-block h-4 w-4 rounded-full object-cover mr-1" loading="lazy" /> : null}
                     + {service.name}
@@ -314,7 +314,7 @@ export default function ServiceSelector({
                 key={`recommended-${service.id}`}
                 type="button"
                 onClick={() => handleServiceSelect(service)}
-                className="px-3 py-1.5 rounded-full border border-blue-200 bg-blue-50 text-blue-700 text-xs font-medium hover:bg-blue-100"
+                className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 shadow-sm hover:bg-blue-100"
               >
                 + {service.name}
               </button>
@@ -429,4 +429,3 @@ export default function ServiceSelector({
     </div>
   );
 }
-

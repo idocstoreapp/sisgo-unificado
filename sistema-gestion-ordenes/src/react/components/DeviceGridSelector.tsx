@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { DeviceType } from "@/types";
 import { 
-  Smartphone, Tablet, Laptop, Watch, ChevronRight, Search, X
+  Smartphone, Tablet, Laptop, Watch, ChevronRight
 } from "lucide-react";
 
 interface DeviceSelectorProps {
@@ -23,32 +23,32 @@ const DEVICE_OPTIONS: DeviceOption[] = [
     id: "iphone",
     name: "iPhone",
     icon: <Smartphone className="w-12 h-12" />,
-    color: "from-slate-800 to-slate-900",
-    gradient: "bg-gradient-to-br from-slate-800 to-slate-900",
+    color: "from-indigo-600 to-blue-600",
+    gradient: "bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-500",
     description: "Smartphones Apple",
   },
   {
     id: "ipad",
     name: "iPad",
     icon: <Tablet className="w-12 h-12" />,
-    color: "from-slate-600 to-slate-800",
-    gradient: "bg-gradient-to-br from-slate-600 to-slate-800",
+    color: "from-violet-600 to-fuchsia-600",
+    gradient: "bg-gradient-to-br from-violet-600 via-fuchsia-600 to-pink-500",
     description: "Tablets Apple",
   },
   {
     id: "macbook",
     name: "MacBook",
     icon: <Laptop className="w-12 h-12" />,
-    color: "from-slate-400 to-slate-600",
-    gradient: "bg-gradient-to-br from-slate-400 to-slate-600",
+    color: "from-emerald-600 to-teal-600",
+    gradient: "bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-500",
     description: "Notebooks Apple",
   },
   {
     id: "apple_watch",
     name: "Apple Watch",
     icon: <Watch className="w-12 h-12" />,
-    color: "from-slate-500 to-slate-700",
-    gradient: "bg-gradient-to-br from-slate-500 to-slate-700",
+    color: "from-orange-500 to-rose-500",
+    gradient: "bg-gradient-to-br from-orange-500 via-rose-500 to-pink-500",
     description: "Relojes Apple",
   },
 ];
@@ -57,14 +57,14 @@ export default function DeviceGridSelector({ onSelect, selected }: DeviceSelecto
   const [hoveredId, setHoveredId] = useState<DeviceType | null>(null);
 
   return (
-    <div className="p-4">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-lg">
+    <div className="rounded-3xl border border-indigo-100 bg-gradient-to-b from-white to-indigo-50/40 p-4 shadow-[0_24px_50px_-30px_rgba(67,56,202,0.45)]">
+      <div className="mb-5 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shadow-blue-500/25">
           <Smartphone className="w-5 h-5 text-white" />
         </div>
         <div>
-          <h3 className="font-semibold text-slate-900">¿Qué dispositivo?</h3>
-          <p className="text-xs text-slate-500">Toca para seleccionar</p>
+          <h3 className="font-semibold tracking-tight text-slate-900">¿Qué dispositivo recibes?</h3>
+          <p className="text-xs text-slate-500">Selecciona la familia del equipo</p>
         </div>
       </div>
 
@@ -81,14 +81,14 @@ export default function DeviceGridSelector({ onSelect, selected }: DeviceSelecto
               onMouseEnter={() => setHoveredId(device.id)}
               onMouseLeave={() => setHoveredId(null)}
               className={`
-                relative overflow-hidden rounded-2xl p-4 text-left transition-all duration-300
+                relative overflow-hidden rounded-2xl border border-white/30 p-4 text-left transition-all duration-300
                 ${device.gradient}
-                ${isSelected ? "ring-4 ring-emerald-400 ring-offset-2 scale-[1.02]" : "hover:scale-[1.02] hover:shadow-xl"}
+                ${isSelected ? "scale-[1.02] ring-4 ring-emerald-400 ring-offset-2 shadow-2xl" : "hover:scale-[1.02] hover:shadow-xl"}
                 ${isHovered && !isSelected ? "ring-2 ring-white/50" : ""}
               `}
             >
               {/* Brillo efecto */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 hover:opacity-100 transition-opacity" />
+              <div className="absolute inset-0 bg-gradient-to-tr from-white/20 via-transparent to-white/5 opacity-0 hover:opacity-100 transition-opacity" />
               
               {/* Checkmark si seleccionado */}
               {isSelected && (
@@ -105,7 +105,7 @@ export default function DeviceGridSelector({ onSelect, selected }: DeviceSelecto
               </div>
               
               {/* Nombre */}
-              <h4 className="text-white font-bold text-lg">{device.name}</h4>
+              <h4 className="text-lg font-bold text-white">{device.name}</h4>
               <p className="text-white/70 text-xs">{device.description}</p>
               
               {/* Flecha指示 */}

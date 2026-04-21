@@ -437,7 +437,7 @@ export default function DeviceChecklist({
       )}
 
       {allItems.length > 0 && completedItems.length !== allItems.length && (
-        <div className="mb-4 rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div className="mb-4 rounded-2xl border border-indigo-100 bg-gradient-to-r from-white to-indigo-50 p-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-slate-700">
               Â¿No puedes probar ninguna funciÃ³n ahora? Puedes marcar todo como <span className="font-semibold">No probado</span> y continuar al siguiente paso.
@@ -445,7 +445,7 @@ export default function DeviceChecklist({
             <button
               type="button"
               onClick={handleMarkAllAsNotTested}
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100"
+              className="rounded-xl border border-indigo-200 bg-white px-3 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50"
             >
               Marcar todo como no probado
             </button>
@@ -453,13 +453,13 @@ export default function DeviceChecklist({
         </div>
       )}
 
-      <div className="mb-4 rounded-xl border border-blue-200 bg-blue-50 p-3">
-        <p className="text-sm font-semibold text-blue-900">Recepción rápida (40 segundos)</p>
-        <p className="text-xs text-blue-800 mt-1">
+      <div className="mb-4 rounded-2xl border border-indigo-200 bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 p-3 shadow-lg shadow-indigo-500/25">
+        <p className="text-sm font-semibold text-white">Recepción rápida (40 segundos)</p>
+        <p className="mt-1 text-xs text-white/90">
           Primero marca estado global. Solo entra al detalle cuando el bloque está en <strong>Con detalles</strong>.
         </p>
         <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-3">
-          <div className="rounded-lg border border-blue-100 bg-white p-3">
+          <div className="rounded-xl border border-white/30 bg-white/95 p-3 shadow-sm">
             <p className="text-sm font-semibold text-slate-800">1) Estado físico externo</p>
             <div className="mt-2 grid grid-cols-3 gap-2">
               <button type="button" onClick={() => applyQuickCategoryState("fisico", "ok")} className={getStatusButtonClass("ok", quickCategoryState.fisico === "ok")}>OK</button>
@@ -468,7 +468,7 @@ export default function DeviceChecklist({
             </div>
             {!quickCategoryHasItems.fisico && <p className="mt-2 text-xs text-slate-500">No hay ítems físicos configurados para este equipo.</p>}
           </div>
-          <div className="rounded-lg border border-blue-100 bg-white p-3">
+          <div className="rounded-xl border border-white/30 bg-white/95 p-3 shadow-sm">
             <p className="text-sm font-semibold text-slate-800">2) Pruebas funcionales</p>
             <div className="mt-2 grid grid-cols-3 gap-2">
               <button type="button" onClick={() => applyQuickCategoryState("funcional", "ok")} className={getStatusButtonClass("ok", quickCategoryState.funcional === "ok")}>OK</button>
@@ -477,7 +477,7 @@ export default function DeviceChecklist({
             </div>
             {!quickCategoryHasItems.funcional && <p className="mt-2 text-xs text-slate-500">No hay ítems funcionales configurados para este equipo.</p>}
           </div>
-          <div className="rounded-lg border border-blue-100 bg-white p-3">
+          <div className="rounded-xl border border-white/30 bg-white/95 p-3 shadow-sm">
             <p className="text-sm font-semibold text-slate-800">3) Elementos entregados</p>
             <div className="mt-2 space-y-2">
               <label className="flex items-center justify-between text-sm text-slate-700">
@@ -514,7 +514,7 @@ export default function DeviceChecklist({
               ref={(el) => {
                 itemRefs.current[itemName] = el;
               }}
-              className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.06)]"
+              className="rounded-2xl border border-indigo-100 bg-gradient-to-b from-white to-slate-50 p-3 shadow-[0_18px_36px_-30px_rgba(79,70,229,0.45)]"
             >
               <div className="mb-3 flex items-center justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-2">

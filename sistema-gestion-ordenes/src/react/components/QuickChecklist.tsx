@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
 import type { DeviceType } from "@/types";
 import { 
-  Power, Smartphone, Tablet, Laptop, Watch, Battery, Monitor, Camera, Volume2, 
+  Power, Smartphone, Battery, Monitor, Camera, 
   Wifi, Bluetooth, Fingerprint, Home, Usb, Speaker, Mic, CheckCircle2, XCircle,
   AlertTriangle, HelpCircle, ChevronRight, ChevronDown
 } from "lucide-react";
@@ -13,13 +12,6 @@ interface QuickChecklistProps {
   onChecklistChange: (data: Record<string, string>) => void;
   compact?: boolean;
 }
-
-const DEVICE_IMAGES: Record<DeviceType, string> = {
-  iphone: "https://dummyimage.com/400x300/e2e8f0/475569&text=iPhone",
-  ipad: "https://dummyimage.com/400x300/e2e8f0/475569&text=iPad",
-  macbook: "https://dummyimage.com/400x300/e2e8f0/475569&text=MacBook",
-  apple_watch: "https://dummyimage.com/400x300/e2e8f0/475569&text=Apple+Watch",
-};
 
 const PHYSICAL_ISSUES = [
   { id: "pantalla_rota", label: "Pantalla rota", icon: Monitor },
@@ -143,10 +135,10 @@ export default function QuickChecklist({
   }) => {
     const isExpanded = expandedSection === id;
     const colors = {
-      blue: "from-blue-50 to-blue-100 border-blue-200",
-      emerald: "from-emerald-50 to-emerald-100 border-emerald-200",
-      amber: "from-amber-50 to-amber-100 border-amber-200",
-      rose: "from-rose-50 to-rose-100 border-rose-200",
+      blue: "from-blue-50 to-indigo-100 border-blue-200",
+      emerald: "from-emerald-50 to-teal-100 border-emerald-200",
+      amber: "from-amber-50 to-orange-100 border-amber-200",
+      rose: "from-rose-50 to-pink-100 border-rose-200",
     };
     const iconColors = {
       blue: "bg-blue-500",
@@ -156,13 +148,13 @@ export default function QuickChecklist({
     };
 
     return (
-      <div className={`rounded-xl border bg-gradient-to-br ${colors[color]} overflow-hidden`}>
+      <div className={`overflow-hidden rounded-2xl border bg-gradient-to-br ${colors[color]} shadow-[0_12px_28px_-24px_rgba(15,23,42,0.7)]`}>
         <button
           type="button"
           onClick={() => setExpandedSection(isExpanded ? null : id)}
-          className="w-full flex items-center gap-3 p-4 text-left hover:opacity-90 transition-opacity"
+          className="flex w-full items-center gap-3 p-4 text-left transition hover:opacity-90"
         >
-          <div className={`w-10 h-10 rounded-lg ${iconColors[color]} flex items-center justify-center`}>
+          <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${iconColors[color]} shadow-lg`}>
             <Icon className="w-5 h-5 text-white" />
           </div>
           <div className="flex-1">
@@ -178,7 +170,7 @@ export default function QuickChecklist({
         </button>
         
         {isExpanded && (
-          <div className="px-4 pb-4">
+          <div className="px-4 pb-4 pt-1">
             {children}
           </div>
         )}
@@ -187,15 +179,18 @@ export default function QuickChecklist({
   };
 
   return (
-    <div className={`space-y-3 ${compact ? "p-2" : "p-4"}`}>
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center shadow-lg">
+    <div className={`space-y-4 ${compact ? "p-2" : "p-4"}`}>
+      <div className="rounded-3xl border border-indigo-100 bg-gradient-to-r from-white via-indigo-50/70 to-violet-100/70 p-4 shadow-[0_20px_35px_-30px_rgba(79,70,229,0.55)]">
+        <div className="mb-1 flex items-center gap-2">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 shadow-lg shadow-emerald-500/25">
           <CheckCircle2 className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-slate-900">Checklist Rápido</h3>
+            <p className="text-xs font-medium text-indigo-600">{getDeviceName()}</p>
+          </div>
         </div>
-        <div>
-          <h3 className="font-semibold text-slate-900">Checklist Rápido</h3>
-          <p className="text-xs text-slate-500">{getDeviceName()}</p>
-        </div>
+        <p className="text-xs text-slate-600">Registra lo mínimo en recepción. Lo no marcado se guarda como "no probado".</p>
       </div>
 
       {/* Pregunta 1: ¿Enciende? */}
@@ -359,7 +354,7 @@ export default function QuickChecklist({
       </SectionCard>
 
       {/* Resumen visual */}
-      <div className="mt-4 p-3 bg-slate-800 rounded-lg">
+      <div className="mt-2 rounded-2xl bg-gradient-to-r from-slate-900 to-indigo-900 p-3 shadow-lg">
         <p className="text-xs text-slate-400 mb-2">Resumen del checklist:</p>
         <div className="flex flex-wrap gap-1">
           {powerState && (

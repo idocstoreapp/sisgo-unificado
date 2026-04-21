@@ -210,34 +210,49 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
     
     return (
       <div className={`
-        flex items-center justify-center w-10 h-10 rounded-full transition-all
-        ${isCompleted ? "bg-emerald-500 text-white" : current ? "bg-brand-light text-white" : "bg-slate-200 text-slate-500"}
+        flex h-11 w-11 items-center justify-center rounded-2xl transition-all
+        ${isCompleted ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30" : current ? "bg-white text-indigo-700 shadow-lg shadow-indigo-900/30" : "bg-white/10 text-slate-300"}
       `}>
-        {isCompleted ? <CheckCircle2 className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
+        {isCompleted ? <CheckCircle2 className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
       </div>
     );
   };
 
   return (
-    <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div className="mx-auto max-w-4xl overflow-hidden rounded-3xl border border-indigo-100 bg-white shadow-[0_35px_90px_-35px_rgba(79,70,229,0.45)]">
       {/* Header con pasos */}
-      <div className="bg-gradient-to-r from-slate-800 to-slate-900 p-4">
-        <div className="flex items-center justify-between">
+      <div className="relative border-b border-indigo-300/20 bg-gradient-to-r from-indigo-800 via-violet-800 to-fuchsia-700 p-6">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.22),transparent_45%),radial-gradient(circle_at_80%_0%,rgba(255,255,255,0.22),transparent_35%)]" />
+        <div className="mb-4 flex items-center justify-between">
+          <div className="relative">
+            <p className="text-xs uppercase tracking-[0.2em] text-white/60">Servicio Técnico</p>
+            <h1 className="text-xl font-semibold text-white">Asistente de Recepción</h1>
+          </div>
+          <span className="relative rounded-full border border-white/30 bg-white/15 px-3 py-1 text-xs font-medium text-white">
+            Paso {step} de {steps.length}
+          </span>
+        </div>
+        <div className="relative flex items-start justify-between gap-2">
           {steps.map((s, i) => (
-            <div key={s.num} className="flex items-center">
-              <StepIcon step={s} current={step === s.num} />
+            <div key={s.num} className="flex flex-1 items-center">
+              <div className="flex flex-col items-center gap-2">
+                <StepIcon step={s} current={step === s.num} />
+                <span className={`text-[10px] font-semibold uppercase tracking-wide ${step === s.num ? "text-white" : "text-white/60"}`}>
+                  {s.label}
+                </span>
+              </div>
               {i < steps.length - 1 && (
-                <div className={`w-8 h-0.5 mx-1 ${step > s.num ? "bg-emerald-500" : "bg-slate-600"}`} />
+                <div className={`mx-2 mt-5 h-1 flex-1 rounded-full ${step > s.num ? "bg-emerald-400" : "bg-white/25"}`} />
               )}
             </div>
           ))}
         </div>
-        <p className="text-center text-white/70 text-sm mt-2">
+        <p className="relative mt-3 text-center text-sm text-white/80">
           {steps.find(s => s.num === step)?.label}
         </p>
       </div>
 
-      <div className="p-6 min-h-[400px]">
+      <div className="min-h-[460px] bg-gradient-to-b from-white via-indigo-50/20 to-slate-100/70 p-6">
         {/* Paso 1: Cliente */}
         {step === 1 && (
           <div className="space-y-4">
@@ -344,7 +359,7 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
               </div>
             </div>
             
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {PROBLEM_QUICK_OPTIONS.map((opt) => (
                 <button
                   key={opt.id}
@@ -352,8 +367,8 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
                   onClick={() => setProblemType(opt.id)}
                   className={`p-3 rounded-xl border-2 text-center transition-all ${
                     problemType === opt.id
-                      ? "border-amber-500 bg-amber-100"
-                      : "border-slate-200 hover:border-amber-300"
+                      ? "border-amber-500 bg-amber-100 shadow-sm"
+                      : "border-slate-200 bg-white hover:border-amber-300"
                   }`}
                 >
                   <span className="text-sm font-medium text-slate-700">{opt.label}</span>
@@ -373,13 +388,13 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
             
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Prioridad</label>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 {PRIORITY_OPTIONS.map((opt) => (
                   <button
                     key={opt.id}
                     type="button"
                     onClick={() => setPriority(opt.id as any)}
-                    className={`flex-1 py-2 rounded-lg font-medium text-sm transition-all ${
+                    className={`rounded-xl py-2.5 text-sm font-medium transition-all ${
                       priority === opt.id
                         ? opt.color
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -411,10 +426,10 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
                 <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
               </div>
             ) : (
-              <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2">
+              <div className="max-h-[350px] space-y-3 overflow-y-auto pr-2">
                 {serviceCategories.map((category) => (
-                  <div key={category.id} className="border border-slate-200 rounded-xl overflow-hidden">
-                    <div className="bg-slate-50 px-3 py-2 font-medium text-sm text-slate-700">
+                  <div key={category.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                    <div className="bg-gradient-to-r from-slate-50 to-white px-3 py-2 text-sm font-medium text-slate-700">
                       {category.name}
                     </div>
                     <div className="divide-y divide-slate-100">
@@ -454,7 +469,7 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
             )}
             
             {selectedServices.length > 0 && (
-              <div className="p-4 bg-slate-800 rounded-xl">
+              <div className="rounded-2xl bg-slate-900 p-4 shadow-lg">
                 <div className="flex justify-between items-center">
                   <span className="text-white/70">Total servicios:</span>
                   <span className="text-white font-bold text-lg">{formatCLP(totalServices)}</span>
@@ -478,22 +493,22 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
             </div>
             
             <div className="space-y-3">
-              <div className="p-3 bg-slate-50 rounded-lg">
+              <div className="rounded-xl border border-slate-200/80 bg-white p-3 shadow-sm">
                 <p className="text-xs text-slate-500">Cliente</p>
                 <p className="font-medium">{customer?.name}</p>
               </div>
               
-              <div className="p-3 bg-slate-50 rounded-lg">
+              <div className="rounded-xl border border-slate-200/80 bg-white p-3 shadow-sm">
                 <p className="text-xs text-slate-500">Dispositivo</p>
                 <p className="font-medium capitalize">{deviceType?.replace("_", " ")} - {deviceModel}</p>
               </div>
               
-              <div className="p-3 bg-slate-50 rounded-lg">
+              <div className="rounded-xl border border-slate-200/80 bg-white p-3 shadow-sm">
                 <p className="text-xs text-slate-500">Problema</p>
                 <p className="font-medium">{problemType || problemDescription || "No especificado"}</p>
               </div>
               
-              <div className="p-3 bg-slate-50 rounded-lg">
+              <div className="rounded-xl border border-slate-200/80 bg-white p-3 shadow-sm">
                 <p className="text-xs text-slate-500">Servicios ({selectedServices.length})</p>
                 <div className="space-y-1 mt-1">
                   {selectedServices.map(s => (
@@ -502,7 +517,7 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
                 </div>
               </div>
               
-              <div className="p-3 bg-emerald-50 rounded-lg">
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
                 <p className="text-xs text-emerald-600">Total</p>
                 <p className="font-bold text-emerald-700 text-xl">{formatCLP(totalServices)}</p>
               </div>
@@ -512,12 +527,12 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
       </div>
 
       {/* Footer con navegación */}
-      <div className="border-t border-slate-200 p-4 flex gap-3">
+      <div className="flex gap-3 border-t border-indigo-100 bg-white p-4">
         {step > 1 && (
           <button
             type="button"
             onClick={() => setStep(step - 1)}
-            className="px-4 py-2 border border-slate-300 rounded-xl text-slate-700 hover:bg-slate-50 font-medium"
+            className="rounded-xl border border-slate-300 px-4 py-2 font-medium text-slate-700 transition hover:bg-slate-50"
           >
             Atrás
           </button>
@@ -530,7 +545,7 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
             type="button"
             onClick={() => setStep(step + 1)}
             disabled={!canProceed()}
-            className="px-6 py-2 bg-brand-light text-white rounded-xl hover:bg-brand-dark disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center gap-2"
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-light to-brand-dark px-6 py-2.5 font-medium text-white shadow-md shadow-brand-light/30 transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Siguiente
             <ChevronRight className="w-4 h-4" />
@@ -540,7 +555,7 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
             type="button"
             onClick={handleSubmit}
             disabled={loading}
-            className="px-6 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:shadow-lg font-medium flex items-center gap-2"
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-2.5 font-medium text-white shadow-md shadow-emerald-500/30 transition hover:shadow-lg"
           >
             {loading ? (
               <>
