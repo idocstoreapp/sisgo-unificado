@@ -219,9 +219,18 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
   };
 
   return (
-    <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden">
+    <div className="mx-auto max-w-3xl overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-[0_30px_80px_-40px_rgba(15,23,42,0.65)]">
       {/* Header con pasos */}
-      <div className="bg-gradient-to-r from-slate-800 to-slate-900 p-4">
+      <div className="border-b border-slate-700/30 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-900 p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.2em] text-white/60">Servicio Técnico</p>
+            <h1 className="text-lg font-semibold text-white">Asistente de Recepción</h1>
+          </div>
+          <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs text-white/80">
+            Paso {step} de {steps.length}
+          </span>
+        </div>
         <div className="flex items-center justify-between">
           {steps.map((s, i) => (
             <div key={s.num} className="flex items-center">
@@ -232,12 +241,12 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
             </div>
           ))}
         </div>
-        <p className="text-center text-white/70 text-sm mt-2">
+        <p className="mt-3 text-center text-sm text-white/70">
           {steps.find(s => s.num === step)?.label}
         </p>
       </div>
 
-      <div className="p-6 min-h-[400px]">
+      <div className="min-h-[460px] bg-gradient-to-b from-white to-slate-50/70 p-6">
         {/* Paso 1: Cliente */}
         {step === 1 && (
           <div className="space-y-4">
@@ -344,7 +353,7 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
               </div>
             </div>
             
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
               {PROBLEM_QUICK_OPTIONS.map((opt) => (
                 <button
                   key={opt.id}
@@ -352,8 +361,8 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
                   onClick={() => setProblemType(opt.id)}
                   className={`p-3 rounded-xl border-2 text-center transition-all ${
                     problemType === opt.id
-                      ? "border-amber-500 bg-amber-100"
-                      : "border-slate-200 hover:border-amber-300"
+                      ? "border-amber-500 bg-amber-100 shadow-sm"
+                      : "border-slate-200 bg-white hover:border-amber-300"
                   }`}
                 >
                   <span className="text-sm font-medium text-slate-700">{opt.label}</span>
@@ -373,13 +382,13 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
             
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">Prioridad</label>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                 {PRIORITY_OPTIONS.map((opt) => (
                   <button
                     key={opt.id}
                     type="button"
                     onClick={() => setPriority(opt.id as any)}
-                    className={`flex-1 py-2 rounded-lg font-medium text-sm transition-all ${
+                    className={`rounded-xl py-2.5 text-sm font-medium transition-all ${
                       priority === opt.id
                         ? opt.color
                         : "bg-slate-100 text-slate-600 hover:bg-slate-200"
@@ -411,10 +420,10 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
                 <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
               </div>
             ) : (
-              <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2">
+              <div className="max-h-[350px] space-y-3 overflow-y-auto pr-2">
                 {serviceCategories.map((category) => (
-                  <div key={category.id} className="border border-slate-200 rounded-xl overflow-hidden">
-                    <div className="bg-slate-50 px-3 py-2 font-medium text-sm text-slate-700">
+                  <div key={category.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                    <div className="bg-gradient-to-r from-slate-50 to-white px-3 py-2 text-sm font-medium text-slate-700">
                       {category.name}
                     </div>
                     <div className="divide-y divide-slate-100">
@@ -454,7 +463,7 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
             )}
             
             {selectedServices.length > 0 && (
-              <div className="p-4 bg-slate-800 rounded-xl">
+              <div className="rounded-2xl bg-slate-900 p-4 shadow-lg">
                 <div className="flex justify-between items-center">
                   <span className="text-white/70">Total servicios:</span>
                   <span className="text-white font-bold text-lg">{formatCLP(totalServices)}</span>
@@ -478,22 +487,22 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
             </div>
             
             <div className="space-y-3">
-              <div className="p-3 bg-slate-50 rounded-lg">
+              <div className="rounded-xl border border-slate-200/80 bg-white p-3 shadow-sm">
                 <p className="text-xs text-slate-500">Cliente</p>
                 <p className="font-medium">{customer?.name}</p>
               </div>
               
-              <div className="p-3 bg-slate-50 rounded-lg">
+              <div className="rounded-xl border border-slate-200/80 bg-white p-3 shadow-sm">
                 <p className="text-xs text-slate-500">Dispositivo</p>
                 <p className="font-medium capitalize">{deviceType?.replace("_", " ")} - {deviceModel}</p>
               </div>
               
-              <div className="p-3 bg-slate-50 rounded-lg">
+              <div className="rounded-xl border border-slate-200/80 bg-white p-3 shadow-sm">
                 <p className="text-xs text-slate-500">Problema</p>
                 <p className="font-medium">{problemType || problemDescription || "No especificado"}</p>
               </div>
               
-              <div className="p-3 bg-slate-50 rounded-lg">
+              <div className="rounded-xl border border-slate-200/80 bg-white p-3 shadow-sm">
                 <p className="text-xs text-slate-500">Servicios ({selectedServices.length})</p>
                 <div className="space-y-1 mt-1">
                   {selectedServices.map(s => (
@@ -502,7 +511,7 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
                 </div>
               </div>
               
-              <div className="p-3 bg-emerald-50 rounded-lg">
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3">
                 <p className="text-xs text-emerald-600">Total</p>
                 <p className="font-bold text-emerald-700 text-xl">{formatCLP(totalServices)}</p>
               </div>
@@ -512,12 +521,12 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
       </div>
 
       {/* Footer con navegación */}
-      <div className="border-t border-slate-200 p-4 flex gap-3">
+      <div className="flex gap-3 border-t border-slate-200 bg-white p-4">
         {step > 1 && (
           <button
             type="button"
             onClick={() => setStep(step - 1)}
-            className="px-4 py-2 border border-slate-300 rounded-xl text-slate-700 hover:bg-slate-50 font-medium"
+            className="rounded-xl border border-slate-300 px-4 py-2 font-medium text-slate-700 transition hover:bg-slate-50"
           >
             Atrás
           </button>
@@ -530,7 +539,7 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
             type="button"
             onClick={() => setStep(step + 1)}
             disabled={!canProceed()}
-            className="px-6 py-2 bg-brand-light text-white rounded-xl hover:bg-brand-dark disabled:opacity-50 disabled:cursor-not-allowed font-medium flex items-center gap-2"
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-brand-light to-brand-dark px-6 py-2.5 font-medium text-white shadow-md shadow-brand-light/30 transition hover:brightness-105 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Siguiente
             <ChevronRight className="w-4 h-4" />
@@ -540,7 +549,7 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
             type="button"
             onClick={handleSubmit}
             disabled={loading}
-            className="px-6 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:shadow-lg font-medium flex items-center gap-2"
+            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 px-6 py-2.5 font-medium text-white shadow-md shadow-emerald-500/30 transition hover:shadow-lg"
           >
             {loading ? (
               <>

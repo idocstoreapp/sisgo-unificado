@@ -94,7 +94,7 @@ export default function TechnicianDashboard({ technicianId, isEncargado, user, o
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <p className="text-slate-600">Cargando métricas...</p>
       </div>
     );
@@ -104,7 +104,7 @@ export default function TechnicianDashboard({ technicianId, isEncargado, user, o
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">
+          <h1 className="mb-2 text-2xl font-bold tracking-tight text-slate-900">
             {isEncargado ? "Dashboard de Encargado" : "Mi Dashboard"}
           </h1>
           <p className="text-slate-600">Resumen de tus órdenes</p>
@@ -112,7 +112,7 @@ export default function TechnicianDashboard({ technicianId, isEncargado, user, o
         {onNewOrder && (
           <button
             onClick={onNewOrder}
-            className="px-6 py-2 bg-brand-light text-white rounded-md hover:bg-brand-dark transition-colors font-medium"
+            className="rounded-xl bg-gradient-to-r from-brand-light to-brand-dark px-6 py-2.5 font-medium text-white shadow-md shadow-brand-light/30 transition hover:brightness-105"
           >
             ➕ Nueva Orden
           </button>
@@ -148,4 +148,3 @@ export default function TechnicianDashboard({ technicianId, isEncargado, user, o
     </div>
   );
 }
-
