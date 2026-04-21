@@ -20,6 +20,7 @@ import { generatePDFBlob } from "@/lib/generate-pdf-blob";
 import { uploadPDFToStorage } from "@/lib/upload-pdf";
 import { useOrderWizard } from "./OrderWizardContext";
 import { useOrderSubmit } from "./useOrderSubmit";
+import { Check, CircleHelp, Lock, NotebookPen, Sparkles, Wrench } from "lucide-react";
 
 interface OrderWizardContentProps {
   onSaved: () => void;
