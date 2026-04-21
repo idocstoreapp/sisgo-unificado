@@ -398,7 +398,7 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
         )}
 
         {/* Equipos - Mostrar cada equipo en una sección separada */}
-        {devices.map((device, deviceIndex) => (
+        {orderStep >= 2 && devices.map((device, deviceIndex) => (
           <div
             key={device.id}
             className="rounded-3xl border border-slate-100 bg-gradient-to-b from-white via-slate-50/30 to-slate-100/60 p-6 shadow-[0_28px_50px_-36px_rgba(15,23,42,0.18)]"
@@ -1126,6 +1126,7 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
                       })}
                     </div>
 
+                    {orderStep === 2 && (
                     <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
                       <div className="rounded-2xl border border-violet-100 bg-violet-50/40 p-4">
                         {device.unlockType === "code" && (
@@ -1202,28 +1203,21 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
                         </ul>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </div>
-              </div>
+                  )}
             )}
 
-                  {showPatternDrawer?.deviceId === device.id && (
-                    <PatternDrawer
-                      onPatternComplete={(pattern) => {
-                        updateDevice(device.id, {
-                          unlockType: "pattern",
-                          deviceUnlockPattern: pattern,
-                          deviceUnlockCode: "",
-                        });
-                        setShowPatternDrawer(null);
-                      }}
-                      onClose={() => setShowPatternDrawer(null)}
-                    />
-                  )}
-                </div>
-              </div>
-              </div>
+            {showPatternDrawer?.deviceId === device.id && (
+              <PatternDrawer
+                onPatternComplete={(pattern) => {
+                  updateDevice(device.id, {
+                    unlockType: "pattern",
+                    deviceUnlockPattern: pattern,
+                    deviceUnlockCode: "",
+                  });
+                  setShowPatternDrawer(null);
+                }}
+                onClose={() => setShowPatternDrawer(null)}
+              />
             )}
 
             {/* Modal para seleccionar categoría de dispositivo */}

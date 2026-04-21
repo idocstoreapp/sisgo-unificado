@@ -8,9 +8,9 @@ import OrderWizard from "@/presentation/components/orders/wizard/OrderWizard";
 
 export default async function NewOrderPage() {
   const supabase = await getSupabaseServerClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user }, error } = await supabase.auth.getUser();
 
-  if (!user) {
+  if (error || !user) {
     redirect("/login");
   }
 

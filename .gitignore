@@ -37,3 +37,8 @@ next-env.d.ts
 # IDE
 .vscode
 .idea
+/cotizador-app
+/sistema-reparaciones
+/sistema-restaurant
+/sistema-restaurante
+/sistema-taller-mecanico
