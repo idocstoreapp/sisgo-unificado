@@ -210,15 +210,31 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
     
     return (
       <div className={`
-        flex items-center justify-center w-10 h-10 rounded-full transition-all
-        ${isCompleted ? "bg-emerald-500 text-white" : current ? "bg-brand-light text-white" : "bg-slate-200 text-slate-500"}
+        flex h-11 w-11 items-center justify-center rounded-2xl transition-all
+        ${isCompleted ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/30" : current ? "bg-white text-indigo-700 shadow-lg shadow-indigo-900/30" : "bg-white/10 text-slate-300"}
       `}>
-        {isCompleted ? <CheckCircle2 className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
+        {isCompleted ? <CheckCircle2 className="h-5 w-5" /> : <Icon className="h-5 w-5" />}
       </div>
     );
   };
 
   return (
+<<<<<<< codex/improve-design-of-service-module-572yzr
+    <div className="mx-auto max-w-4xl overflow-hidden rounded-3xl border border-indigo-100 bg-white shadow-[0_35px_90px_-35px_rgba(79,70,229,0.45)]">
+      {/* Header con pasos */}
+      <div className="relative border-b border-indigo-300/20 bg-gradient-to-r from-indigo-800 via-violet-800 to-fuchsia-700 p-6">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,255,255,0.22),transparent_45%),radial-gradient(circle_at_80%_0%,rgba(255,255,255,0.22),transparent_35%)]" />
+        <div className="mb-4 flex items-center justify-between">
+          <div className="relative">
+            <p className="text-xs uppercase tracking-[0.2em] text-white/60">Servicio Técnico</p>
+            <h1 className="text-xl font-semibold text-white">Asistente de Recepción</h1>
+          </div>
+          <span className="relative rounded-full border border-white/30 bg-white/15 px-3 py-1 text-xs font-medium text-white">
+            Paso {step} de {steps.length}
+          </span>
+        </div>
+        <div className="relative flex items-start justify-between gap-2">
+=======
     <div className="mx-auto max-w-3xl overflow-hidden rounded-3xl border border-slate-200/70 bg-white shadow-[0_30px_80px_-40px_rgba(15,23,42,0.65)]">
       {/* Header con pasos */}
       <div className="border-b border-slate-700/30 bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-900 p-5">
@@ -232,21 +248,35 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
           </span>
         </div>
         <div className="flex items-center justify-between">
+>>>>>>> main
           {steps.map((s, i) => (
-            <div key={s.num} className="flex items-center">
-              <StepIcon step={s} current={step === s.num} />
+            <div key={s.num} className="flex flex-1 items-center">
+              <div className="flex flex-col items-center gap-2">
+                <StepIcon step={s} current={step === s.num} />
+                <span className={`text-[10px] font-semibold uppercase tracking-wide ${step === s.num ? "text-white" : "text-white/60"}`}>
+                  {s.label}
+                </span>
+              </div>
               {i < steps.length - 1 && (
-                <div className={`w-8 h-0.5 mx-1 ${step > s.num ? "bg-emerald-500" : "bg-slate-600"}`} />
+                <div className={`mx-2 mt-5 h-1 flex-1 rounded-full ${step > s.num ? "bg-emerald-400" : "bg-white/25"}`} />
               )}
             </div>
           ))}
         </div>
+<<<<<<< codex/improve-design-of-service-module-572yzr
+        <p className="relative mt-3 text-center text-sm text-white/80">
+=======
         <p className="mt-3 text-center text-sm text-white/70">
+>>>>>>> main
           {steps.find(s => s.num === step)?.label}
         </p>
       </div>
 
+<<<<<<< codex/improve-design-of-service-module-572yzr
+      <div className="min-h-[460px] bg-gradient-to-b from-white via-indigo-50/20 to-slate-100/70 p-6">
+=======
       <div className="min-h-[460px] bg-gradient-to-b from-white to-slate-50/70 p-6">
+>>>>>>> main
         {/* Paso 1: Cliente */}
         {step === 1 && (
           <div className="space-y-4">
@@ -521,7 +551,11 @@ export default function QuickOrderWizard({ technicianId, onSaved }: QuickOrderWi
       </div>
 
       {/* Footer con navegación */}
+<<<<<<< codex/improve-design-of-service-module-572yzr
+      <div className="flex gap-3 border-t border-indigo-100 bg-white p-4">
+=======
       <div className="flex gap-3 border-t border-slate-200 bg-white p-4">
+>>>>>>> main
         {step > 1 && (
           <button
             type="button"

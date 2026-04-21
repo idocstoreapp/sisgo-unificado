@@ -23,32 +23,32 @@ const DEVICE_OPTIONS: DeviceOption[] = [
     id: "iphone",
     name: "iPhone",
     icon: <Smartphone className="w-12 h-12" />,
-    color: "from-slate-800 to-slate-900",
-    gradient: "bg-gradient-to-br from-slate-800 to-slate-900",
+    color: "from-indigo-600 to-blue-600",
+    gradient: "bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-500",
     description: "Smartphones Apple",
   },
   {
     id: "ipad",
     name: "iPad",
     icon: <Tablet className="w-12 h-12" />,
-    color: "from-slate-600 to-slate-800",
-    gradient: "bg-gradient-to-br from-slate-600 to-slate-800",
+    color: "from-violet-600 to-fuchsia-600",
+    gradient: "bg-gradient-to-br from-violet-600 via-fuchsia-600 to-pink-500",
     description: "Tablets Apple",
   },
   {
     id: "macbook",
     name: "MacBook",
     icon: <Laptop className="w-12 h-12" />,
-    color: "from-slate-400 to-slate-600",
-    gradient: "bg-gradient-to-br from-slate-400 to-slate-600",
+    color: "from-emerald-600 to-teal-600",
+    gradient: "bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-500",
     description: "Notebooks Apple",
   },
   {
     id: "apple_watch",
     name: "Apple Watch",
     icon: <Watch className="w-12 h-12" />,
-    color: "from-slate-500 to-slate-700",
-    gradient: "bg-gradient-to-br from-slate-500 to-slate-700",
+    color: "from-orange-500 to-rose-500",
+    gradient: "bg-gradient-to-br from-orange-500 via-rose-500 to-pink-500",
     description: "Relojes Apple",
   },
 ];
@@ -57,7 +57,11 @@ export default function DeviceGridSelector({ onSelect, selected }: DeviceSelecto
   const [hoveredId, setHoveredId] = useState<DeviceType | null>(null);
 
   return (
+<<<<<<< codex/improve-design-of-service-module-572yzr
+    <div className="rounded-3xl border border-indigo-100 bg-gradient-to-b from-white to-indigo-50/40 p-4 shadow-[0_24px_50px_-30px_rgba(67,56,202,0.45)]">
+=======
     <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-[0_16px_32px_-28px_rgba(15,23,42,0.7)] backdrop-blur">
+>>>>>>> main
       <div className="mb-5 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shadow-blue-500/25">
           <Smartphone className="w-5 h-5 text-white" />
@@ -88,7 +92,7 @@ export default function DeviceGridSelector({ onSelect, selected }: DeviceSelecto
               `}
             >
               {/* Brillo efecto */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 hover:opacity-100 transition-opacity" />
+              <div className="absolute inset-0 bg-gradient-to-tr from-white/20 via-transparent to-white/5 opacity-0 hover:opacity-100 transition-opacity" />
               
               {/* Checkmark si seleccionado */}
               {isSelected && (

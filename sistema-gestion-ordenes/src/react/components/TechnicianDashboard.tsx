@@ -102,12 +102,12 @@ export default function TechnicianDashboard({ technicianId, isEncargado, user, o
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex items-center justify-between rounded-2xl border border-indigo-100 bg-gradient-to-r from-white via-indigo-50 to-violet-100 p-4 shadow-[0_22px_38px_-30px_rgba(79,70,229,0.6)]">
         <div>
           <h1 className="mb-2 text-2xl font-bold tracking-tight text-slate-900">
             {isEncargado ? "Dashboard de Encargado" : "Mi Dashboard"}
           </h1>
-          <p className="text-slate-600">Resumen de tus órdenes</p>
+          <p className="text-slate-700">Resumen de tus órdenes</p>
         </div>
         {onNewOrder && (
           <button

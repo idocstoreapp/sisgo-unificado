@@ -106,8 +106,8 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
   const deviceSuggestionsRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const keepScrollPosition = (fn: () => void) => { if (typeof window === "undefined") { fn(); return; } if (document.activeElement instanceof HTMLElement) document.activeElement.blur(); const currentScrollY = window.scrollY; fn(); const restore = () => { if (wizardPanelRef.current) wizardPanelRef.current.focus({ preventScroll: true }); window.scrollTo({ top: currentScrollY, behavior: "auto" }); }; requestAnimationFrame(() => { restore(); setTimeout(restore, 15); setTimeout(restore, 100); }); };
   const getWizardStep = (deviceId: string): number => wizardStepByDevice[deviceId] ?? 1; const getFlowStep = (deviceId: string): 1 | 2 | 3 => flowStepByDevice[deviceId] ?? 1; const isDeviceFinalized = (deviceId: string): boolean => Boolean(finalizedDeviceById[deviceId]);
-  const wizardCardButtonClass = "bg-white border border-white rounded-xl p-2 shadow-sm transition hover:shadow-md text-left overflow-hidden min-h-[320px]";
-  const wizardCardInnerTextClass = "font-medium text-slate-900 text-sm";
+  const wizardCardButtonClass = "group relative overflow-hidden rounded-2xl border border-indigo-100 bg-gradient-to-b from-white to-indigo-50/60 p-2 text-left shadow-[0_18px_35px_-28px_rgba(79,70,229,0.55)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_40px_-24px_rgba(79,70,229,0.45)] min-h-[320px]";
+  const wizardCardInnerTextClass = "text-sm font-semibold text-slate-900";
 
   // Cerrar sugerencias al hacer click fuera (para todos los equipos)
   useEffect(() => {
@@ -241,7 +241,7 @@ return (
 
       {/* Equipos - Mostrar cada equipo en una secciÃƒÆ’Ã‚Â³n separada */}
       {devices.map((device, deviceIndex) => (
-        <div key={device.id} className="border border-slate-200 rounded-lg p-6 bg-slate-50">
+        <div key={device.id} className="rounded-3xl border border-indigo-100 bg-gradient-to-b from-white via-indigo-50/30 to-slate-100/60 p-6 shadow-[0_28px_50px_-36px_rgba(79,70,229,0.55)]">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-bold text-slate-900">
               Equipo {deviceIndex + 1}
@@ -261,8 +261,8 @@ return (
           {!isDeviceFinalized(device.id) && (
           <>
           {(!device.deviceModel || manualEditOpenByDevice[device.id]) ? (
-          <div ref={wizardPanelRef} tabIndex={-1} className="mb-4 rounded-lg border border-slate-200 bg-white p-4">
-            <h4 className="text-sm font-semibold text-slate-900 mb-3">Asistente rÃƒÆ’Ã‚Â¡pido</h4>
+          <div ref={wizardPanelRef} tabIndex={-1} className="mb-4 rounded-2xl border border-indigo-100 bg-white p-4 shadow-[0_12px_35px_-30px_rgba(79,70,229,0.65)]">
+            <h4 className="mb-3 text-sm font-semibold uppercase tracking-wide text-indigo-700">Asistente rápido</h4>
             {!manualEntryByDevice[device.id] && (
               <div className="mb-3">
                 <button
@@ -273,7 +273,7 @@ return (
                     setWizardStepByDevice((prev) => ({ ...prev, [device.id]: 6 }));
                     updateDevice(device.id, { deviceType: null, deviceModel: "" });
                   }}
-                  className="rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                  className="rounded-xl border border-indigo-200 px-3 py-2 text-sm font-medium text-indigo-700 transition hover:bg-indigo-50"
                 >
                   Ãƒâ€šÃ‚Â¿No encuentras el dispositivo? EscrÃƒÆ’Ã‚Â­belo manual
                 </button>
@@ -281,9 +281,9 @@ return (
             )}
             {getWizardStep(device.id) === 1 && (
               <>
-                <p className="text-xl text-slate-600 mb-3">1) Ãƒâ€šÃ‚Â¿QuÃƒÆ’Ã‚Â© dispositivo vas a recibir?</p>
+                <p className="mb-3 text-xl font-semibold text-slate-700">1) ¿Qué dispositivo vas a recibir?</p>
                 {!catalogLoaded ? (
-                  <div className="mb-4 rounded-lg border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-600">
+                  <div className="mb-4 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-700">
                     Cargando catÃƒÆ’Ã‚Â¡logo de dispositivos...
                   </div>
                 ) : (
@@ -297,7 +297,7 @@ return (
                         className={wizardCardButtonClass}
                       >
                         <AdaptiveWizardCardImage src={option.imageUrl} alt={option.label} />
-                        <p className="font-medium text-slate-900 text-sm">{option.icon} {option.label}</p>
+                        <p className={wizardCardInnerTextClass}>{option.icon} {option.label}</p>
                         <p className="text-xs text-slate-600 mt-1">{option.description}</p>
                       </button>
                     ))}
@@ -309,8 +309,8 @@ return (
             {getWizardStep(device.id) === 2 && (
               <>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xl text-slate-600">2) Ãƒâ€šÃ‚Â¿QuÃƒÆ’Ã‚Â© marca de {wizardTypeOptions.find((option) => option.id === device.deviceType)?.label.toLowerCase()}?</p>
-                  <button type="button" className="text-xs underline text-slate-600" onClick={() => setWizardStepByDevice((prev) => ({ ...prev, [device.id]: 1 }))}>
+                  <p className="text-xl font-semibold text-slate-700">2) ¿Qué marca de {wizardTypeOptions.find((option) => option.id === device.deviceType)?.label.toLowerCase()}?</p>
+                  <button type="button" className="text-xs font-medium underline text-indigo-700" onClick={() => setWizardStepByDevice((prev) => ({ ...prev, [device.id]: 1 }))}>
                     Volver
                   </button>
                 </div>
@@ -334,10 +334,10 @@ return (
             {getWizardStep(device.id) === 3 && selectedBrandByDevice[device.id] && (
               <>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xl text-slate-600">3) Selecciona serie / lÃƒÆ’Ã‚Â­nea</p>
+                  <p className="text-xl font-semibold text-slate-700">3) Selecciona serie / línea</p>
                   <button
                     type="button"
-                    className="text-xs underline text-slate-600"
+                    className="text-xs font-medium underline text-indigo-700"
                     onClick={() => {
                       keepScrollPosition(() => {
                         setSelectedBrandByDevice((prev) => ({ ...prev, [device.id]: null }));
@@ -378,10 +378,10 @@ return (
             {getWizardStep(device.id) === 4 && selectedBrandByDevice[device.id] && selectedSeriesByDevice[device.id] && (
               <>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xl text-slate-600">4) Modelo exacto</p>
+                  <p className="text-xl font-semibold text-slate-700">4) Modelo exacto</p>
                   <button
                     type="button"
-                    className="text-xs underline text-slate-600"
+                    className="text-xs font-medium underline text-indigo-700"
                     onClick={() => {
                       keepScrollPosition(() => {
                         setWizardStepByDevice((prev) => ({ ...prev, [device.id]: 3 }));
@@ -427,25 +427,25 @@ return (
                     );
                   })}
                 </div>
-                <div className="mt-3 rounded-md border border-dashed border-slate-300 p-3">
+                <div className="mt-3 rounded-xl border border-dashed border-indigo-300 bg-indigo-50/40 p-3">
                   <p className="text-xs font-semibold text-slate-700 mb-2">Ãƒâ€šÃ‚Â¿No aparece? AgrÃƒÆ’Ã‚Â©galo al catÃƒÆ’Ã‚Â¡logo</p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                     <input
                       value={customCatalogFormByDevice[device.id]?.model ?? ""}
                       onChange={(e) => setCustomCatalogFormByDevice((prev) => ({ ...prev, [device.id]: { ...(prev[device.id] ?? { model: "", variant: "" }), model: e.target.value } }))}
-                      className="border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+                      className="rounded-lg border border-indigo-200 px-2 py-1.5 text-sm"
                       placeholder="Modelo (ej: S24)"
                     />
                     <input
                       value={customCatalogFormByDevice[device.id]?.variant ?? ""}
                       onChange={(e) => setCustomCatalogFormByDevice((prev) => ({ ...prev, [device.id]: { ...(prev[device.id] ?? { model: "", variant: "" }), variant: e.target.value } }))}
-                      className="border border-slate-300 rounded-md px-2 py-1.5 text-sm"
+                      className="rounded-lg border border-indigo-200 px-2 py-1.5 text-sm"
                       placeholder="Variante (opcional)"
                     />
                     <button
                       type="button"
                       onClick={() => addCustomModelToCatalog(device)}
-                      className="rounded-md bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
+                      className="rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 px-3 py-1.5 text-sm font-medium text-white hover:brightness-110"
                     >
                       Guardar y usar
                     </button>
@@ -457,10 +457,10 @@ return (
             {getWizardStep(device.id) === 5 && (
               <>
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xl text-slate-600">5) Variante</p>
+                  <p className="text-xl font-semibold text-slate-700">5) Variante</p>
                   <button
                     type="button"
-                    className="text-xs underline text-slate-600"
+                    className="text-xs font-medium underline text-indigo-700"
                     onClick={() => setWizardStepByDevice((prev) => ({ ...prev, [device.id]: 4 }))}
                   >
                     Volver
@@ -1410,7 +1410,6 @@ return (
     </Fragment>
   );
 }
-
 
 
 
