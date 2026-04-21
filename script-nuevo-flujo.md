@@ -1,205 +1,152 @@
-**ROL**
-Actúa como un **Senior Product Designer + UX Engineer + Arquitecto de Base de Datos especializado en SaaS operativos (tipo POS / sistemas de órdenes de trabajo)**.
-Tu objetivo es rediseñar el sistema existente sin romper su lógica de negocio.
+# Script nuevo flujo (versión simplificada y operativa)
+
+## Rol
+Actúa como **Senior Product Designer + UX Engineer + Arquitecto de Base de Datos** para un SaaS de servicio técnico.
+Tu trabajo es **simplificar el flujo sin romper la lógica actual** ni perder trazabilidad legal/técnica.
 
 ---
 
-**CONTEXTO DEL PROYECTO**
-Estoy construyendo una app tipo SaaS para servicios técnicos (reparación de celulares, notebooks, etc.).
+## Contexto
+La app gestiona órdenes de servicio técnico (celulares, notebooks, tablets, smartwatch, etc.).
 
-Actualmente existe un flujo tipo “wizard” para crear órdenes de trabajo que incluye:
-
-1. Registro de cliente (por RUT o manual)
-2. Selección de dispositivo (tipo → marca → serie → modelo → variante)
-3. Checklist técnico (≈17 validaciones del estado del equipo)
+Flujo actual (muy largo):
+1. Cliente
+2. Dispositivo (tipo → marca → serie → modelo → variante)
+3. Checklist técnico (muchos ítems)
 4. Descripción del problema
-5. Selección de servicio
+5. Servicio
 6. Prioridad
 7. Fecha estimada
 8. Garantía
-9. Generación de orden + PDF
+9. Orden + PDF
 
-Problemas actuales:
-
-* Demasiados pasos → lento en atención real
-* Demasiadas decisiones → fatiga del usuario
-* Checklist crítico pero tedioso
-* Usuarios quieren rapidez, no perfección
-* El sistema necesita seguir siendo completo (no perder información clave)
+### Dolor principal
+- Demasiados pasos y decisiones para atención en mostrador.
+- Mucha escritura manual.
+- Checklist obligatorio pero cansador.
+- Se necesita rapidez sin perder respaldo ante reclamos.
 
 ---
 
-**OBJETIVO DEL REDISEÑO**
+## Objetivo final del rediseño
+Diseñar un flujo de **4 pasos reales** para recepción rápida (20–40 segundos), con diagnóstico ampliado condicional.
 
-Rediseñar el flujo de creación de órdenes para que sea:
-
-* Ultra rápido en contexto real (mostrador / cliente presente)
-* Entendible en menos de 2 minutos
-* Usable todo el día sin fatiga
-* Comercializable como producto SaaS
-* Sin romper la lógica actual ni la base de datos
+- Muchos taps, pocos inputs.
+- Mostrar solo lo necesario en cada momento.
+- Mantener checklist legalmente útil.
+- Mantener compatibilidad con base de datos existente.
 
 ---
 
-**REQUISITOS CLAVE**
-
-1. **NO eliminar lógica importante**
-
-   * El checklist es obligatorio (protección contra reclamos)
-   * El detalle del dispositivo es importante
-   * El sistema debe seguir generando datos completos
-
-2. **DIVIDIR EL FLUJO EN DOS MODOS**
-
-   * Recepción rápida (frente al cliente)
-   * Diagnóstico detallado (después)
-
-3. **SIMPLIFICAR SIN PERDER PODER**
-
-   * Reducir decisiones activas del usuario
-   * Usar defaults inteligentes
-   * Priorizar “tap” sobre escritura
-
-4. **UI ORIENTADA A TOQUE**
-
-   * Grids visuales
-   * Botones grandes
-   * Selección por imágenes
-   * Minimizar inputs de texto
-
-5. **CHECKLIST REDISEÑADO**
-
-   * Basado en:
-
-     * estado global primero
-     * excepciones después
-   * Interacción visual (zonas del dispositivo)
-   * Posibilidad de:
-
-     * “marcar todo como OK”
-     * marcar solo problemas
-   * Debe ser rápido pero legalmente útil
-
-6. **COMPATIBILIDAD CON BASE DE DATOS**
-
-   * Analiza estructura actual (yo la proporcionaré)
-   * No romper relaciones existentes
-   * Proponer:
-
-     * cambios mínimos
-     * nuevas tablas solo si son necesarias
-     * migraciones seguras
+## Reglas de diseño (no negociables)
+1. No eliminar lógica crítica (checklist + detalle equipo + evidencia).
+2. Separar modo **Recepción rápida** y **Diagnóstico detallado**.
+3. Usar defaults inteligentes y autocompletado.
+4. UI táctil: tarjetas grandes, grids, selección visual.
+5. El checklist debe evitar pasos innecesarios:
+   - Si físico está OK, no abrir sub-checklist físico.
+   - Si funcional tiene detalles, abrir solo categoría afectada.
+6. Debe funcionar igual para celular, notebook y smartwatch (mismo patrón mental).
 
 ---
 
-**LO QUE DEBES ENTREGAR**
+## Flujo propuesto (4 pasos)
 
-### 1. 🧠 Análisis del flujo actual
+## Paso 1 — Cliente + empresa/sucursal/encargado (rápido)
+**Objetivo:** identificar quién entrega, dónde se recibe y quién será responsable interno.
 
-* Qué está mal
-* Qué funciona
-* Dónde se pierde tiempo
-* Qué partes son críticas y no se pueden tocar
+**UI:**
+- Buscador principal (RUT/teléfono/email).
+- Si existe: 1 tap para usar cliente.
+- Si no existe: formulario mínimo (nombre + teléfono).
+- Select rápido de empresa/sucursal/encargado (último usado como default).
 
----
-
-### 2. 🔄 Nuevo flujo propuesto (alto nivel)
-
-* Paso a paso simplificado
-* Qué se hace en:
-
-  * Recepción
-  * Diagnóstico
+**Obligatorio:** cliente, sucursal, encargado.
+**Opcional:** email, razón social completa, notas administrativas.
 
 ---
 
-### 3. 📱 Diseño detallado del wizard (pantalla por pantalla)
+## Paso 2 — Equipo en 3 decisiones
+**Objetivo:** registrar equipo sin fricción pero con precisión suficiente.
 
-Para cada paso:
+**UI:**
+- Grid de tipo: Celular / Notebook / Tablet / Smartwatch / Otro.
+- Marca (chips visuales + buscador).
+- Modelo (autocompletar).
+- Campos que aparecen solo si aplica: serie, IMEI, capacidad, color.
 
-* Objetivo
-* Qué se muestra
-* Tipo de UI (grid, botones, input, etc.)
-* Qué es obligatorio vs opcional
-* Cómo reducir fricción
-* Ejemplo real
-
----
-
-### 4. ⚡ Rediseño del checklist (CRÍTICO)
-
-* Nueva lógica de interacción
-* Cómo reducir de 17 decisiones a <5 acciones reales
-* Cómo mantener protección legal
-* Uso de:
-
-  * defaults
-  * selección por zonas
-  * fotos (opcional)
-* Ejemplo completo de uso
+**Regla UX:**
+- “Detalle progresivo”: primero tipo/marca/modelo.
+- Datos avanzados se autocompletan o quedan en “Diagnóstico”.
 
 ---
 
-### 5. 🗄️ Impacto en base de datos
+## Paso 3 — Estado del equipo (checklist inteligente)
+**Objetivo:** tener respaldo legal/técnico en pocos taps.
 
-* Qué tablas actuales se usan
-* Qué campos cambian de uso (si aplica)
-* Nuevos campos sugeridos
-* Migración sin romper producción
+### 3.1 Pregunta base (3 bloques)
+Cada bloque tiene 3 estados: **OK / Con detalles / No probado**.
 
----
+1. **Estado físico externo**
+   - pantalla, cámara externa, carcasa, botones, pin de carga
+2. **Pruebas funcionales por software/uso**
+   - audio llamada, altavoz, auricular, micrófono, wifi, bluetooth, sensores, vibrador, flash
+3. **Entrega de elementos**
+   - ¿Viene con chip?
+   - ¿Viene con microchip/SD?
+   - Selector rápido: Ambos / Solo chip / Solo microchip-SD / Ninguno
 
-### 6. 🚀 Mejores prácticas tipo SaaS vendible
+### 3.2 Lógica condicional (clave)
+- Si bloque = **OK**: no mostrar sub-checklist.
+- Si bloque = **No probado**: registrar motivo rápido (sin batería, sin clave, etc.).
+- Si bloque = **Con detalles**: abrir sub-checklist de esa categoría únicamente.
 
-* Cómo hacer que el usuario entienda la app en minutos
-* Qué hace que esto sea “vendible”
-* Qué eliminarías si tuvieras que simplificar aún más
+### 3.3 Sub-checklists por excepción
+Solo se abren cuando hay detalles.
 
----
+- **Físico:** pantalla, vidrio cámara, carcasa, botones, bisagras (notebook), corona (watch), etc.
+- **Funcional:** módulo afectado + severidad (leve/media/alta).
+- **Internos/entrega:** chip sí/no, microchip/SD sí/no, observación opcional.
 
-### 7. 🎯 Principios de diseño aplicados
-
-* Explica qué principios UX estás aplicando:
-
-  * reducción de carga cognitiva
-  * defaults inteligentes
-  * progressive disclosure
-  * etc.
-
----
-
-**ESTILO DE RESPUESTA**
-
-* No genérico
-* No teórico
-* Enfocado en producto real
-* Explica decisiones con lógica de negocio
-* Piensa como alguien que quiere vender este sistema
+### 3.4 Evidencia opcional pero recomendada
+- Botón “Agregar fotos” (1 a 3 fotos).
+- Botón “Marcar todo OK”.
 
 ---
 
-**INPUT ADICIONAL (IMPORTANTE)**
-Después de este prompt, te proporcionaré:
+## Paso 4 — Orden final (problema + servicio)
+**Objetivo:** cerrar recepción con lo mínimo necesario para trabajar.
 
-* estructura de base de datos (Supabase)
-* tablas relevantes
+### 4.1 Descripción del problema (simplificada)
+En lugar de texto libre largo:
+1) **Síntoma principal** (chips): no enciende / se apaga / pantalla dañada / no carga / mojado / lento / etc.
+2) **Desde cuándo**: hoy / <7 días / >7 días / no sabe.
+3) **Texto corto opcional** (máx 140 caracteres).
 
-Debes usarlas para ajustar el diseño sin romper el sistema.
+### 4.2 Servicio
+- Selector rápido: Diagnóstico, Cambio pantalla, Batería, Conector carga, Software, Limpieza, Otro.
+- Prioridad por defecto: Normal (editable).
+- Fecha estimada sugerida automática según servicio.
+
+### 4.3 Cierre
+- Resumen en una sola vista.
+- Confirmar y generar orden + PDF.
 
 ---
 
-**OBJETIVO FINAL**
-
-Diseñar un flujo que permita:
-
-👉 Crear una orden en 20–40 segundos
-👉 Mantener protección técnica/legal
-👉 Sentirse moderno, rápido y profesional
-👉 Ser fácilmente vendible como SaaS
+## Entregable esperado del asistente
+Cuando respondas este prompt, entrega:
+1. Qué está mal/qué funciona del flujo actual.
+2. Diseño detallado de estas 4 pantallas.
+3. Matriz de lógica condicional del checklist.
+4. Propuesta de campos mínimos vs avanzados.
+5. Impacto en BD (cambios mínimos + migración segura).
+6. Recomendaciones para onboarding en menos de 5 minutos.
 
 ---
-recuerda siempre que es importante que cada paso se haga pero que sea simple hacer el checklist que sea simple hacer la descripcion que sea simple elegir servicio que sea simple todo lo mas simple posible, muchos taps pocos imputs y pocos pasos si no los necesita el flujo debe ser asi el cliente lleg se crea orden se registra el cliente se hace registro de equipo facil pocos pasos, el checklist pregunta 3 cosas estado fisico funcional? camara fsica, pantalla, carcasa, pin de carga, botones, etc funconal/detalles/no probado
-si coloca detalles le despliega checklist de pantallas camaras botones tpin de carga todo lo fisico, uego probar funciones, alta voz, llamada auricular, microfono, wifi, bluetooth, sensor de proximidad, sensor de luz, flash vibrador etc, luego si entrega con chip y microchip rapida opcion si vienem ambos o seleccionar solo el que deja chip o micro chip
-esa logica con todo notebooks smartwatch todo asi
-luego descripcion del problema no se que hacer alli por eso no lo he tocado mucho .
-y servicios tratar de que sean pasos siples sensillos rapido.
+
+## Criterios de éxito
+- Una orden de recepción se crea en 20–40 segundos.
+- El operador no siente fatiga por exceso de decisiones.
+- El checklist mantiene protección legal real.
+- El flujo se siente simple, moderno y consistente entre tipos de equipo.
