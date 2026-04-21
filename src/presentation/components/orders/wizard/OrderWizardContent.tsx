@@ -354,15 +354,48 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
     <Fragment>
       <form onSubmit={handleSubmit} className="space-y-6 rounded-lg bg-white p-6 shadow-md">
         <h2 className="text-2xl font-bold text-slate-900">Nueva Orden de Trabajo</h2>
+        <div className="rounded-2xl border border-violet-100 bg-violet-50/60 p-3">
+          <div className="mb-2 flex items-center justify-between text-xs font-semibold text-violet-700">
+            <span>Paso {orderStep} de 4</span>
+            <span>
+              {orderStep === 1 && "Cliente"}
+              {orderStep === 2 && "Dispositivo"}
+              {orderStep === 3 && "Desbloqueo + Serie"}
+              {orderStep === 4 && "Checklist / Servicios"}
+            </span>
+          </div>
+          <div className="h-2 rounded-full bg-violet-100">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 transition-all"
+              style={{ width: `${(orderStep / 4) * 100}%` }}
+            />
+          </div>
+        </div>
 
         {/* Selección de Cliente */}
-        <div>
-          <label className="mb-2 block text-sm font-medium text-slate-700">Cliente *</label>
-          <CustomerSearch
-            selectedCustomer={selectedCustomer}
-            onCustomerSelect={setSelectedCustomer}
-          />
-        </div>
+        {orderStep === 1 ? (
+          <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
+            <label className="mb-2 block text-sm font-medium text-slate-700">Cliente *</label>
+            <CustomerSearch
+              selectedCustomer={selectedCustomer}
+              onCustomerSelect={setSelectedCustomer}
+            />
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setOrderStep(2)}
+                disabled={!selectedCustomer}
+                className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Continuar: Dispositivo
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+            Cliente seleccionado: <strong>{selectedCustomer?.name || "Sin cliente"}</strong>
+          </div>
+        )}
 
         {/* Equipos - Mostrar cada equipo en una sección separada */}
         {devices.map((device, deviceIndex) => (
@@ -384,7 +417,7 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
             </div>
 
             {/* Información del Dispositivo */}
-            {!isDeviceFinalized(device.id) && (
+            {!isDeviceFinalized(device.id) && orderStep === 2 && (
               <>
                 {!device.deviceModel || manualEditOpenByDevice[device.id] ? (
                   <div
@@ -1171,6 +1204,9 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
                     </div>
                   </div>
                 </div>
+              </div>
+              </div>
+            )}
 
                   {showPatternDrawer?.deviceId === device.id && (
                     <PatternDrawer
@@ -1297,6 +1333,15 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
               !isDeviceFinalized(device.id) &&
               (activeStageByDevice[device.id] ?? "unlock") !== "unlock" && (
               <div className="mt-4 rounded-2xl border border-indigo-100 bg-gradient-to-br from-white via-indigo-50/20 to-slate-50 p-4 shadow-[0_20px_40px_-30px_rgba(79,70,229,0.5)]">
+                <div className="mb-3 flex justify-start">
+                  <button
+                    type="button"
+                    onClick={() => setOrderStep(3)}
+                    className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                  >
+                    ← Volver a desbloqueo
+                  </button>
+                </div>
                 <div className="mb-4 flex flex-wrap items-center gap-2">
                   <button
                     type="button"
