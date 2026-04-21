@@ -84,6 +84,16 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
 
   const setDevices = () => {}; // Used inside helper functions which were moved.
   const MAX_DESCRIPTION_LENGTH = 500;
+  const QUICK_PROBLEM_SYMPTOMS = [
+    "No enciende",
+    "Pantalla dañada",
+    "No carga",
+    "Batería dura poco",
+    "Sin señal",
+    "Sin audio en llamada",
+    "Lento / se reinicia",
+    "Mojado",
+  ];
   const getDeviceServiceTotal = (device: any): number => {
     if (!device) return 0;
     return (device.selectedServices || []).reduce((sum: number, service: any) => {
@@ -783,7 +793,7 @@ return (
                   Agregar Nuevo Dispositivo
                 </h3>
                 <p className="text-slate-600 mb-4">
-                  El dispositivo <strong>"{showDeviceCategoryModal.deviceModel || device.deviceModel}"</strong> no estÃƒÆ’Ã‚Â¡ en el listado.
+                  El dispositivo <strong>&quot;{showDeviceCategoryModal.deviceModel || device.deviceModel}&quot;</strong> no estÃƒÆ’Ã‚Â¡ en el listado.
                   Por favor, selecciona la categorÃƒÆ’Ã‚Â­a del dispositivo:
                 </p>
                 <div className="space-y-2 mb-6">
@@ -919,6 +929,28 @@ return (
 <label className="block text-sm font-medium text-slate-700 mb-2">
                     Descripcion del Problema * (Maximo {MAX_DESCRIPTION_LENGTH} caracteres)
                   </label>
+                  <div className="mb-3">
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Selección rápida</p>
+                    <div className="flex flex-wrap gap-2">
+                      {QUICK_PROBLEM_SYMPTOMS.map((symptom) => (
+                        <button
+                          key={`${device.id}-${symptom}`}
+                          type="button"
+                          onClick={() => {
+                            const current = device.problemDescription.trim();
+                            if (current.toLowerCase().includes(symptom.toLowerCase())) return;
+                            const nextValue = current ? `${current}. ${symptom}` : symptom;
+                            if (nextValue.length <= MAX_DESCRIPTION_LENGTH) {
+                              updateDevice(device.id, { problemDescription: nextValue });
+                            }
+                          }}
+                          className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-100"
+                        >
+                          {symptom}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
                   <textarea
                     className={`w-full border rounded-md px-3 py-2 min-h-[100px] ${
                       device.problemDescription.length > MAX_DESCRIPTION_LENGTH
@@ -1378,8 +1410,6 @@ return (
     </Fragment>
   );
 }
-
-
 
 
 
