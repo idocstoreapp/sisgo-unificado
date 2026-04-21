@@ -180,6 +180,9 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
   const wizardPanelRef = useRef<HTMLDivElement | null>(null);
   const deviceInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const deviceSuggestionsRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const [activeStageByDevice, setActiveStageByDevice] = useState<
+    Record<string, "unlock" | "checklist" | "services">
+  >({});
   const keepScrollPosition = (fn: () => void) => {
     if (typeof window === "undefined") {
       fn();
@@ -1290,7 +1293,9 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
               )}
 
             {/* Flujo de checklist -> descripción -> servicios (sin scroll) */}
-            {device.deviceModel && !isDeviceFinalized(device.id) && (
+            {device.deviceModel &&
+              !isDeviceFinalized(device.id) &&
+              (activeStageByDevice[device.id] ?? "unlock") !== "unlock" && (
               <div className="mt-4 rounded-2xl border border-indigo-100 bg-gradient-to-br from-white via-indigo-50/20 to-slate-50 p-4 shadow-[0_20px_40px_-30px_rgba(79,70,229,0.5)]">
                 <div className="mb-4 flex flex-wrap items-center gap-2">
                   <button
