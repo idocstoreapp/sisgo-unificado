@@ -20,13 +20,13 @@ const DEFAULT_STATUS_OPTIONS = [
 ];
 
 const STATUS_STYLES: Record<string, string> = {
-  ok: "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100",
-  funcionando: "border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100",
-  damaged: "border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100",
-  "dañado": "border-rose-200 bg-rose-50 text-rose-800 hover:bg-rose-100",
-  replaced: "border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100",
-  reparado: "border-blue-200 bg-blue-50 text-blue-800 hover:bg-blue-100",
-  entregado: "border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100",
+  ok: "border-zinc-200 bg-zinc-50 text-zinc-800 hover:bg-zinc-100",
+  funcionando: "border-zinc-200 bg-zinc-50 text-zinc-800 hover:bg-zinc-100",
+  damaged: "border-gray-200 bg-gray-50 text-gray-800 hover:bg-gray-100",
+  "dañado": "border-gray-200 bg-gray-50 text-gray-800 hover:bg-gray-100",
+  replaced: "border-gray-200 bg-gray-50 text-gray-800 hover:bg-gray-100",
+  reparado: "border-gray-200 bg-gray-50 text-gray-800 hover:bg-gray-100",
+  entregado: "border-stone-200 bg-stone-50 text-stone-800 hover:bg-stone-100",
   no_probado: "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100",
   "no probado": "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100",
 };
@@ -34,9 +34,9 @@ const STATUS_STYLES: Record<string, string> = {
 function getStatusButtonClass(value: string, selected: boolean): string {
   const normalized = value.toLowerCase();
   const base =
-    "min-h-[48px] rounded-xl border px-3 py-2 text-sm font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-brand-light/40";
+    "min-h-[48px] rounded-xl border px-3 py-2 text-sm font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-slate-700/40";
   const tone = STATUS_STYLES[normalized] || "border-slate-200 bg-white text-slate-700 hover:bg-slate-50";
-  const active = selected ? "ring-2 ring-brand-light shadow-sm scale-[1.01]" : "";
+  const active = selected ? "ring-2 ring-slate-700 shadow-sm scale-[1.01]" : "";
   return `${base} ${tone} ${active}`.trim();
 }
 
@@ -414,14 +414,14 @@ export default function DeviceChecklist({
       <h3 className="mb-4 text-lg font-semibold text-slate-900 md:text-xl">Checklist de VerificaciÃ³n *</h3>
 
       {completedItems.length > 0 && (
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
-          <p className="text-sm font-medium text-emerald-800">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+          <p className="text-sm font-medium text-zinc-800">
             {completedItems.length} checklist{completedItems.length > 1 ? "s" : ""} completado{completedItems.length > 1 ? "s" : ""}.
           </p>
           <button
             type="button"
             onClick={() => setShowCompletedModal(true)}
-            className="rounded-lg border border-emerald-300 bg-white px-3 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100"
+            className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold text-zinc-700 hover:bg-zinc-100"
           >
             Ver checklist completados
           </button>
@@ -437,7 +437,7 @@ export default function DeviceChecklist({
       )}
 
       {allItems.length > 0 && completedItems.length !== allItems.length && (
-        <div className="mb-4 rounded-2xl border border-indigo-100 bg-gradient-to-r from-white to-indigo-50 p-3">
+        <div className="mb-4 rounded-2xl border border-slate-100 bg-gradient-to-r from-white to-slate-50 p-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-slate-700">
               Â¿No puedes probar ninguna funciÃ³n ahora? Puedes marcar todo como <span className="font-semibold">No probado</span> y continuar al siguiente paso.
@@ -445,7 +445,7 @@ export default function DeviceChecklist({
             <button
               type="button"
               onClick={handleMarkAllAsNotTested}
-              className="rounded-xl border border-indigo-200 bg-white px-3 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50"
+              className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
             >
               Marcar todo como no probado
             </button>
@@ -453,7 +453,7 @@ export default function DeviceChecklist({
         </div>
       )}
 
-      <div className="mb-4 rounded-2xl border border-indigo-200 bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 p-3 shadow-lg shadow-indigo-500/25">
+      <div className="mb-4 rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-600 via-zinc-600 to-zinc-600 p-3 shadow-lg shadow-slate-500/25">
         <p className="text-sm font-semibold text-white">Recepción rápida (40 segundos)</p>
         <p className="mt-1 text-xs text-white/90">
           Primero marca estado global. Solo entra al detalle cuando el bloque está en <strong>Con detalles</strong>.
@@ -514,19 +514,19 @@ export default function DeviceChecklist({
               ref={(el) => {
                 itemRefs.current[itemName] = el;
               }}
-              className="rounded-2xl border border-indigo-100 bg-gradient-to-b from-white to-slate-50 p-3 shadow-[0_18px_36px_-30px_rgba(79,70,229,0.45)]"
+              className="rounded-2xl border border-slate-100 bg-gradient-to-b from-white to-slate-50 p-3 shadow-[0_18px_36px_-30px_rgba(15,23,42,0.14)]"
             >
               <div className="mb-3 flex items-center justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-2">
                   <span className="truncate text-base font-semibold text-slate-800">{itemName}</span>
                   {selectedValue && (
-                    <span className="rounded-full border border-brand-light/30 bg-brand-light/10 px-2 py-0.5 text-[11px] font-semibold text-brand-dark">
+                    <span className="rounded-full border border-slate-700/30 bg-slate-700/10 px-2 py-0.5 text-[11px] font-semibold text-slate-900">
                       {formatStatusLabel(selectedValue)}
                     </span>
                   )}
                 </div>
                 {isCustom && (
-                  <span className="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">Personalizado</span>
+                  <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">Personalizado</span>
                 )}
               </div>
 
@@ -569,7 +569,7 @@ export default function DeviceChecklist({
                 {isCustom && (
                   <button
                     onClick={() => handleRemoveCustomItem(itemName)}
-                    className="rounded-md bg-red-500 px-2 py-1 text-xs text-white hover:bg-red-600"
+                    className="rounded-md bg-gray-500 px-2 py-1 text-xs text-white hover:bg-gray-600"
                     type="button"
                   >
                     âœ•
@@ -582,8 +582,8 @@ export default function DeviceChecklist({
       </div>
 
       {filteredVisibleItems.length === 0 && allItems.length > 0 && (
-        <div className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-3">
-          <p className="text-sm text-emerald-800">
+        <div className="mb-5 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
+          <p className="text-sm text-zinc-800">
             Â¡Excelente! Todos los items del checklist ya tienen estado asignado.
           </p>
         </div>
@@ -618,7 +618,7 @@ export default function DeviceChecklist({
                     </div>
                     <div className="flex items-center gap-2">
                       {isCustom && (
-                        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-medium text-blue-700">Personalizado</span>
+                        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">Personalizado</span>
                       )}
                       <button
                         type="button"
@@ -644,7 +644,7 @@ export default function DeviceChecklist({
         <button
           type="button"
           onClick={handleOpenAddChecklistModal}
-          className="rounded-xl bg-brand-light px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
+          className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900"
         >
           + Agregar nuevo checklist
         </button>
@@ -708,7 +708,7 @@ export default function DeviceChecklist({
                       <button
                         type="button"
                         onClick={() => handleRemoveStatusInModal(status)}
-                        className="text-red-600 hover:text-red-700"
+                        className="text-gray-600 hover:text-gray-700"
                         title="Eliminar estado"
                       >
                         âœ•
@@ -729,7 +729,7 @@ export default function DeviceChecklist({
                 <button
                   type="button"
                   onClick={handleSaveCustomChecklist}
-                  className="rounded-xl bg-brand-light px-4 py-2 text-sm font-semibold text-white hover:bg-brand-dark"
+                  className="rounded-xl bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-900"
                 >
                   Guardar checklist
                 </button>
