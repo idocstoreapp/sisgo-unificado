@@ -8,8 +8,8 @@ import { FinanceDashboard } from "@/presentation/components/finance/FinanceDashb
 
 export default async function FinancePage() {
   const supabase = await getSupabaseServerClient();
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) redirect("/login");
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
   return <div className="min-h-screen bg-background"><FinanceDashboard /></div>;
 }
