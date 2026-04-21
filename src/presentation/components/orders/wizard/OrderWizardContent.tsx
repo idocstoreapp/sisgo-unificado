@@ -204,6 +204,9 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
   const getWizardStep = (deviceId: string): number => wizardStepByDevice[deviceId] ?? 1;
   const getFlowStep = (deviceId: string): 1 | 2 | 3 => flowStepByDevice[deviceId] ?? 1;
   const isDeviceFinalized = (deviceId: string): boolean => Boolean(finalizedDeviceById[deviceId]);
+  const patternDrawerDevice = showPatternDrawer
+    ? devices.find((d) => d.id === showPatternDrawer.deviceId)
+    : null;
   const wizardCardButtonClass =
     "group relative overflow-hidden rounded-2xl border border-slate-100 bg-gradient-to-b from-white to-slate-50/60 p-2 text-left shadow-[0_18px_35px_-28px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_40px_-24px_rgba(15,23,42,0.14)] min-h-[320px]";
   const wizardCardInnerTextClass = "text-sm font-semibold text-slate-900";
