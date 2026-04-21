@@ -1676,6 +1676,25 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
           </div>
         ))}
 
+        {showPatternDrawer &&
+          (() => {
+            const targetDevice = devices.find((d) => d.id === showPatternDrawer.deviceId);
+            if (!targetDevice) return null;
+            return (
+              <PatternDrawer
+                onPatternComplete={(pattern) => {
+                  updateDevice(targetDevice.id, {
+                    unlockType: "pattern",
+                    deviceUnlockPattern: pattern,
+                    deviceUnlockCode: "",
+                  });
+                  setShowPatternDrawer(null);
+                }}
+                onClose={() => setShowPatternDrawer(null)}
+              />
+            );
+          })()}
+
         {/* Botón para agregar otro equipo */}
         <div className="flex justify-center">
           <button
