@@ -243,7 +243,7 @@ export default function ServiceSelector({
 
       {!hasSelectedDevice && (
         <div className="mb-3 p-3 rounded-md border border-stone-200 bg-stone-50 text-stone-800 text-sm">
-          ¿Servicios para qué dispositivo? Primero selecciona tipo y modelo en el asistente de dispositivo.
+          Â¿Servicios para quÃ© dispositivo? Primero selecciona tipo y modelo en el asistente de dispositivo.
         </div>
       )}
 

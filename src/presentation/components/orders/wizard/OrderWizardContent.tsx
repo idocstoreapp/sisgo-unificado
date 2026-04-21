@@ -284,7 +284,7 @@ return (
                 <p className="mb-3 text-xl font-semibold text-slate-700">1) ¿Qué dispositivo vas a recibir?</p>
                 {!catalogLoaded ? (
                   <div className="mb-4 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                    Cargando catálogo de dispositivos...
+                    Cargando catÃƒÆ’Ã‚Â¡logo de dispositivos...
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
@@ -428,7 +428,7 @@ return (
                   })}
                 </div>
                 <div className="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50/40 p-3">
-                  <p className="text-xs font-semibold text-slate-700 mb-2">¿No aparece? Agrégalo al catálogo</p>
+                  <p className="text-xs font-semibold text-slate-700 mb-2">Ãƒâ€šÃ‚Â¿No aparece? AgrÃƒÆ’Ã‚Â©galo al catÃƒÆ’Ã‚Â¡logo</p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                     <input
                       value={customCatalogFormByDevice[device.id]?.model ?? ""}
@@ -628,7 +628,7 @@ return (
 
               return (
                 <div className="p-3 rounded-md border border-stone-200 bg-stone-50 text-stone-800 text-sm">
-                  Completa el asistente rápido para seleccionar el dispositivo.
+                  Completa el asistente rÃƒÆ’Ã‚Â¡pido para seleccionar el dispositivo.
                 </div>
               );
             })()}
@@ -864,7 +864,7 @@ return (
           {device.deviceModel && !device.deviceType && showDeviceCategoryModal?.deviceId !== device.id && (
             <div className="mb-4 p-4 bg-stone-50 border border-stone-200 rounded-md">
               <p className="text-sm text-stone-800 mb-2">
-                No se detectó la categoría del dispositivo. Para mostrar el checklist, selecciona la categoría:
+                No se detectÃƒÆ’Ã‚Â³ la categorÃƒÆ’Ã‚Â­a del dispositivo. Para mostrar el checklist, selecciona la categorÃƒÆ’Ã‚Â­a:
               </p>
               <button
                 type="button"

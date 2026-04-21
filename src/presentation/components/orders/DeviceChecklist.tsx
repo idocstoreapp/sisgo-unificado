@@ -584,7 +584,7 @@ export default function DeviceChecklist({
       {filteredVisibleItems.length === 0 && allItems.length > 0 && (
         <div className="mb-5 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
           <p className="text-sm text-zinc-800">
-            ¡Excelente! Todos los items del checklist ya tienen estado asignado.
+            Â¡Excelente! Todos los items del checklist ya tienen estado asignado.
           </p>
         </div>
       )}
