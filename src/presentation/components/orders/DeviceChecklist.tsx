@@ -12,28 +12,6 @@ interface DeviceChecklistProps {
 type QuickCategory = "fisico" | "funcional";
 type QuickState = "ok" | "detalles" | "no_probado" | null;
 
-const DEFAULT_PHYSICAL_DETAIL_ITEMS = [
-  "Pantalla",
-  "Cámara externa",
-  "Pin de carga",
-  "Botón encendido",
-  "Botones volumen",
-  "Carcasa",
-  "Tapa trasera",
-];
-
-const DEFAULT_FUNCTIONAL_DETAIL_ITEMS = [
-  "Vibrador",
-  "Altavoz",
-  "Auricular llamada",
-  "Micrófono",
-  "Wifi",
-  "Bluetooth",
-  "Señal",
-  "Flash",
-  "Batería",
-];
-
 const DEFAULT_STATUS_OPTIONS = [
   { value: "ok", label: "âœ“ Funcionando" },
   { value: "damaged", label: "âš  DaÃ±ado" },
@@ -106,8 +84,6 @@ function getQuickCategoryForItem(itemName: string): QuickCategory | null {
     "senal",
     "señal",
     "software",
-    "bateria",
-    "battery",
   ];
 
   if (physicalKeywords.some((keyword) => text.includes(keyword))) return "fisico";
@@ -288,18 +264,8 @@ export default function DeviceChecklist({
     ...items.map(item => item.item_name),
     ...customItems.filter(item => !items.some(dbItem => dbItem.item_name === item))
   ];
-  const physicalItems = Array.from(
-    new Set([
-      ...allItems.filter((itemName) => getQuickCategoryForItem(itemName) === "fisico"),
-      ...DEFAULT_PHYSICAL_DETAIL_ITEMS,
-    ]),
-  );
-  const functionalItems = Array.from(
-    new Set([
-      ...allItems.filter((itemName) => getQuickCategoryForItem(itemName) === "funcional"),
-      ...DEFAULT_FUNCTIONAL_DETAIL_ITEMS,
-    ]),
-  );
+  const physicalItems = allItems.filter((itemName) => getQuickCategoryForItem(itemName) === "fisico");
+  const functionalItems = allItems.filter((itemName) => getQuickCategoryForItem(itemName) === "funcional");
   const quickCategoryHasItems = {
     fisico: physicalItems.length > 0,
     funcional: functionalItems.length > 0,
