@@ -12,28 +12,6 @@ interface DeviceChecklistProps {
 type QuickCategory = "fisico" | "funcional";
 type QuickState = "ok" | "detalles" | "no_probado" | null;
 
-const DEFAULT_PHYSICAL_DETAIL_ITEMS = [
-  "Pantalla",
-  "Cámara externa",
-  "Pin de carga",
-  "Botón encendido",
-  "Botones volumen",
-  "Carcasa",
-  "Tapa trasera",
-];
-
-const DEFAULT_FUNCTIONAL_DETAIL_ITEMS = [
-  "Vibrador",
-  "Altavoz",
-  "Auricular llamada",
-  "Micrófono",
-  "Wifi",
-  "Bluetooth",
-  "Señal",
-  "Flash",
-  "Batería",
-];
-
 const DEFAULT_STATUS_OPTIONS = [
   { value: "ok", label: "âœ“ Funcionando" },
   { value: "damaged", label: "âš  DaÃ±ado" },
@@ -106,8 +84,6 @@ function getQuickCategoryForItem(itemName: string): QuickCategory | null {
     "senal",
     "señal",
     "software",
-    "bateria",
-    "battery",
   ];
 
   if (physicalKeywords.some((keyword) => text.includes(keyword))) return "fisico";
@@ -292,18 +268,8 @@ export default function DeviceChecklist({
     ...items.map(item => item.item_name),
     ...customItems.filter(item => !items.some(dbItem => dbItem.item_name === item))
   ];
-  const physicalItems = Array.from(
-    new Set([
-      ...allItems.filter((itemName) => getQuickCategoryForItem(itemName) === "fisico"),
-      ...DEFAULT_PHYSICAL_DETAIL_ITEMS,
-    ]),
-  );
-  const functionalItems = Array.from(
-    new Set([
-      ...allItems.filter((itemName) => getQuickCategoryForItem(itemName) === "funcional"),
-      ...DEFAULT_FUNCTIONAL_DETAIL_ITEMS,
-    ]),
-  );
+  const physicalItems = allItems.filter((itemName) => getQuickCategoryForItem(itemName) === "fisico");
+  const functionalItems = allItems.filter((itemName) => getQuickCategoryForItem(itemName) === "funcional");
   const quickCategoryHasItems = {
     fisico: physicalItems.length > 0,
     funcional: functionalItems.length > 0,
@@ -321,12 +287,11 @@ export default function DeviceChecklist({
   }
 
   const quickCategoryState: Record<QuickCategory, QuickState> = {
-    fisico: quickSelectionByCategory.fisico ?? getQuickStateForItems(physicalItems),
-    funcional: quickSelectionByCategory.funcional ?? getQuickStateForItems(functionalItems),
+    fisico: getQuickStateForItems(physicalItems),
+    funcional: getQuickStateForItems(functionalItems),
   };
 
   function applyQuickCategoryState(category: QuickCategory, value: "ok" | "detalles" | "no_probado") {
-    setQuickSelectionByCategory((prev) => ({ ...prev, [category]: value }));
     const categoryItems = category === "fisico" ? physicalItems : functionalItems;
     if (categoryItems.length === 0) return;
 
@@ -367,12 +332,6 @@ export default function DeviceChecklist({
     if (category === "fisico" && quickCategoryState.fisico !== "detalles") return false;
     if (category === "funcional" && quickCategoryState.funcional !== "detalles") return false;
     return true;
-  });
-  const physicalVisibleItems = filteredVisibleItems.filter((itemName) => getQuickCategoryForItem(itemName) === "fisico");
-  const functionalVisibleItems = filteredVisibleItems.filter((itemName) => getQuickCategoryForItem(itemName) === "funcional");
-  const uncategorizedVisibleItems = filteredVisibleItems.filter((itemName) => {
-    const category = getQuickCategoryForItem(itemName);
-    return category !== "fisico" && category !== "funcional";
   });
 
   useEffect(() => {
@@ -528,178 +487,8 @@ export default function DeviceChecklist({
         </div>
       </div>
 
-      <div className="mb-5 space-y-4">
-        {physicalVisibleItems.length > 0 && (
-          <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Capa exterior (físico)</p>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              {physicalVisibleItems.map((itemName) => {
-                const isCustom = customItems.includes(itemName) && !items.some(item => item.item_name === itemName);
-                const selectedValue = checklistData[itemName] || "";
-                const statusOptions = getStatusOptionsForItem(itemName);
-                return (
-                  <div
-                    key={itemName}
-                    ref={(el) => {
-                      itemRefs.current[itemName] = el;
-                    }}
-                    className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.06)]"
-                  >
-                    <div className="mb-3 flex items-center justify-between gap-2">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <span className="truncate text-base font-semibold text-slate-800">{itemName}</span>
-                        {selectedValue && (
-                          <span className="rounded-full border border-brand-light/30 bg-brand-light/10 px-2 py-0.5 text-[11px] font-semibold text-brand-dark">
-                            {formatStatusLabel(selectedValue)}
-                          </span>
-                        )}
-                      </div>
-                      {isCustom && (
-                        <span className="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">Personalizado</span>
-                      )}
-                    </div>
-
-                    {(expandedByItem[itemName] || !selectedValue) ? (
-                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
-                        {statusOptions.map((statusOption) => {
-                          const isSelected = selectedValue === statusOption.value;
-                          return (
-                            <button
-                              key={statusOption.value}
-                              type="button"
-                              className={getStatusButtonClass(statusOption.value, isSelected)}
-                              aria-pressed={isSelected}
-                              onClick={() => handleItemChange(itemName, statusOption.value)}
-                            >
-                              {statusOption.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
-                        <span className="text-xs font-semibold text-slate-700">
-                          Estado: {formatStatusLabel(selectedValue)}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setExpandedByItem((prev) => ({ ...prev, [itemName]: true }))}
-                          className="rounded-md border border-slate-300 px-2 py-1 text-[11px] text-slate-600 hover:bg-slate-100"
-                        >
-                          Editar
-                        </button>
-                      </div>
-                    )}
-
-                    <div className="mt-3 flex items-center justify-between gap-2">
-                      <span className="text-xs text-slate-500">
-                        {selectedValue ? "Toca otro estado para cambiar rápido." : "Selecciona un estado."}
-                      </span>
-                      {isCustom && (
-                        <button
-                          onClick={() => handleRemoveCustomItem(itemName)}
-                          className="rounded-md bg-red-500 px-2 py-1 text-xs text-white hover:bg-red-600"
-                          type="button"
-                        >
-                          ✕
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {functionalVisibleItems.length > 0 && (
-          <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Pruebas con equipo encendido (funcional)</p>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              {functionalVisibleItems.map((itemName) => {
-                const isCustom = customItems.includes(itemName) && !items.some(item => item.item_name === itemName);
-                const selectedValue = checklistData[itemName] || "";
-                const statusOptions = getStatusOptionsForItem(itemName);
-                return (
-                  <div
-                    key={itemName}
-                    ref={(el) => {
-                      itemRefs.current[itemName] = el;
-                    }}
-                    className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 shadow-[0_1px_2px_rgba(15,23,42,0.06)]"
-                  >
-                    <div className="mb-3 flex items-center justify-between gap-2">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <span className="truncate text-base font-semibold text-slate-800">{itemName}</span>
-                        {selectedValue && (
-                          <span className="rounded-full border border-brand-light/30 bg-brand-light/10 px-2 py-0.5 text-[11px] font-semibold text-brand-dark">
-                            {formatStatusLabel(selectedValue)}
-                          </span>
-                        )}
-                      </div>
-                      {isCustom && (
-                        <span className="rounded-full bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">Personalizado</span>
-                      )}
-                    </div>
-
-                    {(expandedByItem[itemName] || !selectedValue) ? (
-                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
-                        {statusOptions.map((statusOption) => {
-                          const isSelected = selectedValue === statusOption.value;
-                          return (
-                            <button
-                              key={statusOption.value}
-                              type="button"
-                              className={getStatusButtonClass(statusOption.value, isSelected)}
-                              aria-pressed={isSelected}
-                              onClick={() => handleItemChange(itemName, statusOption.value)}
-                            >
-                              {statusOption.label}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
-                        <span className="text-xs font-semibold text-slate-700">
-                          Estado: {formatStatusLabel(selectedValue)}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => setExpandedByItem((prev) => ({ ...prev, [itemName]: true }))}
-                          className="rounded-md border border-slate-300 px-2 py-1 text-[11px] text-slate-600 hover:bg-slate-100"
-                        >
-                          Editar
-                        </button>
-                      </div>
-                    )}
-
-                    <div className="mt-3 flex items-center justify-between gap-2">
-                      <span className="text-xs text-slate-500">
-                        {selectedValue ? "Toca otro estado para cambiar rápido." : "Selecciona un estado."}
-                      </span>
-                      {isCustom && (
-                        <button
-                          onClick={() => handleRemoveCustomItem(itemName)}
-                          className="rounded-md bg-red-500 px-2 py-1 text-xs text-white hover:bg-red-600"
-                          type="button"
-                        >
-                          ✕
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {uncategorizedVisibleItems.length > 0 && (
-          <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Otros checks</p>
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              {uncategorizedVisibleItems.map((itemName) => {
+      <div className="mb-5 grid grid-cols-1 gap-3 md:grid-cols-2">
+        {filteredVisibleItems.map((itemName) => {
           const isCustom = customItems.includes(itemName) && !items.some(item => item.item_name === itemName);
           const selectedValue = checklistData[itemName] || "";
           const statusOptions = getStatusOptionsForItem(itemName);
