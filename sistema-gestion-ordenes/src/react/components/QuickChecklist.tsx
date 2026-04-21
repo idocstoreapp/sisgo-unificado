@@ -180,14 +180,22 @@ export default function QuickChecklist({
 
   return (
     <div className={`space-y-4 ${compact ? "p-2" : "p-4"}`}>
+<<<<<<< codex/improve-design-of-service-module-572yzr
       <div className="rounded-3xl border border-indigo-100 bg-gradient-to-r from-white via-indigo-50/70 to-violet-100/70 p-4 shadow-[0_20px_35px_-30px_rgba(79,70,229,0.55)]">
+=======
+      <div className="rounded-2xl border border-emerald-100 bg-gradient-to-r from-white via-emerald-50/80 to-emerald-100/70 p-4">
+>>>>>>> main
         <div className="mb-1 flex items-center gap-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 shadow-lg shadow-emerald-500/25">
           <CheckCircle2 className="w-5 h-5 text-white" />
           </div>
           <div>
             <h3 className="font-semibold text-slate-900">Checklist Rápido</h3>
+<<<<<<< codex/improve-design-of-service-module-572yzr
             <p className="text-xs font-medium text-indigo-600">{getDeviceName()}</p>
+=======
+            <p className="text-xs text-slate-500">{getDeviceName()}</p>
+>>>>>>> main
           </div>
         </div>
         <p className="text-xs text-slate-600">Registra lo mínimo en recepción. Lo no marcado se guarda como "no probado".</p>
@@ -354,7 +362,11 @@ export default function QuickChecklist({
       </SectionCard>
 
       {/* Resumen visual */}
+<<<<<<< codex/improve-design-of-service-module-572yzr
       <div className="mt-2 rounded-2xl bg-gradient-to-r from-slate-900 to-indigo-900 p-3 shadow-lg">
+=======
+      <div className="mt-2 rounded-2xl bg-slate-900 p-3 shadow-lg">
+>>>>>>> main
         <p className="text-xs text-slate-400 mb-2">Resumen del checklist:</p>
         <div className="flex flex-wrap gap-1">
           {powerState && (

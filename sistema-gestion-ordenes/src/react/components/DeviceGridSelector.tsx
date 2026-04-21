@@ -57,7 +57,11 @@ export default function DeviceGridSelector({ onSelect, selected }: DeviceSelecto
   const [hoveredId, setHoveredId] = useState<DeviceType | null>(null);
 
   return (
+<<<<<<< codex/improve-design-of-service-module-572yzr
     <div className="rounded-3xl border border-indigo-100 bg-gradient-to-b from-white to-indigo-50/40 p-4 shadow-[0_24px_50px_-30px_rgba(67,56,202,0.45)]">
+=======
+    <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-4 shadow-[0_16px_32px_-28px_rgba(15,23,42,0.7)] backdrop-blur">
+>>>>>>> main
       <div className="mb-5 flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 shadow-lg shadow-blue-500/25">
           <Smartphone className="w-5 h-5 text-white" />
