@@ -9,13 +9,12 @@ import GeneralExpenses from "./GeneralExpenses";
 import KpiCard from "./KpiCard";
 
 interface BranchExpensesPageProps {
-  userRole: string;
+  userRole?: string;
   refreshKey?: number;
+  isAdmin?: boolean;
 }
 
-type FilterMode = "month" | "range";
-
-export default function BranchExpensesPage({ userRole, refreshKey = 0 }: BranchExpensesPageProps) {
+export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0, isAdmin = false }: BranchExpensesPageProps) {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
   const [branchSummary, setBranchSummary] = useState<BranchExpensesSummary | null>(null);
@@ -124,16 +123,16 @@ export default function BranchExpensesPage({ userRole, refreshKey = 0 }: BranchE
 
       const { data: profileData } = await supabase
         .from("users")
-        .select("sucursal_id")
+        .select("branch_id")
         .eq("id", user.id)
         .single();
 
-      if (profileData?.sucursal_id) {
-        setEncargadoBranchId(profileData.sucursal_id);
+      if (profileData?.branch_id) {
+        setEncargadoBranchId(profileData.branch_id);
         const { data: branchData } = await supabase
           .from("branches")
           .select("*")
-          .eq("id", profileData.sucursal_id)
+          .eq("id", profileData.branch_id)
           .single();
         
         if (branchData) {
@@ -281,7 +280,7 @@ export default function BranchExpensesPage({ userRole, refreshKey = 0 }: BranchE
       const { data: smallExpenses } = await supabase
         .from("small_expenses")
         .select("monto, tipo")
-        .eq("sucursal_id", branchId)
+        .eq("branch_id", branchId)
         .gte("fecha", start)
         .lte("fecha", end);
 
@@ -295,7 +294,7 @@ export default function BranchExpensesPage({ userRole, refreshKey = 0 }: BranchE
       const { data: generalExpenses } = await supabase
         .from("general_expenses")
         .select("monto, tipo")
-        .eq("sucursal_id", branchId)
+        .eq("branch_id", branchId)
         .gte("fecha", start)
         .lte("fecha", end);
 
@@ -310,7 +309,7 @@ export default function BranchExpensesPage({ userRole, refreshKey = 0 }: BranchE
         .from("orders")
         .select("replacement_cost, paid_at")
         .eq("status", "paid")
-        .eq("sucursal_id", branchId)
+        .eq("branch_id", branchId)
         .not("paid_at", "is", null)
         .gte("paid_at", start + "T00:00:00")
         .lte("paid_at", end + "T23:59:59");
@@ -324,7 +323,7 @@ export default function BranchExpensesPage({ userRole, refreshKey = 0 }: BranchE
       const { data: branchTechnicians } = await supabase
         .from("users")
         .select("id")
-        .eq("sucursal_id", branchId)
+        .eq("branch_id", branchId)
         .eq("role", "technician");
 
       const technicianIds = (branchTechnicians || []).map((u) => u.id);
@@ -369,7 +368,7 @@ export default function BranchExpensesPage({ userRole, refreshKey = 0 }: BranchE
       const { data: branchEncargados } = await supabase
         .from("users")
         .select("id")
-        .eq("sucursal_id", branchId)
+        .eq("branch_id", branchId)
         .eq("role", "encargado");
 
       const encargadoIds = (branchEncargados || []).map((u) => u.id);

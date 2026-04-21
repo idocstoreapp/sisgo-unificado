@@ -33,7 +33,7 @@ BEGIN
     commission_percentage,
     config
   ) VALUES (
-    'Mi Empresa SpA',
+    'Idoc Store',
     'servicio_tecnico',
     '76.123.456-7',
     'Mi Empresa Servicios Limitada',

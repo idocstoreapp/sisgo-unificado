@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useEffect, useRef, Fragment, type FormEvent } from "react";
 import { supabase } from "@/lib/supabase";
 import { formatCLP, formatCLPInput, parseCLPInput } from "@/lib/currency";
@@ -83,8 +83,13 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
   } = context;
 
   const setDevices = () => {}; // Used inside helper functions which were moved.
-const MAX_DESCRIPTION_LENGTH = 500;
-  const getDeviceServiceTotal = (device: any): number => device.selectedServices.reduce((sum: number, service: any) => sum + (device.servicePrices[service.id] || 0), 0);
+  const MAX_DESCRIPTION_LENGTH = 500;
+  const getDeviceServiceTotal = (device: any): number => {
+    if (!device) return 0;
+    return (device.selectedServices || []).reduce((sum: number, service: any) => {
+      return sum + (device.servicePrices?.[service.id] || service.price || 0);
+    }, 0);
+  };
 
   const wizardPanelRef = useRef<HTMLDivElement | null>(null);
   const deviceInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -135,12 +140,12 @@ const MAX_DESCRIPTION_LENGTH = 500;
             
             const { data: allResponsables, error: allError } = await supabase
               .from("users")
-              .select("id, name, role, sucursal_id")
+              .select("id, name, role, branch_id")
               .eq("role", "responsable");
             
             console.log("[OrderForm] DEBUG - Consulta todos los responsables - Error:", allError);
             console.log("[OrderForm] DEBUG - Todos los responsables en el sistema:", allResponsables);
-            console.log("[OrderForm] DEBUG - Buscando responsables con sucursal_id:", sucursalId);
+            console.log("[OrderForm] DEBUG - Buscando responsables con branch_id:", sucursalId);
             console.log("[OrderForm] DEBUG - Tipo de sucursalId:", typeof sucursalId);
             
             if (allError) {
@@ -156,7 +161,7 @@ const MAX_DESCRIPTION_LENGTH = 500;
               .from("users")
               .select("*")
               .eq("role", "responsable")
-              .eq("sucursal_id", sucursalId)
+              .eq("branch_id", sucursalId)
               .order("name");
 
             if (error) {
@@ -172,20 +177,20 @@ const MAX_DESCRIPTION_LENGTH = 500;
                 console.log("[OrderForm] Responsables encontrados:", data.map(u => ({ 
                   id: u.id, 
                   name: u.name, 
-                  sucursal_id: u.sucursal_id,
-                  sucursal_id_type: typeof u.sucursal_id
+                  branch_id: u.branch_id,
+                  branch_id_type: typeof u.branch_id
                 })));
               } else {
                 // Si no hay responsables, mostrar informaciÃƒÆ’Ã‚Â³n de debug
                 console.warn("[OrderForm] No se encontraron responsables para sucursal:", sucursalId);
                 if (allResponsables && allResponsables.length > 0) {
-                  console.warn("[OrderForm] Pero hay responsables en el sistema con estos sucursal_id:", 
+                  console.warn("[OrderForm] Pero hay responsables en el sistema con estos branch_id:", 
                     allResponsables.map(u => ({ 
                       name: u.name, 
-                      sucursal_id: u.sucursal_id, 
-                      sucursal_id_type: typeof u.sucursal_id,
-                      sucursal_id_coincide: u.sucursal_id === sucursalId,
-                      sucursal_id_equals: u.sucursal_id == sucursalId
+                      branch_id: u.branch_id, 
+                      branch_id_type: typeof u.branch_id,
+                      branch_id_coincide: u.branch_id === sucursalId,
+                      branch_id_equals: u.branch_id == sucursalId
                     }))
                   );
                 } else {
@@ -430,7 +435,7 @@ return (
                     <button
                       type="button"
                       onClick={() => addCustomModelToCatalog(device)}
-                      className="rounded-md bg-brand-light px-3 py-1.5 text-sm text-white hover:bg-brand-dark"
+                      className="rounded-md bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-700"
                     >
                       Guardar y usar
                     </button>
@@ -578,7 +583,7 @@ return (
                             setWizardStepByDevice((prev) => ({ ...prev, [device.id]: 6 }));
                           }
                         }}
-                        className="rounded-md bg-brand-light px-2 py-1 text-xs text-white hover:bg-brand-dark"
+                        className="rounded-md bg-blue-600 px-2 py-1 text-xs text-white hover:bg-blue-700"
                       >
                         Usar valor manual
                       </button>
@@ -870,21 +875,21 @@ return (
                 <button
                   type="button"
                   onClick={() => setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 1 }))}
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${getFlowStep(device.id) === 1 ? "bg-brand-light text-white" : "bg-slate-100 text-slate-700"}`}
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${getFlowStep(device.id) === 1 ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-700"}`}
                 >
                   1. Checklist
                 </button>
                 <button
                   type="button"
                   onClick={() => setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 2 }))}
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${getFlowStep(device.id) === 2 ? "bg-brand-light text-white" : "bg-slate-100 text-slate-700"}`}
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${getFlowStep(device.id) === 2 ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-700"}`}
                 >
                   2. Problema
                 </button>
                 <button
                   type="button"
                   onClick={() => setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 3 }))}
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${getFlowStep(device.id) === 3 ? "bg-brand-light text-white" : "bg-slate-100 text-slate-700"}`}
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${getFlowStep(device.id) === 3 ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-700"}`}
                 >
                   3. Servicios
                 </button>
@@ -898,12 +903,12 @@ return (
                     onChecklistChange={(newChecklist) => updateDevice(device.id, { checklistData: newChecklist })}
                   />
                   <div className="mt-4 flex justify-end">
-                    <button
+<button
                       type="button"
                       onClick={() => setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 2 }))}
-                      className="rounded-md bg-brand-light px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark"
+                      className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
                     >
-                      Continuar: DescripciÃƒÆ’Ã‚Â³n
+                      Siguiente: Descripcion
                     </button>
                   </div>
                 </>
@@ -911,8 +916,8 @@ return (
 
               {getFlowStep(device.id) === 2 && (
                 <>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    DescripciÃƒÆ’Ã‚Â³n del Problema * (MÃƒÆ’Ã‚Â¡ximo {MAX_DESCRIPTION_LENGTH} caracteres)
+<label className="block text-sm font-medium text-slate-700 mb-2">
+                    Descripcion del Problema * (Maximo {MAX_DESCRIPTION_LENGTH} caracteres)
                   </label>
                   <textarea
                     className={`w-full border rounded-md px-3 py-2 min-h-[100px] ${
@@ -954,7 +959,7 @@ return (
                     <button
                       type="button"
                       onClick={() => setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 3 }))}
-                      className="rounded-md bg-brand-light px-4 py-2 text-sm font-medium text-white hover:bg-brand-dark"
+                      className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
                     >
                       Continuar: Servicios
                     </button>
@@ -1173,7 +1178,7 @@ return (
         <button
           type="button"
           onClick={addNewDevice}
-          className="px-6 py-3 bg-brand-light text-white rounded-md hover:bg-brand-dark font-medium flex items-center gap-2"
+          className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium flex items-center gap-2"
         >
           ÃƒÂ¢Ã…Â¾Ã¢â‚¬Â¢ Agregar Otro Equipo
         </button>
@@ -1341,7 +1346,7 @@ return (
         <button
           type="submit"
           disabled={loading || isSubmitting || devices.some(device => device.problemDescription.length > MAX_DESCRIPTION_LENGTH)}
-          className="px-6 py-2 bg-brand-light text-white rounded-md hover:bg-brand-dark disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading || isSubmitting ? "Guardando..." : `Crear Orden${devices.length > 1 ? ` (${devices.length} equipos)` : ''}`}
         </button>

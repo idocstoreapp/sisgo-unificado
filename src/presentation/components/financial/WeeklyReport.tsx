@@ -212,11 +212,11 @@ export default function WeeklyReport({ technicianId, refreshKey = 0, userRole }:
         return dateB - dateA; // Más recientes primero
       });
 
-      // Consulta para ajustes - CARGAR CON APLICACIONES para calcular remaining
+// Consulta para ajustes - CARGAR CON APLICACIONES para calcular remaining
       // IMPORTANTE: Cargar TODOS los ajustes, no filtrar por fecha de creación
       // Necesitamos todos los ajustes para calcular correctamente totalAppliedAdjustments
       // (que cuenta solo las aplicaciones de esta semana, no todos los ajustes)
-      let adjustmentsQuery = supabase
+      const adjustmentsQuery = supabase
         .from("salary_adjustments")
         .select("*, applications:salary_adjustment_applications(applied_amount, week_start)")
         .eq("technician_id", technicianId);
@@ -747,7 +747,7 @@ export default function WeeklyReport({ technicianId, refreshKey = 0, userRole }:
           <div className="text-xs text-slate-600 space-y-1">
             <p><strong>🔹 Ajustes de sueldo:</strong> Registra adelantos o descuentos que el técnico debe. Estos se restan de sus ganancias futuras.</p>
             <p><strong>🔹 Liquidación de sueldo:</strong> Es el pago real que le haces al técnico. Aquí puedes descontar los adelantos pendientes.</p>
-            <p className="text-slate-500 mt-2">💡 <strong>Ejemplo:</strong> Si el técnico pidió un adelanto de $50,000, primero lo registras como "Ajuste". Luego, al pagarle, seleccionas ese adelanto en la "Liquidación" para descontarlo del pago.</p>
+            <p className="text-slate-500 mt-2">💡 <strong>Ejemplo:</strong> Si el técnico pidió un adelanto de $50,000, primero lo registras como Ajuste. Luego, al pagarle, seleccionas ese adelanto en la Liquidación para descontarlo del pago.</p>
           </div>
         </div>
         

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useRef, useEffect, useState } from "react";
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
@@ -95,11 +95,11 @@ export default function PDFPreview({
       }
       
       // Siempre intentar cargar datos actualizados desde la BD
-      if (order.sucursal_id) {
+      if (order.branch_id) {
         const { data: updatedBranch, error: branchError } = await supabase
           .from("branches")
           .select("*")
-          .eq("id", order.sucursal_id)
+          .eq("id", order.branch_id)
           .single();
         
         if (!branchError && updatedBranch) {
@@ -1372,12 +1372,12 @@ export default function PDFPreview({
         console.log("[PDF Preview] Espacio necesario:", totalHeightNeeded, "puntos, disponible:", availableHeight, "puntos");
       }
       
-      // SIEMPRE intentar optimizar cuando hay un solo equipo y hay espacio disponible
+// SIEMPRE intentar optimizar cuando hay un solo equipo y hay espacio disponible
       if (isSingleDevice && totalHeightNeeded < maxUsableHeight) {
-        // Cuando hay un solo equipo, AUMENTAR el tamaÃ±o de fuente para ocupar TODO el espacio disponible
-        // Usar bÃºsqueda para encontrar el tamaÃ±o mÃ¡ximo que quepa
-        let minFontSize = fontSize;
-        let maxFontSize = Math.min(12, fontSize * 3); // MÃ¡ximo 12pt o el triple del tamaÃ±o actual
+        // Cuando hay un solo equipo, AUMENTAR el tamaño de fuente para ocupar TODO el espacio disponible
+        // Usar búsqueda para encontrar el tamaño máximo que quepa
+        const minFontSize = fontSize;
+        const maxFontSize = Math.min(12, fontSize * 3); // Máximo 12pt o el triple del tamaño actual
         let bestFontSize = fontSize;
         
         // Probar diferentes tamaÃ±os desde el mÃ¡ximo hacia abajo hasta encontrar el que quepa
@@ -1444,8 +1444,8 @@ export default function PDFPreview({
           }
         });
         
-      let testMaxY = Math.max(...maxYPerColumn, warrantyPanelStartY + warrantyPaddingTop);
-      let testPanelHeight = testMaxY - warrantyPanelStartY + warrantyPaddingBottom;
+      const testMaxY = Math.max(...maxYPerColumn, warrantyPanelStartY + warrantyPaddingTop);
+      const testPanelHeight = testMaxY - warrantyPanelStartY + warrantyPaddingBottom;
       
       // NO expandir el interlineado - esto causa espacio excesivo entre garantÃ­as
       // El espacio debe ser mÃ­nimo y compacto para dejar lugar a los equipos
@@ -1495,7 +1495,7 @@ export default function PDFPreview({
       warrantyText.forEach((text, index) => {
         const isLeftColumn = index % 2 === 0;
         const currentX = isLeftColumn ? leftColumnX : rightColumnX;
-        let currentY = isLeftColumn ? leftY : rightY;
+        const currentY = isLeftColumn ? leftY : rightY;
         
         // Agregar punto al inicio de cada polÃ­tica
         const textWithBullet = `â€¢ ${text}`;
@@ -1628,11 +1628,11 @@ export default function PDFPreview({
       }
       
       // Siempre intentar cargar datos actualizados desde la BD
-      if (order.sucursal_id) {
+      if (order.branch_id) {
         const { data: updatedBranch, error: branchError } = await supabase
           .from("branches")
           .select("*")
-          .eq("id", order.sucursal_id)
+          .eq("id", order.branch_id)
           .single();
         
         if (!branchError && updatedBranch) {
@@ -1969,11 +1969,11 @@ export default function PDFPreview({
       }
       
       // Siempre intentar cargar datos actualizados desde la BD
-      if (order.sucursal_id) {
+      if (order.branch_id) {
         const { data: updatedBranch, error: branchError } = await supabase
           .from("branches")
           .select("*")
-          .eq("id", order.sucursal_id)
+          .eq("id", order.branch_id)
           .single();
         
         if (!branchError && updatedBranch) {

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import type { Customer } from "@/types";
@@ -17,6 +17,24 @@ export default function CustomerSearch({ selectedCustomer, onCustomerSelect }: C
   const [loading, setLoading] = useState(false);
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
   const countryDropdownRef = useRef<HTMLDivElement>(null);
+  const [companyId, setCompanyId] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function getCompanyId() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data } = await supabase
+          .from("users")
+          .select("company_id")
+          .eq("id", user.id)
+          .single();
+        if (data?.company_id) {
+          setCompanyId(data.company_id);
+        }
+      }
+    }
+    getCompanyId();
+  }, []);
 
   // Formulario nuevo cliente
   const [newCustomer, setNewCustomer] = useState({
@@ -41,6 +59,24 @@ export default function CustomerSearch({ selectedCustomer, onCustomerSelect }: C
     return () => clearTimeout(delaySearch);
   }, [searchTerm, showForm]);
 
+  // Debug: cargar clientes iniciales
+  useEffect(() => {
+    async function loadInitialCustomers() {
+      console.log("[CustomerSearch] Cargando clientes iniciales...");
+      const { data, error } = await supabase.from("customers").select("*").limit(20);
+      if (error) {
+        console.error("[CustomerSearch] Error:", error);
+      } else {
+        console.log("[CustomerSearch] Clientes cargados:", data?.length || 0);
+        if (data && data.length > 0) {
+          setCustomers(data);
+          setShowResults(true);
+        }
+      }
+    }
+    loadInitialCustomers();
+  }, []);
+
   // Cerrar dropdown de paÃ­s al hacer click fuera
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -61,47 +97,34 @@ export default function CustomerSearch({ selectedCustomer, onCustomerSelect }: C
     }
 
     setLoading(true);
+    console.log("[CustomerSearch] Buscando:", searchTerm);
+    
     try {
-      // Usar mÃºltiples consultas para evitar problemas con .or()
-      const searchPattern = `%${searchTerm}%`;
+      const searchLower = searchTerm.toLowerCase();
       
-      // Consulta 1: Por nombre
-      const { data: nameData } = await supabase
+      // Simple query - by name containing search
+      const { data, error } = await supabase
         .from("customers")
         .select("*")
-        .ilike("name", searchPattern)
+        .or(`name.ilike.%${searchLower}%,email.ilike.%${searchLower}%,phone.ilike.%${searchLower}%`)
         .limit(10);
 
-      // Consulta 2: Por email (si no se encontrÃ³ por nombre)
-      const { data: emailData } = await supabase
-        .from("customers")
-        .select("*")
-        .ilike("email", searchPattern)
-        .limit(10);
-
-      // Consulta 3: Por telÃ©fono (si no se encontrÃ³ por nombre ni email)
-      const { data: phoneData } = await supabase
-        .from("customers")
-        .select("*")
-        .ilike("phone", searchPattern)
-        .limit(10);
-
-      // Combinar resultados Ãºnicos
-      const allResults = [
-        ...(nameData || []),
-        ...(emailData || []),
-        ...(phoneData || [])
-      ];
-
-      // Filtrar duplicados por ID
-      const uniqueCustomers = Array.from(
-        new Map(allResults.map((c) => [c.id, c])).values()
-      ).slice(0, 10);
-
-      setCustomers(uniqueCustomers);
-      setShowResults(uniqueCustomers.length > 0);
+      if (error) {
+        console.error("[CustomerSearch] Error:", error);
+        // Fallback - try simpler query
+        const { data: fallbackData } = await supabase
+          .from("customers")
+          .select("*")
+          .limit(20);
+        setCustomers(fallbackData || []);
+        setShowResults(true);
+      } else {
+        console.log("[CustomerSearch] Resultados:", data?.length || 0);
+        setCustomers(data || []);
+        setShowResults(data && data.length > 0);
+      }
     } catch (error) {
-      console.error("Error en bÃºsqueda:", error);
+      console.error("[CustomerSearch] Error:", error);
       setCustomers([]);
     } finally {
       setLoading(false);
@@ -174,6 +197,12 @@ export default function CustomerSearch({ selectedCustomer, onCustomerSelect }: C
         }
       } else {
         // Si no existe, crear el nuevo cliente
+        if (!companyId) {
+          alert("Error: No se pudo identificar la empresa. Por favor, inicia sesión nuevamente.");
+          setLoading(false);
+          return;
+        }
+
         const { data, error } = await supabase
           .from("customers")
           .insert({
@@ -183,6 +212,7 @@ export default function CustomerSearch({ selectedCustomer, onCustomerSelect }: C
             phone_country_code: newCustomer.phoneCountryCode,
             rut_document: newCustomer.rutDocument?.trim() || null,
             address: newCustomer.address?.trim() || null,
+            company_id: companyId,
           })
           .select()
           .single();
@@ -280,7 +310,7 @@ export default function CustomerSearch({ selectedCustomer, onCustomerSelect }: C
             <button
               type="button"
               onClick={() => setShowForm(true)}
-              className="px-4 py-2 bg-brand-light text-white rounded-md hover:bg-brand-dark"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
             >
               + Nuevo
             </button>
@@ -362,7 +392,7 @@ export default function CustomerSearch({ selectedCustomer, onCustomerSelect }: C
                                 type="button"
                                 onClick={() => handleCountrySelect(country)}
                                 className={`w-full text-left px-3 py-2 hover:bg-slate-50 flex items-center gap-2 ${
-                                  country.dialCode === newCustomer.phoneCountryCode ? "bg-brand-light bg-opacity-10" : ""
+                                  country.dialCode === newCustomer.phoneCountryCode ? "bg-blue-600 bg-opacity-10" : ""
                                 }`}
                               >
                                 <span className="text-lg">{country.flag}</span>
@@ -413,7 +443,7 @@ export default function CustomerSearch({ selectedCustomer, onCustomerSelect }: C
                     type="button"
                     onClick={handleCreateCustomer}
                     disabled={loading}
-                    className="px-4 py-2 bg-brand-light text-white rounded-md hover:bg-brand-dark disabled:opacity-50"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
                   >
                     {loading ? "Guardando..." : "Guardar Cliente"}
                   </button>

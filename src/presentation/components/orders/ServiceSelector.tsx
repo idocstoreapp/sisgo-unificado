@@ -32,17 +32,7 @@ export default function ServiceSelector({
 
   useEffect(() => {
     async function init() {
-      // Resolve company_id from the authenticated user's profile
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("company_id")
-        .eq("id", user.id)
-        .single();
-      const cid = profile?.company_id ?? null;
-      setCompanyId(cid);
-      if (cid) loadServices(cid);
+      loadServices();
     }
     init();
   }, []);
@@ -62,17 +52,38 @@ export default function ServiceSelector({
     setSelectedCategory(null);
   }, [deviceType, deviceModel]);
 
+  const fallbackServices: Service[] = [
+    { id: "1", name: "Cambio de Pantalla", description: null, default_price: 25000, category: "pantalla", created_at: new Date().toISOString() },
+    { id: "2", name: "Cambio de Batería", description: null, default_price: 15000, category: "bateria", created_at: new Date().toISOString() },
+    { id: "3", name: "Cambio de Cámara Frontal", description: null, default_price: 20000, category: "camara", created_at: new Date().toISOString() },
+    { id: "4", name: "Cambio de Cámara Trasera", description: null, default_price: 22000, category: "camara", created_at: new Date().toISOString() },
+    { id: "5", name: "Reparación de Carga", description: null, default_price: 12000, category: "carga", created_at: new Date().toISOString() },
+    { id: "6", name: "Software / Reset", description: null, default_price: 10000, category: "software", created_at: new Date().toISOString() },
+    { id: "7", name: "Cambio de Vidrio Templado", description: null, default_price: 18000, category: "pantalla", created_at: new Date().toISOString() },
+    { id: "8", name: "Diagnóstico", description: null, default_price: 5000, category: "mantenimiento", created_at: new Date().toISOString() },
+    { id: "9", name: "Limpieza Química", description: null, default_price: 8000, category: "mantenimiento", created_at: new Date().toISOString() },
+    { id: "10", name: "Reparación de Placa", description: null, default_price: 35000, category: "placa", created_at: new Date().toISOString() },
+    { id: "11", name: "Recuperación de Datos", description: null, default_price: 20000, category: "software", created_at: new Date().toISOString() },
+    { id: "12", name: "Cambio de Micrófono", description: null, default_price: 10000, category: "carga", created_at: new Date().toISOString() },
+  ];
+
   async function loadServices(cid?: string | null) {
-    const id = cid ?? companyId;
-    if (!id) return;
+    console.log("[ServiceSelector] Cargando servicios...");
     const { data, error } = await supabase
-      .from("catalog_services")
+      .from("services")
       .select("*")
-      .eq("company_id", id)
-      .eq("is_active", true)
       .order("name");
-    if (error) console.error("[ServiceSelector] Error cargando servicios:", error);
-    if (data) setAvailableServices(data);
+    if (error) {
+      console.error("[ServiceSelector] Error cargando servicios:", error);
+      console.log("[ServiceSelector] Usando servicios de fallback");
+      setAvailableServices(fallbackServices);
+    } else if (!data || data.length === 0) {
+      console.log("[ServiceSelector] No hay servicios en DB, usando fallback");
+      setAvailableServices(fallbackServices);
+    } else {
+      console.log("[ServiceSelector] Servicios cargados:", data.length);
+      setAvailableServices(data);
+    }
   }
 
   const filteredServices = availableServices.filter(
@@ -157,7 +168,6 @@ export default function ServiceSelector({
       return;
     }
 
-    // ProtecciÃ³n contra mÃºltiples llamadas simultÃ¡neas
     if (loading) {
       console.warn("[ServiceSelector] handleCreateService ya estÃ¡ en ejecuciÃ³n. Ignorando llamada duplicada.");
       return;
@@ -165,15 +175,12 @@ export default function ServiceSelector({
 
     setLoading(true);
     try {
-      if (!companyId) { alert("No se pudo determinar la empresa. Recarga la página."); setLoading(false); return; }
       const { data, error } = await supabase
-        .from("catalog_services")
+        .from("services")
         .insert({
-          company_id: companyId,
           name: newServiceName.trim(),
           description: null,
           default_price: 0,
-          is_active: true,
         })
         .select()
         .single();
@@ -189,22 +196,16 @@ export default function ServiceSelector({
       }
 
       if (data) {
-        // Recargar la lista de servicios disponibles
         await loadServices();
         
-        // Validar que el servicio no estÃ© ya en la lista antes de agregarlo
         if (!selectedServices.find((s) => s.id === data.id)) {
-          // Agregar el nuevo servicio a los servicios seleccionados
           handleServiceSelect(data);
-        } else {
-          console.warn(`[ServiceSelector] El servicio ${data.name} (${data.id}) ya estÃ¡ en la lista. No se agregarÃ¡ duplicado.`);
         }
         
-        // Limpiar el formulario
         setNewServiceName("");
         setShowNewServiceForm(false);
-        setSearchTerm(""); // Limpiar el tÃ©rmino de bÃºsqueda
-        setShowResults(false); // Ocultar resultados
+        setSearchTerm("");
+        setShowResults(false);
       }
     } catch (error: any) {
       console.error("Error creando servicio:", error);
@@ -234,7 +235,7 @@ export default function ServiceSelector({
         <button
           type="button"
           onClick={() => setShowNewServiceForm(true)}
-          className="px-4 py-2 bg-brand-light text-white rounded-md hover:bg-brand-dark whitespace-nowrap"
+          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 whitespace-nowrap"
         >
           + Nuevo
         </button>
@@ -363,9 +364,9 @@ export default function ServiceSelector({
               setShowNewServiceForm(true);
               setShowResults(false);
             }}
-            className="w-full px-4 py-2 bg-brand-light text-white rounded-md hover:bg-brand-dark"
+            className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
           >
-            Crear "{searchTerm}"
+            Crear &quot;{searchTerm}&quot;
           </button>
         </div>
       )}
@@ -391,7 +392,7 @@ export default function ServiceSelector({
               type="button"
               onClick={handleCreateService}
               disabled={loading}
-              className="px-4 py-2 bg-brand-light text-white rounded-md hover:bg-brand-dark disabled:opacity-50"
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
               {loading ? "Guardando..." : "Guardar"}
             </button>

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { createContext, useContext, useState, useRef, useEffect, ReactNode } from "react";
 import type { Customer, Service, DeviceType, User } from "@/types";
@@ -266,7 +266,7 @@ export function OrderWizardProvider({
           const branchSession = JSON.parse(branchSessionStr);
           if (branchSession.type === 'branch' && branchSession.branchId) {
             setLoadingResponsibleUsers(true);
-            const { data } = await supabase.from("users").select("*").eq("role", "responsable").eq("sucursal_id", branchSession.branchId).order("name");
+            const { data } = await supabase.from("users").select("*").eq("role", "responsable").eq("branch_id", branchSession.branchId).order("name");
             setResponsibleUsers(data || []);
             setLoadingResponsibleUsers(false);
           }

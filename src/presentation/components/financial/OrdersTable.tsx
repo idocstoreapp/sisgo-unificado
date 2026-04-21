@@ -101,7 +101,7 @@ export default function OrdersTable({ technicianId, refreshKey = 0, onUpdate, is
 
     // Filtrar por sucursal si se proporciona
     if (branchId) {
-      q = q.eq("sucursal_id", branchId);
+      q = q.eq("branch_id", branchId);
     }
     
     if (filters?.technicianId) {

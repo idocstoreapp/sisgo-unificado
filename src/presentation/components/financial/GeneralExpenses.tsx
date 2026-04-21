@@ -31,7 +31,7 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
   const [editingExpense, setEditingExpense] = useState<GeneralExpense | null>(null);
   const [deletingExpenseId, setDeletingExpenseId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    sucursal_id: sucursalId || "",
+    branch_id: sucursalId || "",
     tipo: "arriendo",
     tipoPersonalizado: "",
     usarTipoPersonalizado: false,
@@ -48,12 +48,12 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
     loadData();
   }, [sucursalId, refreshKey, dateFilter, showAllHistory, localDateFilter]);
 
-  // Sincronizar formData.sucursal_id con sucursalId cuando cambia (solo si no estamos editando)
+  // Sincronizar formData.branch_id con sucursalId cuando cambia (solo si no estamos editando)
   useEffect(() => {
     if (sucursalId && !editingExpense) {
       setFormData(prev => ({
         ...prev,
-        sucursal_id: sucursalId
+        branch_id: sucursalId
       }));
     }
   }, [sucursalId, editingExpense]);
@@ -79,7 +79,7 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
         `);
 
       if (sucursalId) {
-        query = query.eq("sucursal_id", sucursalId);
+        query = query.eq("branch_id", sucursalId);
       }
 
       // Aplicar filtros de fecha
@@ -105,7 +105,7 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
         .select("tipo");
       
       if (sucursalId) {
-        allExpensesQuery = allExpensesQuery.eq("sucursal_id", sucursalId);
+        allExpensesQuery = allExpensesQuery.eq("branch_id", sucursalId);
       }
 
       const { data: allExpensesData } = await allExpensesQuery;
@@ -131,7 +131,7 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
       return;
     }
 
-    if (!formData.sucursal_id) {
+    if (!formData.branch_id) {
       setError("Debes seleccionar una sucursal");
       return;
     }
@@ -158,7 +158,7 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
       const { error: insertError } = await supabase
         .from("general_expenses")
         .insert({
-          sucursal_id: formData.sucursal_id,
+          branch_id: formData.branch_id,
           user_id: user.id,
           tipo: tipoFinal,
           monto: parseFloat(formData.monto),
@@ -171,7 +171,7 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
 
       // Limpiar formulario
       setFormData({
-        sucursal_id: sucursalId || "",
+        branch_id: sucursalId || "",
         tipo: "arriendo",
         tipoPersonalizado: "",
         usarTipoPersonalizado: false,
@@ -200,7 +200,7 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
     setEditingExpense(expense);
     const tipoEsPersonalizado = !["arriendo", "internet", "luz", "agua", "facturas", "servicios"].includes(expense.tipo);
     setFormData({
-      sucursal_id: expense.sucursal_id,
+      branch_id: expense.branch_id,
       tipo: tipoEsPersonalizado ? "arriendo" : expense.tipo,
       tipoPersonalizado: tipoEsPersonalizado ? expense.tipo : "",
       usarTipoPersonalizado: tipoEsPersonalizado,
@@ -218,7 +218,7 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
 
     setError(null);
 
-    if (!formData.sucursal_id) {
+    if (!formData.branch_id) {
       setError("Debes seleccionar una sucursal");
       return;
     }
@@ -242,7 +242,7 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
       const { error: updateError } = await supabase
         .from("general_expenses")
         .update({
-          sucursal_id: formData.sucursal_id,
+          branch_id: formData.branch_id,
           tipo: tipoFinal,
           monto: parseFloat(formData.monto),
           fecha: formData.fecha,
@@ -256,7 +256,7 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
       setShowForm(false);
       setEditingExpense(null);
       setFormData({
-        sucursal_id: sucursalId || "",
+        branch_id: sucursalId || "",
         tipo: "arriendo",
         tipoPersonalizado: "",
         usarTipoPersonalizado: false,
@@ -336,10 +336,10 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
           <button
             onClick={() => {
               if (!showForm) {
-                // Al abrir el formulario, asegurar que sucursal_id esté sincronizado
+                // Al abrir el formulario, asegurar que branch_id esté sincronizado
                 setFormData(prev => ({
                   ...prev,
-                  sucursal_id: sucursalId || prev.sucursal_id
+                  branch_id: sucursalId || prev.branch_id
                 }));
               }
               setShowForm(!showForm);
@@ -414,7 +414,7 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
                 onClick={() => {
                   setEditingExpense(null);
                   setFormData({
-                    sucursal_id: sucursalId || "",
+                    branch_id: sucursalId || "",
                     tipo: "arriendo",
                     tipoPersonalizado: "",
                     usarTipoPersonalizado: false,
@@ -437,8 +437,8 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
                   Sucursal *
                 </label>
                 <select
-                  value={formData.sucursal_id}
-                  onChange={(e) => setFormData({ ...formData, sucursal_id: e.target.value })}
+                  value={formData.branch_id}
+                  onChange={(e) => setFormData({ ...formData, branch_id: e.target.value })}
                   className="w-full border border-slate-300 rounded-md px-3 py-2"
                   required
                 >

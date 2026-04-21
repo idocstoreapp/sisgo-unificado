@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
@@ -170,7 +170,7 @@ export default function ServiceQuickPicker({ value, onChange, required = false }
         )}
       </div>
 
-      <p className="text-xs text-slate-500">Tip: con 2 letras aparecen coincidencias (ej: "pa" â†’ pantalla).</p>
+      <p className="text-xs text-slate-500">Tip: con 2 letras aparecen coincidencias (ej: pa â†’ pantalla).</p>
     </div>
   );
 }

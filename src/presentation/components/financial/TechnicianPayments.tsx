@@ -11,11 +11,12 @@ import OrdersTable from "./OrdersTable";
 
 interface TechnicianPaymentsProps {
   refreshKey?: number;
-  branchId?: string; // Opcional: filtrar por sucursal
-  technicianIds?: string[]; // Opcional: lista de IDs de técnicos a mostrar
+  branchId?: string;
+  technicianIds?: string[];
+  isAdmin?: boolean;
 }
 
-export default function TechnicianPayments({ refreshKey = 0, branchId, technicianIds }: TechnicianPaymentsProps) {
+export default function TechnicianPayments({ refreshKey = 0, branchId, technicianIds, isAdmin = false }: TechnicianPaymentsProps) {
   const [technicians, setTechnicians] = useState<Profile[]>([]);
   const [technicianOptions, setTechnicianOptions] = useState<Profile[]>([]);
   const [selectedTech, setSelectedTech] = useState<string | null>(null);
@@ -118,7 +119,7 @@ export default function TechnicianPayments({ refreshKey = 0, branchId, technicia
     
     // Filtrar por sucursal si se proporciona
     if (branchId) {
-      query = query.eq("sucursal_id", branchId);
+      query = query.eq("branch_id", branchId);
     }
     
     // Filtrar por lista de IDs si se proporciona
@@ -1374,7 +1375,7 @@ export default function TechnicianPayments({ refreshKey = 0, branchId, technicia
                   <OrdersTable 
                     technicianId={tech.id} 
                     refreshKey={refreshKey}
-                    isAdmin={true}
+                    isAdmin={isAdmin}
                   />
                 </div>
               </div>

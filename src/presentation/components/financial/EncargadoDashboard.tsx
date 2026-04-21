@@ -39,15 +39,15 @@ export default function EncargadoDashboard() {
           id: profileData.id,
           name: profileData.name,
           role: profileData.role,
-          sucursal_id: profileData.sucursal_id
+          branch_id: profileData.branch_id
         });
 
         // Cargar sucursal
-        if (profileData.sucursal_id) {
+        if (profileData.branch_id) {
           const { data: branchData, error: branchError } = await supabase
             .from("branches")
             .select("*")
-            .eq("id", profileData.sucursal_id)
+            .eq("id", profileData.branch_id)
             .single();
 
           if (branchError) {
@@ -58,10 +58,10 @@ export default function EncargadoDashboard() {
             console.log("🏢 [EncargadoDashboard] Sucursal cargada:", branchData);
             setBranch(branchData as Branch);
           } else {
-            console.warn("⚠️ [EncargadoDashboard] No se encontró la sucursal con ID:", profileData.sucursal_id);
+            console.warn("⚠️ [EncargadoDashboard] No se encontró la sucursal con ID:", profileData.branch_id);
           }
         } else {
-          console.warn("⚠️ [EncargadoDashboard] El encargado no tiene sucursal_id asignado");
+          console.warn("⚠️ [EncargadoDashboard] El encargado no tiene branch_id asignado");
         }
       }
     } catch (err) {
@@ -203,7 +203,7 @@ function TechnicianPaymentsForBranch({ branchId, refreshKey }: { branchId: strin
         .from("users")
         .select("*")
         .eq("role", "technician")
-        .eq("sucursal_id", branchId)
+        .eq("branch_id", branchId)
         .order("name");
 
       if (error) {
@@ -280,7 +280,7 @@ function OrdersTableForBranch({ branchId, refreshKey }: { branchId: string; refr
         .from("users")
         .select("id")
         .eq("role", "technician")
-        .eq("sucursal_id", branchId);
+        .eq("branch_id", branchId);
       
       if (data) {
         setTechnicianIds(data.map(t => t.id));

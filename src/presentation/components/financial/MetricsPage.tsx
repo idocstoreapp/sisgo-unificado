@@ -208,7 +208,7 @@ export default function MetricsPage() {
           const { data: branchTechnicians } = await supabase
             .from("users")
             .select("id")
-            .eq("sucursal_id", branchId)
+            .eq("branch_id", branchId)
             .eq("role", "technician");
 
           const technicianIds = (branchTechnicians || []).map(t => t.id);
@@ -239,7 +239,7 @@ export default function MetricsPage() {
           while (hasMore) {
             const { data: ordersPage, error } = await supabase
               .from("orders")
-              .select("id, repair_cost, replacement_cost, commission_amount, status, paid_at, created_at, payment_method, sucursal_id")
+              .select("id, repair_cost, replacement_cost, commission_amount, status, paid_at, created_at, payment_method, branch_id")
               .in("technician_id", technicianIds)
               .eq("status", "paid")
               .not("paid_at", "is", null)
@@ -268,7 +268,7 @@ export default function MetricsPage() {
           while (hasMore) {
             const { data: ordersPage, error } = await supabase
               .from("orders")
-              .select("id, repair_cost, replacement_cost, commission_amount, status, paid_at, created_at, payment_method, sucursal_id")
+              .select("id, repair_cost, replacement_cost, commission_amount, status, paid_at, created_at, payment_method, branch_id")
               .in("technician_id", technicianIds)
               .eq("status", "paid")
               .is("paid_at", null)
@@ -300,7 +300,7 @@ export default function MetricsPage() {
           while (hasMore) {
             const { data: ordersPage, error } = await supabase
               .from("orders")
-              .select("id, repair_cost, replacement_cost, commission_amount, status, paid_at, created_at, payment_method, sucursal_id")
+              .select("id, repair_cost, replacement_cost, commission_amount, status, paid_at, created_at, payment_method, branch_id")
               .in("technician_id", technicianIds)
               .gte("created_at", start.toISOString())
               .lte("created_at", end.toISOString())
@@ -328,7 +328,7 @@ export default function MetricsPage() {
           while (hasMore) {
             const { data: ordersPage, error } = await supabase
               .from("orders")
-              .select("id, repair_cost, replacement_cost, commission_amount, status, paid_at, created_at, payment_method, sucursal_id")
+              .select("id, repair_cost, replacement_cost, commission_amount, status, paid_at, created_at, payment_method, branch_id")
               .in("technician_id", technicianIds)
               .in("status", ["returned", "cancelled"])
               .gte("created_at", start.toISOString())

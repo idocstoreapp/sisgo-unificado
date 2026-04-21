@@ -59,7 +59,7 @@ export default function SmallExpenses({ sucursalId, refreshKey = 0, dateFilter, 
           branch:branches(*),
           user:users(id, name, email)
         `)
-        .eq("sucursal_id", sucursalId);
+        .eq("branch_id", sucursalId);
 
       // Aplicar filtros de fecha
       if (!showAllHistory) {
@@ -88,7 +88,7 @@ export default function SmallExpenses({ sucursalId, refreshKey = 0, dateFilter, 
       const { data: allExpensesData } = await supabase
         .from("small_expenses")
         .select("tipo")
-        .eq("sucursal_id", sucursalId);
+        .eq("branch_id", sucursalId);
 
       const tiposUnicos = Array.from(new Set((allExpensesData || []).map(exp => exp.tipo))).filter(Boolean);
       const tiposPredefinidos = ["aseo", "mercaderia", "compras_pequenas"];
@@ -135,7 +135,7 @@ export default function SmallExpenses({ sucursalId, refreshKey = 0, dateFilter, 
       const { error: insertError } = await supabase
         .from("small_expenses")
         .insert({
-          sucursal_id: sucursalId,
+          branch_id: sucursalId,
           user_id: user.id,
           tipo: tipoFinal,
           monto: parseFloat(formData.monto),

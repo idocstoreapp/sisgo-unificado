@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 import type { FormEvent } from "react";
 import { supabase } from "@/lib/supabase";
 import { useOrderWizard } from "./OrderWizardContext";
@@ -10,8 +10,16 @@ export function useOrderSubmit(onSaved: () => void) {
   const {
     isSubmitting, loading, selectedCustomer, devices, setDevices,
     setIsSubmitting, setLoading, responsibleUserName, technicianId,
-    setCreatedOrder, setCreatedOrderServices, setShowPDFPreview
+    setCreatedOrder, setCreatedOrderServices, setShowPDFPreview,
+    priority, commitmentDate, warrantyDays
   } = context as any;
+
+  const getDeviceServiceTotal = (device: any): number => {
+    if (!device) return 0;
+    return (device.selectedServices || []).reduce((sum: number, service: any) => {
+      return sum + (device.servicePrices?.[service.id] || service.price || 0);
+    }, 0);
+  };
 
 async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -135,6 +143,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
       // Las sucursales tienen su sesiÃ³n guardada en localStorage
       let isBranch = false;
       let sucursalId: string | null = null;
+      let companyId: string | null = null;
       let branchData = null;
       let actualTechnicianId: string | null = technicianId;
 
@@ -145,7 +154,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
           try {
             const branchSession = JSON.parse(branchSessionStr);
             if (branchSession.type === 'branch' && branchSession.branchId) {
-              // Es una sucursal - usar el branchId como sucursal_id
+              // Es una sucursal - usar el branchId como branch_id
               isBranch = true;
               sucursalId = branchSession.branchId;
               actualTechnicianId = null; // Las sucursales no tienen technician_id
@@ -153,12 +162,13 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
               // Cargar datos completos de la sucursal
               const { data: branch, error: branchError } = await supabase
                 .from("branches")
-                .select("*")
+                .select("*, companies!inner(id)")
                 .eq("id", sucursalId)
                 .single();
               
               if (!branchError && branch) {
                 branchData = branch;
+                companyId = branch.companies?.id || branch.company_id;
               }
             }
           } catch (e) {
@@ -171,7 +181,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
       if (!isBranch) {
         const { data: tech, error: techError } = await supabase
           .from("users")
-          .select("sucursal_id")
+          .select("branch_id, company_id")
           .eq("id", technicianId)
           .maybeSingle(); // Usar maybeSingle en lugar de single para evitar error si no existe
 
@@ -193,18 +203,20 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
             // Cargar datos completos de la sucursal
             const { data: branch, error: branchError } = await supabase
               .from("branches")
-              .select("*")
+              .select("*, companies!inner(id)")
               .eq("id", sucursalId)
               .single();
             
             if (!branchError && branch) {
               branchData = branch;
+              companyId = branch.companies?.id || branch.company_id;
             }
           } else {
             throw techError;
           }
         } else {
-          sucursalId = tech?.sucursal_id || null;
+          sucursalId = tech?.branch_id || null;
+          companyId = tech?.company_id || null;
           
           // Cargar datos completos de la sucursal por separado
           if (sucursalId) {
@@ -255,23 +267,36 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
       }));
 
       // Preparar datos de inserciÃ³n para la orden Ãºnica
-      // NOTA: Dejamos order_number como NULL para que el trigger de la BD lo genere automÃ¡ticamente
+      // Generar nÃºmero de orden - FORMA EXPLÃ�CITA
+      const year = new Date().getFullYear();
+      const randomNum = Math.floor(Math.random() * 9000) + 1000;
+      const orderNumber: string = "OT-" + year + "-" + randomNum;
+      
+      console.log("[OrderForm] Generando orderNumber:", orderNumber);
+      
       const orderData: any = {
-        order_number: null, // El trigger de BD lo generarÃ¡ automÃ¡ticamente
+        company_id: companyId,
+        business_type: "servicio_tecnico",
+        order_number: orderNumber,
         customer_id: selectedCustomer.id,
-        technician_id: actualTechnicianId, // NULL para sucursales, technicianId para usuarios normales
-        sucursal_id: sucursalId,
-        // Datos del primer equipo (equipo principal)
-        device_type: firstDevice.deviceType || "iphone",
-        device_model: firstDevice.deviceModel,
-        device_serial_number: firstDevice.deviceSerial || null,
-        device_unlock_code: firstDevice.unlockType === "code" ? firstDevice.deviceUnlockCode : null,
-        problem_description: firstDevice.problemDescription,
-        checklist_data: firstDevice.checklistData,
+        assigned_to: actualTechnicianId, // NULL para sucursales, technicianId para usuarios normales
+        branch_id: sucursalId,
+        // Datos del primer equipo (equipo principal) en metadata
+        metadata: {
+          device_type: firstDevice.deviceType || "iphone",
+          device_model: firstDevice.deviceModel,
+          device_serial_number: firstDevice.deviceSerial || null,
+          device_unlock_code: firstDevice.unlockType === "code" ? firstDevice.deviceUnlockCode : null,
+          device_unlock_pattern: firstDevice.unlockType === "pattern" && firstDevice.deviceUnlockPattern.length > 0 ? firstDevice.deviceUnlockPattern : null,
+          problem_description: firstDevice.problemDescription,
+          checklist_data: firstDevice.checklistData || {},
+          // Equipos adicionales
+          devices_data: additionalDevices.length > 0 ? additionalDevices : null,
+        },
         // Totales combinados de todos los equipos
         replacement_cost: totalReplacementCost,
         labor_cost: totalLaborCost,
-        total_repair_cost: totalRepairCost,
+        total_cost: totalRepairCost,
         priority,
         commitment_date: commitmentDate || null,
         warranty_days: warrantyDays,
@@ -300,12 +325,21 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         orderData.device_unlock_pattern = firstDevice.deviceUnlockPattern;
       }
 
+      // Asegurar que order_number estÃ© presente
+      if (!orderData.order_number) {
+        orderData.order_number = orderNumber;
+      }
+
       // Crear la orden Ãºnica
       console.log("[OrderForm] Creando orden con datos:", {
         ...orderData,
         responsible_user_name: orderData.responsible_user_name || "NULL (no es sucursal)",
         isBranchSession
       });
+      
+      // Debug: verificar orderNumber
+      console.log("[OrderForm] orderNumber:", orderNumber, "type:", typeof orderNumber);
+      console.log("[OrderForm] orderData.order_number:", orderData.order_number);
       
       const { data: order, error: orderError } = await supabase
         .from("work_orders")

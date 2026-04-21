@@ -61,6 +61,7 @@ export interface Service {
   image_url?: string | null;
   category_image_url?: string | null;
   created_at: string;
+  is_active?: boolean;
 }
 
 export interface DeviceChecklistItem {

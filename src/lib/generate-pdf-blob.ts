@@ -31,11 +31,11 @@ export async function generatePDFBlob(
   // Cargar datos actualizados de la sucursal desde la base de datos
   // Esto asegura que el PDF siempre refleje los datos más recientes de la sucursal
   let branchData = order.sucursal;
-  if (order.sucursal_id) {
+  if (order.branch_id) {
     const { data: updatedBranch } = await supabase
       .from("branches")
       .select("*")
-      .eq("id", order.sucursal_id)
+      .eq("id", order.branch_id)
       .single();
     
     if (updatedBranch) {

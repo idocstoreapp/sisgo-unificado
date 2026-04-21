@@ -1,11 +1,7 @@
-﻿"use client";
-/**
- * Orders list component with filters and actions
- */
-
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/presentation/components/ui/button";
 import { Input } from "@/presentation/components/ui/input";
 import {
@@ -17,104 +13,173 @@ import {
 } from "@/presentation/components/ui/select";
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, PRIORITY_LABELS, PRIORITY_COLORS } from "@/shared/constants";
 import type { OrderStatus, Priority } from "@/shared/kernel/types";
+import Link from "next/link";
 
-// Placeholder data
-const placeholderOrders = [
-  {
-    id: "1",
-    orderNumber: "OT-2026-0001",
-    customerName: "Juan PÃ©rez",
-    businessType: "servicio_tecnico",
-    status: "en_proceso" as OrderStatus,
-    priority: "urgente" as Priority,
-    totalPrice: 150000,
-    commitmentDate: new Date("2026-04-15"),
-    createdAt: new Date("2026-04-10"),
-    isOverdue: false,
-    isPaid: false,
-  },
-  {
-    id: "2",
-    orderNumber: "OT-2026-0002",
-    customerName: "MarÃ­a GonzÃ¡lez",
-    businessType: "servicio_tecnico",
-    status: "por_entregar" as OrderStatus,
-    priority: "media" as Priority,
-    totalPrice: 85000,
-    commitmentDate: new Date("2026-04-12"),
-    createdAt: new Date("2026-04-08"),
-    isOverdue: true,
-    isPaid: true,
-  },
-  {
-    id: "3",
-    orderNumber: "OT-2026-0003",
-    customerName: "Carlos Rivas",
-    businessType: "servicio_tecnico",
-    status: "entregada" as OrderStatus,
-    priority: "baja" as Priority,
-    totalPrice: 45000,
-    commitmentDate: null,
-    createdAt: new Date("2026-04-05"),
-    isOverdue: false,
-    isPaid: true,
-  },
-];
+interface WorkOrder {
+  id: string;
+  order_number: string;
+  customer_id: string;
+  branch_id: string | null;
+  assigned_to: string | null;
+  business_type: string;
+  status: string;
+  priority: string;
+  commitment_date: string | null;
+  created_at: string;
+  total_price: number;
+  replacement_cost: number;
+  labor_cost: number;
+  paid_at: string | null;
+}
+
+interface CustomerMap {
+  [key: string]: string;
+}
 
 export function OrdersList() {
+  const [orders, setOrders] = useState<WorkOrder[]>([]);
+  const [customers, setCustomers] = useState<CustomerMap>({});
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
+  const [branchFilter, setBranchFilter] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState<string>("");
+  const [dateTo, setDateTo] = useState<string>("");
 
-  const filteredOrders = placeholderOrders.filter((order) => {
-    const matchesSearch =
-      order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.customerName.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === "all" || order.status === statusFilter;
-    const matchesPriority = priorityFilter === "all" || order.priority === priorityFilter;
-    return matchesSearch && matchesStatus && matchesPriority;
-  });
+  const loadCustomers = useCallback(async () => {
+    const { data } = await supabase.from("customers").select("id, name");
+    if (data) {
+      const map: CustomerMap = {};
+      data.forEach((c: any) => { map[c.id] = c.name; });
+      setCustomers(map);
+    }
+  }, []);
+
+  const loadOrders = useCallback(async () => {
+    setLoading(true);
+    try {
+      let query = supabase
+        .from("work_orders")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(200);
+
+      if (statusFilter !== "all") {
+        query = query.eq("status", statusFilter);
+      }
+
+      if (priorityFilter !== "all") {
+        query = query.eq("priority", priorityFilter);
+      }
+
+      if (branchFilter !== "all") {
+        query = query.eq("branch_id", branchFilter);
+      }
+
+      if (dateFrom) {
+        const from = new Date(dateFrom);
+        from.setHours(0, 0, 0, 0);
+        query = query.gte("created_at", from.toISOString());
+      }
+
+      if (dateTo) {
+        const to = new Date(dateTo);
+        to.setHours(23, 59, 59, 999);
+        query = query.lte("created_at", to.toISOString());
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error("Error loading orders:", error);
+      } else {
+        setOrders(data || []);
+      }
+    } catch (error) {
+      console.error("Error loading orders:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [statusFilter, priorityFilter, branchFilter, dateFrom, dateTo]);
+
+  const loadBranches = useCallback(async () => {
+    const { data } = await supabase
+      .from("branches")
+      .select("id, name")
+      .order("name");
+    if (data) setBranches(data);
+  }, []);
+
+  useEffect(() => {
+    loadCustomers();
+  }, [loadCustomers]);
+
+  useEffect(() => {
+    loadOrders();
+  }, [loadOrders]);
+
+  useEffect(() => {
+    loadBranches();
+  }, [loadBranches]);
 
   function formatCLP(amount: number): string {
     return new Intl.NumberFormat("es-CL", {
       style: "currency",
       currency: "CLP",
       minimumFractionDigits: 0,
-    }).format(amount);
+    }).format(amount || 0);
   }
 
-  function formatDate(date: Date | null): string {
+  function formatDate(date: string | null): string {
     if (!date) return "-";
     return new Intl.DateTimeFormat("es-CL", {
       day: "numeric",
       month: "short",
       year: "numeric",
-    }).format(date);
+    }).format(new Date(date));
   }
+
+  function isOverdue(order: WorkOrder): boolean {
+    if (!order.commitment_date) return false;
+    const commitment = new Date(order.commitment_date);
+    const now = new Date();
+    return (
+      order.status !== "entregada" &&
+      order.status !== "rechazada" &&
+      commitment < now
+    );
+  }
+
+  const filteredOrders = orders.filter((order) => {
+    const matchesSearch =
+      !searchQuery ||
+      order.order_number.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
+  });
 
   return (
     <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">Ã“rdenes de Trabajo</h2>
-          <p className="text-muted-foreground">Gestiona las Ã³rdenes de servicio</p>
+          <h2 className="text-2xl font-bold text-foreground">Órdenes de Trabajo</h2>
+          <p className="text-muted-foreground">Gestiona las órdenes de servicio</p>
         </div>
         <Button asChild>
-          <a href="/orders/new">+ Nueva Orden</a>
+          <Link href="/orders/new">+ Nueva Orden</Link>
         </Button>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
         <Input
-          placeholder="Buscar por nÃºmero o cliente..."
+          placeholder="Buscar por número..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="max-w-md"
+          className="max-w-xs"
         />
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[200px]">
+          <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Estado" />
           </SelectTrigger>
           <SelectContent>
@@ -127,11 +192,11 @@ export function OrdersList() {
           </SelectContent>
         </Select>
         <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-          <SelectTrigger className="w-full sm:w-[200px]">
+          <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="Prioridad" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todas las prioridades</SelectItem>
+            <SelectItem value="all">Todas</SelectItem>
             {Object.entries(PRIORITY_LABELS).map(([key, label]) => (
               <SelectItem key={key} value={key}>
                 {label}
@@ -139,80 +204,107 @@ export function OrdersList() {
             ))}
           </SelectContent>
         </Select>
+        <Select value={branchFilter} onValueChange={setBranchFilter}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Sucursal" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas las sucursales</SelectItem>
+            {branches.map((branch) => (
+              <SelectItem key={branch.id} value={branch.id}>
+                {branch.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Orders table */}
       <div className="bg-card border border-border rounded-xl overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-muted">
-              <tr>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">NÂ° Orden</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground">Cliente</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground hidden md:table-cell">Estado</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground hidden lg:table-cell">Prioridad</th>
-                <th className="text-left p-4 text-sm font-medium text-muted-foreground hidden sm:table-cell">Fecha LÃ­mite</th>
-                <th className="text-right p-4 text-sm font-medium text-muted-foreground">Total</th>
-                <th className="text-right p-4 text-sm font-medium text-muted-foreground">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {filteredOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-accent/50 transition-colors">
-                  <td className="p-4">
-                    <span className="font-mono text-sm font-medium text-foreground">{order.orderNumber}</span>
-                    {order.isOverdue && (
-                      <span className="ml-2 text-xs text-destructive">âš ï¸ Vencida</span>
-                    )}
-                  </td>
-                  <td className="p-4 text-foreground">{order.customerName}</td>
-                  <td className="p-4 hidden md:table-cell">
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${ORDER_STATUS_COLORS[order.status]}`}>
-                      {ORDER_STATUS_LABELS[order.status]}
-                    </span>
-                  </td>
-                  <td className="p-4 hidden lg:table-cell">
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${PRIORITY_COLORS[order.priority]}`}>
-                      {PRIORITY_LABELS[order.priority]}
-                    </span>
-                  </td>
-                  <td className="p-4 text-sm text-muted-foreground hidden sm:table-cell">
-                    {formatDate(order.commitmentDate)}
-                  </td>
-                  <td className="p-4 text-right font-medium text-foreground">
-                    {formatCLP(order.totalPrice)}
-                  </td>
-                  <td className="p-4 text-right">
-                    <Button variant="ghost" size="sm" asChild>
-                      <a href={`/orders/${order.id}`}>Ver</a>
-                    </Button>
-                  </td>
+        {loading ? (
+          <div className="text-center py-12 text-muted-foreground">Cargando...</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-muted">
+                <tr>
+                  <th className="text-left p-3 text-sm font-medium">N° Orden</th>
+                  <th className="text-left p-3 text-sm font-medium">Cliente</th>
+                  <th className="text-left p-3 text-sm font-medium hidden md:table-cell">Estado</th>
+                  <th className="text-left p-3 text-sm font-medium hidden lg:table-cell">Prioridad</th>
+                  <th className="text-left p-3 text-sm font-medium hidden sm:table-cell">Fecha Límite</th>
+                  <th className="text-right p-3 text-sm font-medium">Total</th>
+                  <th className="text-right p-3 text-sm font-medium">Acciones</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {filteredOrders.length === 0 && (
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filteredOrders.map((order) => (
+                  <tr key={order.id} className="hover:bg-accent/50 transition-colors">
+                    <td className="p-3">
+                      <span className="font-mono text-sm font-medium">{order.order_number}</span>
+                    </td>
+                    <td className="p-3">
+                      <div className="text-sm font-medium">
+                        {customers[order.customer_id] || "Cliente #" + order.customer_id?.slice(0, 8)}
+                      </div>
+                    </td>
+                    <td className="p-3 hidden md:table-cell">
+                      <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${ORDER_STATUS_COLORS[order.status as OrderStatus] || "bg-gray-100"}`}>
+                        {ORDER_STATUS_LABELS[order.status as OrderStatus] || order.status}
+                      </span>
+                    </td>
+                    <td className="p-3 hidden lg:table-cell">
+                      <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${PRIORITY_COLORS[order.priority as Priority] || "bg-gray-100"}`}>
+                        {PRIORITY_LABELS[order.priority as Priority] || order.priority}
+                      </span>
+                    </td>
+                    <td className="p-3 text-sm hidden sm:table-cell">
+                      <span className={isOverdue(order) ? "text-red-600 font-medium" : ""}>
+                        {formatDate(order.commitment_date)}
+                      </span>
+                      {isOverdue(order) && (
+                        <span className="ml-1 text-xs">⚠️</span>
+                      )}
+                    </td>
+                    <td className="p-3 text-right font-medium">
+                      {formatCLP(order.total_price)}
+                      {order.paid_at && (
+                        <div className="text-xs text-green-600">Pagado</div>
+                      )}
+                    </td>
+                    <td className="p-3 text-right">
+                      <Button variant="ghost" size="sm" asChild>
+                        <Link href={`/orders/${order.id}`}>Ver</Link>
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {filteredOrders.length === 0 && !loading && (
           <div className="text-center py-12 text-muted-foreground">
-            No hay Ã³rdenes que coincidan con los filtros
+            No hay órdenes que coincidan con los filtros
           </div>
         )}
       </div>
 
-      {/* Summary stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {[
-          { label: "En Proceso", count: placeholderOrders.filter((o) => o.status === "en_proceso").length, color: "bg-yellow-500" },
-          { label: "Por Entregar", count: placeholderOrders.filter((o) => o.status === "por_entregar").length, color: "bg-blue-500" },
-          { label: "Entregadas", count: placeholderOrders.filter((o) => o.status === "entregada").length, color: "bg-green-500" },
-          { label: "Vencidas", count: placeholderOrders.filter((o) => o.isOverdue).length, color: "bg-red-500" },
+          { label: "En Proceso", status: "en_proceso", color: "bg-yellow-500" },
+          { label: "Por Entregar", status: "por_entregar", color: "bg-blue-500" },
+          { label: "Entregada", status: "entregada", color: "bg-green-500" },
+          { label: "Rechazada", status: "rechazada", color: "bg-red-500" },
+          { label: "Garantía", status: "garantia", color: "bg-purple-500" },
         ].map((stat) => (
           <div key={stat.label} className="bg-card border border-border rounded-xl p-4">
             <div className="flex items-center gap-2 mb-1">
               <div className={`w-2 h-2 rounded-full ${stat.color}`} />
               <span className="text-sm text-muted-foreground">{stat.label}</span>
             </div>
-            <p className="text-2xl font-bold text-foreground">{stat.count}</p>
+            <p className="text-2xl font-bold">
+              {orders.filter((o) => o.status === stat.status).length}
+            </p>
           </div>
         ))}
       </div>
