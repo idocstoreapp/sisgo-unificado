@@ -77,7 +77,7 @@ export default function CustomerSearch({ selectedCustomer, onCustomerSelect }: C
     loadInitialCustomers();
   }, []);
 
-  // Cerrar dropdown de paÃ­s al hacer click fuera
+  // Cerrar dropdown de país al hacer click fuera
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (countryDropdownRef.current && !countryDropdownRef.current.contains(event.target as Node)) {
@@ -138,7 +138,7 @@ export default function CustomerSearch({ selectedCustomer, onCustomerSelect }: C
     }
 
     if (!newCustomer.name || !newCustomer.email || !newCustomer.phone) {
-      alert("Por favor completa nombre, email y telÃ©fono");
+      alert("Por favor completa nombre, email y teléfono");
       return;
     }
 
@@ -147,7 +147,7 @@ export default function CustomerSearch({ selectedCustomer, onCustomerSelect }: C
       const email = newCustomer.email.trim().toLowerCase();
       const phone = newCustomer.phone.trim();
 
-      // Primero verificar si ya existe un cliente con ese email y telÃ©fono
+      // Primero verificar si ya existe un cliente con ese email y teléfono
       const { data: existingCustomer, error: searchError } = await supabase
         .from("customers")
         .select("*")
@@ -164,7 +164,7 @@ export default function CustomerSearch({ selectedCustomer, onCustomerSelect }: C
 
       if (existingCustomer) {
         // Si el cliente ya existe, usar el existente
-        // Pero actualizar los campos que puedan haber cambiado (nombre, direcciÃ³n, RUT)
+        // Pero actualizar los campos que puedan haber cambiado (nombre, dirección, RUT)
         const updates: any = {};
         if (newCustomer.name.trim() !== existingCustomer.name) {
           updates.name = newCustomer.name.trim();
@@ -187,7 +187,7 @@ export default function CustomerSearch({ selectedCustomer, onCustomerSelect }: C
 
           if (updateError) {
             console.error("Error actualizando cliente:", updateError);
-            // Si falla la actualizaciÃ³n, usar el cliente existente tal cual
+            // Si falla la actualización, usar el cliente existente tal cual
             customerData = existingCustomer;
           } else {
             customerData = updatedCustomer;
@@ -283,7 +283,7 @@ export default function CustomerSearch({ selectedCustomer, onCustomerSelect }: C
           <div>
             <p className="font-medium text-slate-900">{selectedCustomer.name}</p>
             <p className="text-sm text-slate-600">
-              {selectedCustomer.email} â€¢ {getCountryByDialCode(selectedCustomer.phone_country_code || "+56")?.flag} {selectedCustomer.phone_country_code || "+56"} {selectedCustomer.phone}
+              {selectedCustomer.email} • {getCountryByDialCode(selectedCustomer.phone_country_code || "+56")?.flag} {selectedCustomer.phone_country_code || "+56"} {selectedCustomer.phone}
             </p>
           </div>
           <button
@@ -303,7 +303,7 @@ export default function CustomerSearch({ selectedCustomer, onCustomerSelect }: C
             <input
               type="text"
               className="flex-1 border border-slate-300 rounded-md px-3 py-2"
-              placeholder="Buscar cliente por nombre, email o telÃ©fono..."
+              placeholder="Buscar cliente por nombre, email o teléfono..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -334,7 +334,7 @@ export default function CustomerSearch({ selectedCustomer, onCustomerSelect }: C
                   >
                     <p className="font-medium text-slate-900">{customer.name}</p>
                     <p className="text-sm text-slate-600">
-                      {customer.email} â€¢ {customerCountry?.flag} {customer.phone_country_code || "+56"} {customer.phone}
+                      {customer.email} • {customerCountry?.flag} {customer.phone_country_code || "+56"} {customer.phone}
                     </p>
                   </button>
                 );
@@ -372,7 +372,7 @@ export default function CustomerSearch({ selectedCustomer, onCustomerSelect }: C
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">TelÃ©fono *</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Teléfono *</label>
                     <div className="flex gap-2">
                       <div className="relative" ref={countryDropdownRef}>
                         <button
@@ -382,7 +382,7 @@ export default function CustomerSearch({ selectedCustomer, onCustomerSelect }: C
                         >
                           <span className="text-lg">{selectedCountry.flag}</span>
                           <span className="text-sm">{selectedCountry.dialCode}</span>
-                          <span className="ml-auto text-xs">â–¼</span>
+                          <span className="ml-auto text-xs">▼</span>
                         </button>
                         {showCountryDropdown && (
                           <div className="absolute z-50 mt-1 w-64 bg-white border border-slate-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
@@ -422,7 +422,7 @@ export default function CustomerSearch({ selectedCustomer, onCustomerSelect }: C
                     />
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-slate-700 mb-1">DirecciÃ³n</label>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Dirección</label>
                     <input
                       type="text"
                       className="w-full border border-slate-300 rounded-md px-3 py-2"

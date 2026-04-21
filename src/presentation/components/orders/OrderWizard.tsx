@@ -107,7 +107,7 @@ export default function OrderWizard({ companyId, branchId, onSuccess, onCancel }
       validationErrors.push("Todos los dispositivos deben tener tipo y modelo");
     }
     if (devices.some(d => !d.problemDescription)) {
-      validationErrors.push("Todos los dispositivos deben tener descripciÃ³n del problema");
+      validationErrors.push("Todos los dispositivos deben tener descripción del problema");
     }
     if (devices.some(d => d.selectedServices.length === 0)) {
       validationErrors.push("Todos los dispositivos deben tener al menos un servicio");
@@ -236,7 +236,7 @@ export default function OrderWizard({ companyId, branchId, onSuccess, onCancel }
             {[
               { step: 1, label: "Cliente" },
               { step: 2, label: "Dispositivos" },
-              { step: 3, label: "ConfiguraciÃ³n" },
+              { step: 3, label: "Configuración" },
             ].map(({ step, label }) => (
               <div key={step} className="flex items-center flex-1">
                 <div
@@ -246,7 +246,7 @@ export default function OrderWizard({ companyId, branchId, onSuccess, onCancel }
                       : "bg-gray-300 text-gray-600"
                   }`}
                 >
-                  {currentStep > step ? "âœ“" : step}
+                  {currentStep > step ? "✓" : step}
                 </div>
                 <div className="ml-2 font-semibold text-gray-700">{label}</div>
                 {step < 3 && (
@@ -296,7 +296,7 @@ export default function OrderWizard({ companyId, branchId, onSuccess, onCancel }
                 disabled={!selectedCustomer}
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Siguiente â†’
+                Siguiente →
               </button>
             </div>
           </div>
@@ -348,13 +348,13 @@ export default function OrderWizard({ companyId, branchId, onSuccess, onCancel }
                 onClick={() => setCurrentStep(1)}
                 className="px-6 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
               >
-                â† Anterior
+                ← Anterior
               </button>
               <button
                 onClick={() => setCurrentStep(3)}
                 className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
               >
-                Siguiente â†’
+                Siguiente →
               </button>
             </div>
           </div>
@@ -363,7 +363,7 @@ export default function OrderWizard({ companyId, branchId, onSuccess, onCancel }
         {/* Step 3: Order Settings */}
         {currentStep === 3 && (
           <div className="bg-white rounded-xl shadow-lg p-6">
-            <h2 className="text-2xl font-bold mb-4">Paso 3: ConfiguraciÃ³n de Orden</h2>
+            <h2 className="text-2xl font-bold mb-4">Paso 3: Configuración de Orden</h2>
             
             {/* Priority */}
             <div className="mb-4">
@@ -402,7 +402,7 @@ export default function OrderWizard({ companyId, branchId, onSuccess, onCancel }
 
             {/* Warranty Days */}
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">DÃ­as de GarantÃ­a</label>
+              <label className="block text-sm font-medium mb-2">Días de Garantía</label>
               <input
                 type="number"
                 value={warrantyDays}
@@ -427,14 +427,14 @@ export default function OrderWizard({ companyId, branchId, onSuccess, onCancel }
                 onClick={() => setCurrentStep(2)}
                 className="px-6 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
               >
-                â† Anterior
+                ← Anterior
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={loading}
                 className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
               >
-                {loading ? "Creando..." : "Crear Orden âœ“"}
+                {loading ? "Creando..." : "Crear Orden ✓"}
               </button>
             </div>
           </div>
@@ -492,7 +492,7 @@ function DeviceConfiguration({
 
       {/* Serial Number */}
       <div>
-        <label className="block text-sm font-medium mb-2">NÃºmero de Serie (opcional)</label>
+        <label className="block text-sm font-medium mb-2">Número de Serie (opcional)</label>
         <input
           type="text"
           value={device.deviceSerial}
@@ -516,7 +516,7 @@ function DeviceConfiguration({
             onClick={() => onUpdate({ unlockType: "code" })}
             className={`px-3 py-1 rounded ${device.unlockType === "code" ? "bg-blue-600 text-white" : "bg-gray-200"}`}
           >
-            CÃ³digo
+            Código
           </button>
           <button
             onClick={() => {
@@ -525,7 +525,7 @@ function DeviceConfiguration({
             }}
             className={`px-3 py-1 rounded ${device.unlockType === "pattern" ? "bg-blue-600 text-white" : "bg-gray-200"}`}
           >
-            PatrÃ³n
+            Patrón
           </button>
         </div>
         {device.unlockType === "code" && (
@@ -533,7 +533,7 @@ function DeviceConfiguration({
             type="text"
             value={device.deviceUnlockCode}
             onChange={(e) => onUpdate({ deviceUnlockCode: e.target.value })}
-            placeholder="CÃ³digo de desbloqueo..."
+            placeholder="Código de desbloqueo..."
             className="w-full px-4 py-2 border border-gray-300 rounded-lg"
           />
         )}
@@ -541,7 +541,7 @@ function DeviceConfiguration({
 
       {/* Problem Description */}
       <div>
-        <label className="block text-sm font-medium mb-2">DescripciÃ³n del Problema *</label>
+        <label className="block text-sm font-medium mb-2">Descripción del Problema *</label>
         <textarea
           value={device.problemDescription}
           onChange={(e) => onUpdate({ problemDescription: e.target.value })}
@@ -561,7 +561,7 @@ function DeviceConfiguration({
           onClick={() => setShowChecklist(true)}
           className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
         >
-          âœ“ Checklist de Dispositivo
+          ✓ Checklist de Dispositivo
         </button>
         {Object.keys(device.checklistData).length > 0 && (
           <p className="text-sm text-gray-600 mt-2">
@@ -576,7 +576,7 @@ function DeviceConfiguration({
           onClick={() => setShowServiceSelector(true)}
           className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
         >
-          ðŸ”§ Seleccionar Servicios
+          🔧 Seleccionar Servicios
         </button>
         {device.selectedServices.length > 0 && (
           <div className="mt-2 p-3 bg-indigo-50 rounded">
@@ -634,7 +634,7 @@ function DeviceConfiguration({
           <div className="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold">Checklist - {device.deviceType}</h2>
-              <button onClick={() => setShowChecklist(false)} className="text-gray-500 hover:text-gray-700 text-xl">âœ•</button>
+              <button onClick={() => setShowChecklist(false)} className="text-gray-500 hover:text-gray-700 text-xl">✕</button>
             </div>
             <DeviceChecklist
               deviceType={device.deviceType}
@@ -655,7 +655,7 @@ function DeviceConfiguration({
           <div className="bg-white rounded-xl p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold">Seleccionar Servicios</h2>
-              <button onClick={() => setShowServiceSelector(false)} className="text-gray-500 hover:text-gray-700 text-xl">âœ•</button>
+              <button onClick={() => setShowServiceSelector(false)} className="text-gray-500 hover:text-gray-700 text-xl">✕</button>
             </div>
             <ServiceSelector
               selectedServices={device.selectedServices}

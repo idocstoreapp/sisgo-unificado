@@ -6,7 +6,7 @@ interface PatternViewerProps {
   size?: number;
 }
 
-// Posiciones de los 9 puntos del patrÃ³n (grid 3x3)
+// Posiciones de los 9 puntos del patrón (grid 3x3)
 const PATTERN_POSITIONS = [
   { id: 1, x: 50, y: 50 },
   { id: 2, x: 150, y: 50 },
@@ -33,7 +33,7 @@ export default function PatternViewer({ pattern, size = 300 }: PatternViewerProp
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Asegurar tamaÃ±o del canvas
+    // Asegurar tamaño del canvas
     canvas.width = size;
     canvas.height = size;
 
@@ -45,7 +45,7 @@ export default function PatternViewer({ pattern, size = 300 }: PatternViewerProp
       ctx.save();
       ctx.scale(scale, scale);
 
-      // Dibujar lÃ­neas hasta el punto actual
+      // Dibujar líneas hasta el punto actual
       ctx.strokeStyle = "#3b82f6";
       ctx.lineWidth = 4;
       for (let i = 0; i < currentIndex; i++) {
@@ -63,13 +63,13 @@ export default function PatternViewer({ pattern, size = 300 }: PatternViewerProp
       PATTERN_POSITIONS.forEach((point) => {
         const isSelected = pattern.slice(0, currentIndex + 1).includes(point.id);
         
-        // CÃ­rculo exterior
+        // Círculo exterior
         ctx.fillStyle = isSelected ? "#3b82f6" : "#e5e7eb";
         ctx.beginPath();
         ctx.arc(point.x, point.y, POINT_RADIUS, 0, 2 * Math.PI);
         ctx.fill();
 
-        // CÃ­rculo interior
+        // Círculo interior
         ctx.fillStyle = isSelected ? "#ffffff" : "#9ca3af";
         ctx.beginPath();
         ctx.arc(point.x, point.y, POINT_RADIUS - 8, 0, 2 * Math.PI);
@@ -88,14 +88,14 @@ export default function PatternViewer({ pattern, size = 300 }: PatternViewerProp
       return;
     }
 
-    // Reiniciar animaciÃ³n cuando cambia el patrÃ³n
+    // Reiniciar animación cuando cambia el patrón
     setCurrentIndex(0);
     
     let timeoutId: NodeJS.Timeout;
     const animate = () => {
       setCurrentIndex((prev) => {
         if (prev >= pattern.length - 1) {
-          // Reiniciar despuÃ©s de una pausa
+          // Reiniciar después de una pausa
           timeoutId = setTimeout(() => {
             setCurrentIndex(0);
           }, 500);

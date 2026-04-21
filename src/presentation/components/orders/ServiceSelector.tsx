@@ -99,14 +99,14 @@ export default function ServiceSelector({
 
   const hasSelectedDevice = Boolean(deviceType && deviceModel.trim());
   const fallbackServiceCategories = [
-    { key: "pantalla", label: "Pantalla", icon: "ðŸ–¥ï¸", pattern: /pantalla|glass|tactil/i },
-    { key: "bateria", label: "BaterÃ­a", icon: "ðŸ”‹", pattern: /bateria|baterÃ­a/i },
-    { key: "camara", label: "CÃ¡mara", icon: "ðŸ“·", pattern: /camara|cÃ¡mara|face id/i },
-    { key: "carga", label: "Carga", icon: "ðŸ”Œ", pattern: /carga|conector|pin|base/i },
-    { key: "software", label: "Software", icon: "ðŸ§ ", pattern: /software|reseteo|google|frp|actualizaciÃ³n|actualizacion|virus/i },
-    { key: "mantenimiento", label: "MantenciÃ³n", icon: "ðŸ§°", pattern: /limpieza|mantencion|manten|diagnostico|diagnÃ³stico|baÃ±o quimico/i },
-    { key: "placa", label: "Placa", icon: "ðŸ§©", pattern: /placa|fpc|sensores|sim|flex/i },
-    { key: "otros", label: "Otros", icon: "âš™ï¸", pattern: /.*/i },
+    { key: "pantalla", label: "Pantalla", icon: "🖥️", pattern: /pantalla|glass|tactil/i },
+    { key: "bateria", label: "Batería", icon: "🔋", pattern: /bateria|batería/i },
+    { key: "camara", label: "Cámara", icon: "📷", pattern: /camara|cámara|face id/i },
+    { key: "carga", label: "Carga", icon: "🔌", pattern: /carga|conector|pin|base/i },
+    { key: "software", label: "Software", icon: "🧠", pattern: /software|reseteo|google|frp|actualización|actualizacion|virus/i },
+    { key: "mantenimiento", label: "Mantención", icon: "🧰", pattern: /limpieza|mantencion|manten|diagnostico|diagnóstico|baño quimico/i },
+    { key: "placa", label: "Placa", icon: "🧩", pattern: /placa|fpc|sensores|sim|flex/i },
+    { key: "otros", label: "Otros", icon: "⚙️", pattern: /.*/i },
   ];
 
   const categorizedByDb = availableServices.reduce<Record<string, { key: string; label: string; icon: string; imageUrl: string | null; services: Service[] }>>((acc, service) => {
@@ -116,7 +116,7 @@ export default function ServiceSelector({
       acc[key] = {
         key,
         label: service.category as string,
-        icon: "ðŸ› ï¸",
+        icon: "🛠️",
         imageUrl: service.category_image_url || null,
         services: [],
       };
@@ -141,16 +141,16 @@ export default function ServiceSelector({
   const selectedCategoryData = servicesByCategory.find((category) => category.key === selectedCategory);
 
   function handleServiceSelect(service: Service) {
-    // Validar que el servicio no estÃ© ya en la lista (protecciÃ³n contra duplicados)
+    // Validar que el servicio no esté ya en la lista (protección contra duplicados)
     if (selectedServices.find((s) => s.id === service.id)) {
-      console.warn(`[ServiceSelector] Servicio ${service.name} (${service.id}) ya estÃ¡ en la lista. Ignorando duplicado.`);
+      console.warn(`[ServiceSelector] Servicio ${service.name} (${service.id}) ya está en la lista. Ignorando duplicado.`);
       setSearchTerm("");
       setShowResults(false);
       if (inputRef.current) inputRef.current.focus();
       return;
     }
 
-    // Agregar el servicio solo si no estÃ¡ duplicado
+    // Agregar el servicio solo si no está duplicado
     onServicesChange([...selectedServices, service]);
     setSearchTerm("");
     setShowResults(false);
@@ -169,7 +169,7 @@ export default function ServiceSelector({
     }
 
     if (loading) {
-      console.warn("[ServiceSelector] handleCreateService ya estÃ¡ en ejecuciÃ³n. Ignorando llamada duplicada.");
+      console.warn("[ServiceSelector] handleCreateService ya está en ejecución. Ignorando llamada duplicada.");
       return;
     }
 
@@ -221,7 +221,7 @@ export default function ServiceSelector({
         <input
           ref={inputRef}
           type="text"
-          className="flex-1 rounded-xl border border-indigo-200 px-3 py-2 shadow-sm focus:border-indigo-400 focus:outline-none"
+          className="flex-1 rounded-xl border border-slate-200 px-3 py-2 shadow-sm focus:border-slate-400 focus:outline-none"
           placeholder="Buscar o escribir nombre de servicio..."
           value={searchTerm}
           onChange={(e) => {
@@ -235,23 +235,23 @@ export default function ServiceSelector({
         <button
           type="button"
           onClick={() => setShowNewServiceForm(true)}
-          className="whitespace-nowrap rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 font-medium text-white shadow-md shadow-indigo-500/30 hover:brightness-110"
+          className="whitespace-nowrap rounded-xl bg-gradient-to-r from-slate-600 to-zinc-600 px-4 py-2 font-medium text-white shadow-md shadow-slate-500/30 hover:brightness-110"
         >
           + Nuevo
         </button>
       </div>
 
       {!hasSelectedDevice && (
-        <div className="mb-3 p-3 rounded-md border border-amber-200 bg-amber-50 text-amber-800 text-sm">
-          Â¿Servicios para quÃ© dispositivo? Primero selecciona tipo y modelo en el asistente de dispositivo.
+        <div className="mb-3 p-3 rounded-md border border-stone-200 bg-stone-50 text-stone-800 text-sm">
+          ¿Servicios para qué dispositivo? Primero selecciona tipo y modelo en el asistente de dispositivo.
         </div>
       )}
 
       {hasSelectedDevice && (
-        <div className="mb-3 rounded-2xl border border-indigo-100 bg-gradient-to-b from-white to-indigo-50/60 p-3">
+        <div className="mb-3 rounded-2xl border border-slate-100 bg-gradient-to-b from-white to-slate-50/60 p-3">
           {!selectedCategory && (
             <>
-              <p className="text-xs font-semibold text-slate-700 mb-2">Â¿QuÃ© tipo de servicio necesitas?</p>
+              <p className="text-xs font-semibold text-slate-700 mb-2">¿Qué tipo de servicio necesitas?</p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {servicesByCategory
                   .filter((category) => category.services.length > 0)
@@ -260,7 +260,7 @@ export default function ServiceSelector({
                       key={`category-${category.key}`}
                       type="button"
                       onClick={() => setSelectedCategory(category.key)}
-                      className="rounded-2xl border border-indigo-200 bg-white px-3 py-2 text-left text-xs text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-indigo-400 hover:bg-indigo-50"
+                      className="rounded-2xl border border-slate-200 bg-white px-3 py-2 text-left text-xs text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-400 hover:bg-slate-50"
                     >
                       {category.imageUrl ? (
                         <img src={category.imageUrl} alt={category.label} className="h-10 w-full object-cover rounded-md mb-1" loading="lazy" />
@@ -282,7 +282,7 @@ export default function ServiceSelector({
                 <button
                   type="button"
                   onClick={() => setSelectedCategory(null)}
-                  className="text-xs font-medium underline text-indigo-700"
+                  className="text-xs font-medium underline text-slate-700"
                 >
                   Cambiar tipo
                 </button>
@@ -293,7 +293,7 @@ export default function ServiceSelector({
                     key={`category-service-${service.id}`}
                     type="button"
                     onClick={() => handleServiceSelect(service)}
-                    className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs text-emerald-800 shadow-sm hover:bg-emerald-100"
+                    className="rounded-full border border-zinc-200 bg-zinc-50 px-3 py-1.5 text-xs text-zinc-800 shadow-sm hover:bg-zinc-100"
                   >
                     {service.image_url ? <img src={service.image_url} alt={service.name} className="inline-block h-4 w-4 rounded-full object-cover mr-1" loading="lazy" /> : null}
                     + {service.name}
@@ -314,7 +314,7 @@ export default function ServiceSelector({
                 key={`recommended-${service.id}`}
                 type="button"
                 onClick={() => handleServiceSelect(service)}
-                className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 shadow-sm hover:bg-blue-100"
+                className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-100"
               >
                 + {service.name}
               </button>
@@ -326,7 +326,7 @@ export default function ServiceSelector({
       {showResults && searchTerm && filteredServices.length > 0 && (
         <div className="absolute z-20 w-full mt-1 bg-white border border-slate-200 rounded-md shadow-lg max-h-60 overflow-y-auto">
           {filteredServices.map((service) => {
-            // Verificar si el servicio ya estÃ¡ seleccionado (protecciÃ³n adicional)
+            // Verificar si el servicio ya está seleccionado (protección adicional)
             const isAlreadySelected = selectedServices.some(s => s.id === service.id);
             
             return (
@@ -356,7 +356,7 @@ export default function ServiceSelector({
 
       {showResults && searchTerm && filteredServices.length === 0 && !showNewServiceForm && (
         <div className="absolute z-20 w-full mt-1 bg-white border border-slate-200 rounded-md shadow-lg p-4">
-          <p className="text-slate-600 text-center mb-2">No se encontrÃ³ el servicio</p>
+          <p className="text-slate-600 text-center mb-2">No se encontró el servicio</p>
           <button
             type="button"
             onClick={() => {
@@ -364,7 +364,7 @@ export default function ServiceSelector({
               setShowNewServiceForm(true);
               setShowResults(false);
             }}
-            className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            className="w-full px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
           >
             Crear &quot;{searchTerm}&quot;
           </button>
@@ -392,7 +392,7 @@ export default function ServiceSelector({
               type="button"
               onClick={handleCreateService}
               disabled={loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
+              className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50"
             >
               {loading ? "Guardando..." : "Guardar"}
             </button>
@@ -418,7 +418,7 @@ export default function ServiceSelector({
               <button
                 type="button"
                 onClick={() => onServicesChange(selectedServices.filter((s) => s.id !== service.id))}
-                className="text-red-600 hover:text-red-800 text-sm font-medium"
+                className="text-gray-600 hover:text-gray-800 text-sm font-medium"
               >
                 Eliminar
               </button>

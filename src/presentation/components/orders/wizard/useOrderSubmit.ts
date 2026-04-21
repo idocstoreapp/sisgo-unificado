@@ -24,7 +24,7 @@ export function useOrderSubmit(onSaved: () => void) {
 async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     
-    // ProtecciÃ³n contra mÃºltiples submits
+    // Protección contra múltiples submits
     if (isSubmitting || loading) {
       console.warn("Submit ya en progreso, ignorando llamada duplicada");
       return;
@@ -42,19 +42,19 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
       const equipoNum = index + 1;
       const camposFaltantes: string[] = [];
       
-      // Validar modelo del dispositivo (no vacÃ­o y no solo espacios)
+      // Validar modelo del dispositivo (no vacío y no solo espacios)
       if (!device.deviceModel || !device.deviceModel.trim()) {
         camposFaltantes.push("Dispositivo (Marca y Modelo)");
       }
       
-      // Validar descripciÃ³n del problema (no vacÃ­o y no solo espacios)
+      // Validar descripción del problema (no vacío y no solo espacios)
       if (!device.problemDescription || !device.problemDescription.trim()) {
-        camposFaltantes.push("DescripciÃ³n del Problema");
+        camposFaltantes.push("Descripción del Problema");
       }
       
-      // Validar descripciÃ³n no exceda el lÃ­mite
+      // Validar descripción no exceda el límite
       if (device.problemDescription && device.problemDescription.length > MAX_DESCRIPTION_LENGTH) {
-        camposFaltantes.push(`DescripciÃ³n excede ${MAX_DESCRIPTION_LENGTH} caracteres`);
+        camposFaltantes.push(`Descripción excede ${MAX_DESCRIPTION_LENGTH} caracteres`);
       }
       
       // Validar servicios seleccionados
@@ -62,7 +62,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         camposFaltantes.push("Servicios");
       }
       
-      // Validar que cada servicio tenga un precio vÃ¡lido
+      // Validar que cada servicio tenga un precio válido
       const serviciosSinPrecio: string[] = [];
       device.selectedServices.forEach(service => {
         const precio = device.servicePrices[service.id];
@@ -101,12 +101,12 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
             isBranchSession = true;
             // Es una sucursal - validar que se haya ingresado un nombre (puede ser de la lista o texto libre)
             if (!responsibleUserName || responsibleUserName.trim() === "") {
-              alert("Por favor ingresa el nombre del responsable de recibir el equipo. Este campo es obligatorio para crear Ã³rdenes desde sucursales.");
+              alert("Por favor ingresa el nombre del responsable de recibir el equipo. Este campo es obligatorio para crear órdenes desde sucursales.");
               return;
             }
           }
         } catch (error) {
-          console.error("Error validando sesiÃ³n de sucursal:", error);
+          console.error("Error validando sesión de sucursal:", error);
         }
       }
     }
@@ -130,7 +130,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     });
     
     if (invalidChecklists.length > 0) {
-      alert(`Por favor selecciona una opciÃ³n para todos los items del checklist.\n${invalidChecklists.join("\n")}`);
+      alert(`Por favor selecciona una opción para todos los items del checklist.\n${invalidChecklists.join("\n")}`);
       return;
     }
 
@@ -140,14 +140,14 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     try {
 
       // Verificar si es una sucursal (no tiene usuario en auth.users)
-      // Las sucursales tienen su sesiÃ³n guardada en localStorage
+      // Las sucursales tienen su sesión guardada en localStorage
       let isBranch = false;
       let sucursalId: string | null = null;
       let companyId: string | null = null;
       let branchData = null;
       let actualTechnicianId: string | null = technicianId;
 
-      // Verificar si hay sesiÃ³n de sucursal en localStorage
+      // Verificar si hay sesión de sucursal en localStorage
       if (typeof window !== 'undefined') {
         const branchSessionStr = localStorage.getItem('branchSession');
         if (branchSessionStr) {
@@ -186,7 +186,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
           .maybeSingle(); // Usar maybeSingle en lugar de single para evitar error si no existe
 
         if (techError) {
-          // Si el error es porque no existe el usuario, podrÃ­a ser una sucursal
+          // Si el error es porque no existe el usuario, podría ser una sucursal
           // Intentar verificar si es una sucursal por el ID
           const { data: branchCheck, error: branchCheckError } = await supabase
             .from("branches")
@@ -266,8 +266,8 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         })),
       }));
 
-      // Preparar datos de inserciÃ³n para la orden Ãºnica
-      // Generar nÃºmero de orden - FORMA EXPLÃ�CITA
+      // Preparar datos de inserción para la orden única
+      // Generar número de orden - FORMA EXPLÍCITA
       const year = new Date().getFullYear();
       const randomNum = Math.floor(Math.random() * 9000) + 1000;
       const orderNumber: string = "OT-" + year + "-" + randomNum;
@@ -301,9 +301,9 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         commitment_date: commitmentDate || null,
         warranty_days: warrantyDays,
         status: "en_proceso",
-        // Almacenar equipos adicionales en JSONB (si hay mÃ¡s de un equipo)
-        // Nota: Si el campo devices_data no existe en la BD, simplemente no se guardarÃ¡
-        // pero el cÃ³digo seguirÃ¡ funcionando con all_devices en memoria
+        // Almacenar equipos adicionales en JSONB (si hay más de un equipo)
+        // Nota: Si el campo devices_data no existe en la BD, simplemente no se guardará
+        // pero el código seguirá funcionando con all_devices en memoria
         ...(additionalDevices.length > 0 ? { devices_data: additionalDevices } : {}),
         // Agregar nombre del encargado responsable
         // Si es sucursal, el campo debe estar presente (ya validado arriba)
@@ -313,24 +313,24 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
           : {}),
       };
       
-      // ValidaciÃ³n final de seguridad: si es sucursal, el campo debe estar en orderData
+      // Validación final de seguridad: si es sucursal, el campo debe estar en orderData
       if (isBranchSession && !orderData.responsible_user_name) {
-        console.error("[OrderForm] ERROR CRÃTICO: Es sucursal pero responsible_user_name no estÃ¡ en orderData");
+        console.error("[OrderForm] ERROR CRÍTICO: Es sucursal pero responsible_user_name no está en orderData");
         alert("Error: El nombre del encargado responsable es obligatorio. Por favor ingresa el nombre e intenta nuevamente.");
         return;
       }
 
-      // Agregar device_unlock_pattern solo si existe la columna y hay un patrÃ³n
+      // Agregar device_unlock_pattern solo si existe la columna y hay un patrón
       if (firstDevice.unlockType === "pattern" && firstDevice.deviceUnlockPattern.length > 0) {
         orderData.device_unlock_pattern = firstDevice.deviceUnlockPattern;
       }
 
-      // Asegurar que order_number estÃ© presente
+      // Asegurar que order_number esté presente
       if (!orderData.order_number) {
         orderData.order_number = orderNumber;
       }
 
-      // Crear la orden Ãºnica
+      // Crear la orden única
       console.log("[OrderForm] Creando orden con datos:", {
         ...orderData,
         responsible_user_name: orderData.responsible_user_name || "NULL (no es sucursal)",
@@ -370,14 +370,14 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
       
       // Validar que hay servicios antes de guardar
       if (!firstDevice.selectedServices || firstDevice.selectedServices.length === 0) {
-        console.warn("[OrderForm] ADVERTENCIA: El primer equipo no tiene servicios seleccionados. No se guardarÃ¡n servicios en order_services.");
+        console.warn("[OrderForm] ADVERTENCIA: El primer equipo no tiene servicios seleccionados. No se guardarán servicios en order_services.");
       } else {
         for (const service of firstDevice.selectedServices) {
           const servicePrice = firstDevice.servicePrices[service.id] || 0;
           
-          // Validar que el precio sea vÃ¡lido
+          // Validar que el precio sea válido
           if (!servicePrice || servicePrice <= 0 || isNaN(servicePrice)) {
-            console.error(`[OrderForm] Error: El servicio ${service.name} no tiene un precio vÃ¡lido (${servicePrice}). Saltando...`);
+            console.error(`[OrderForm] Error: El servicio ${service.name} no tiene un precio válido (${servicePrice}). Saltando...`);
             continue;
           }
           
@@ -437,7 +437,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         ...createdOrder,
         customer: selectedCustomer,
         sucursal: branchData,
-        // Incluir informaciÃ³n de todos los equipos para el PDF
+        // Incluir información de todos los equipos para el PDF
         all_devices: devices.map((device, index) => {
           const deviceServices = device.selectedServices.map(s => ({
             id: s.id,
@@ -471,7 +471,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
       console.log("[OrderForm] all_devices construido:", orderWithRelations.all_devices);
       
       // Construir orderServices para el PDF (todos los servicios de todos los equipos)
-      // Incluir la descripciÃ³n del servicio para que no se repita la descripciÃ³n del problema
+      // Incluir la descripción del servicio para que no se repita la descripción del problema
       const orderServicesForPDF: Array<{
         quantity: number;
         unit_price: number;
@@ -494,7 +494,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         });
       });
       
-      // Mostrar Ã©xito inmediatamente
+      // Mostrar éxito inmediatamente
       // IMPORTANTE: Resetear isSubmitting ANTES de mostrar el preview para evitar duplicaciones
       setIsSubmitting(false);
       setLoading(false);
@@ -503,7 +503,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
       setCreatedOrderServices(orderServicesForPDF);
       setShowPDFPreview(true);
       const devicesCount = devices.length;
-      alert(`Orden creada exitosamente con ${devicesCount} equipo${devicesCount === 1 ? '' : 's'}. Se abrirÃ¡ la vista previa del PDF.`);
+      alert(`Orden creada exitosamente con ${devicesCount} equipo${devicesCount === 1 ? '' : 's'}. Se abrirá la vista previa del PDF.`);
       
       // Enviar email al cliente en segundo plano (no bloquear)
       // Usar setTimeout para que no bloquee la UI
@@ -523,7 +523,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
             }
           }
 
-          // Generar PDF con el mismo diseÃ±o que se usa en la vista previa (todos los equipos)
+          // Generar PDF con el mismo diseño que se usa en la vista previa (todos los equipos)
           // Recopilar todos los servicios de todos los equipos
           const allServices = devices.flatMap(device => device.selectedServices);
           
@@ -537,8 +537,8 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
             totalReplacementCost, // Total de repuestos de todos los equipos
             warrantyDays,
             firstDevice.checklistData, // Checklist del primer equipo (para compatibilidad)
-            [], // notes vacÃ­o para nueva orden
-            orderServicesForPDF // Pasar orderServices para que el PDF tenga la misma informaciÃ³n detallada
+            [], // notes vacío para nueva orden
+            orderServicesForPDF // Pasar orderServices para que el PDF tenga la misma información detallada
           );
 
           // Intentar subir PDF a Supabase Storage primero
@@ -584,7 +584,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
           // Asegurarse de que tenemos al menos uno de los dos
           if (!pdfUrl && !pdfBase64) {
             console.error("[ORDER FORM] No se pudo generar ni URL ni base64 del PDF");
-            // Intentar generar base64 una vez mÃ¡s como Ãºltimo recurso
+            // Intentar generar base64 una vez más como último recurso
             try {
               pdfBase64 = await new Promise<string>((resolve, reject) => {
                 const reader = new FileReader();
@@ -600,19 +600,19 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
             }
           }
 
-          // Evitar payloads demasiado grandes (Vercel devuelve 413 antes de ejecutar la funciÃ³n)
-          // 2.5M chars base64 â‰ˆ 1.8MB binario, dejando margen para el resto del JSON
+          // Evitar payloads demasiado grandes (Vercel devuelve 413 antes de ejecutar la función)
+          // 2.5M chars base64 ≈ 1.8MB binario, dejando margen para el resto del JSON
           const MAX_BASE64_PAYLOAD_LENGTH = 2_500_000;
           if (pdfBase64 && pdfBase64.length > MAX_BASE64_PAYLOAD_LENGTH) {
-            console.warn("[ORDER FORM] PDF en base64 demasiado grande para enviar en request, se enviarÃ¡ email sin adjunto", {
+            console.warn("[ORDER FORM] PDF en base64 demasiado grande para enviar en request, se enviará email sin adjunto", {
               base64Length: pdfBase64.length,
               maxAllowed: MAX_BASE64_PAYLOAD_LENGTH,
             });
             pdfBase64 = null;
           }
 
-          // Enviar email incluso sin PDF para no perder la notificaciÃ³n al cliente
-          console.log("[ORDER FORM] Enviando email de creaciÃ³n de orden:", createdOrder.order_number);
+          // Enviar email incluso sin PDF para no perder la notificación al cliente
+          console.log("[ORDER FORM] Enviando email de creación de orden:", createdOrder.order_number);
           const emailResponse = await fetch('/api/send-order-email', {
               method: 'POST',
               headers: {
@@ -622,8 +622,8 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
                 to: selectedCustomer.email,
                 customerName: selectedCustomer.name,
                 orderNumber: createdOrder.order_number,
-                pdfBase64: pdfBase64, // Puede ser null si se subiÃ³ a storage
-                pdfUrl: pdfUrl, // URL del PDF si se subiÃ³ exitosamente
+                pdfBase64: pdfBase64, // Puede ser null si se subió a storage
+                pdfUrl: pdfUrl, // URL del PDF si se subió exitosamente
                 branchName: updatedBranchData?.name || branchData?.name,
                 branchEmail: updatedBranchData?.email || branchData?.email,
               }),
@@ -648,7 +648,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
                 errorData = { error: `Error ${emailResponse.status}: ${emailResponse.statusText}`, status: emailResponse.status };
               }
               console.error("[ORDER FORM] Error enviando email:", errorData);
-              // No mostrar alerta aquÃ­, solo loguear el error
+              // No mostrar alerta aquí, solo loguear el error
             } else {
               let successData: any = {};
               try {
@@ -666,10 +666,10 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
               }
               console.log("[ORDER FORM] Email enviado exitosamente:", successData);
             }        } catch (emailError: any) {
-          console.error("[ORDER FORM] ExcepciÃ³n al enviar email:", emailError);
+          console.error("[ORDER FORM] Excepción al enviar email:", emailError);
           // No mostrar error al usuario, solo loguear
         }
-      }, 100); // PequeÃ±o delay para no bloquear la UI
+      }, 100); // Pequeño delay para no bloquear la UI
     } catch (error: any) {
       console.error("Error creando orden:", error);
       alert(`Error: ${error.message}`);
@@ -689,4 +689,3 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
 
   return { handleSubmit };
 }
-

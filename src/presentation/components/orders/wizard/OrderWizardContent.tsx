@@ -46,7 +46,7 @@ function AdaptiveWizardCardImage({ src, alt }: { src: string; alt: string }) {
 
 // Interfaz para un equipo individual
 interface DeviceItem {
-  id: string; // ID ÃƒÆ’Ã‚Âºnico para cada equipo
+  id: string; // ID único para cada equipo
   deviceType: DeviceType | null;
   deviceModel: string;
   deviceSerial: string;
@@ -106,7 +106,7 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
   const deviceSuggestionsRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const keepScrollPosition = (fn: () => void) => { if (typeof window === "undefined") { fn(); return; } if (document.activeElement instanceof HTMLElement) document.activeElement.blur(); const currentScrollY = window.scrollY; fn(); const restore = () => { if (wizardPanelRef.current) wizardPanelRef.current.focus({ preventScroll: true }); window.scrollTo({ top: currentScrollY, behavior: "auto" }); }; requestAnimationFrame(() => { restore(); setTimeout(restore, 15); setTimeout(restore, 100); }); };
   const getWizardStep = (deviceId: string): number => wizardStepByDevice[deviceId] ?? 1; const getFlowStep = (deviceId: string): 1 | 2 | 3 => flowStepByDevice[deviceId] ?? 1; const isDeviceFinalized = (deviceId: string): boolean => Boolean(finalizedDeviceById[deviceId]);
-  const wizardCardButtonClass = "group relative overflow-hidden rounded-2xl border border-indigo-100 bg-gradient-to-b from-white to-indigo-50/60 p-2 text-left shadow-[0_18px_35px_-28px_rgba(79,70,229,0.55)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_40px_-24px_rgba(79,70,229,0.45)] min-h-[320px]";
+  const wizardCardButtonClass = "group relative overflow-hidden rounded-2xl border border-slate-100 bg-gradient-to-b from-white to-slate-50/60 p-2 text-left shadow-[0_18px_35px_-28px_rgba(15,23,42,0.18)] transition hover:-translate-y-0.5 hover:shadow-[0_22px_40px_-24px_rgba(15,23,42,0.14)] min-h-[320px]";
   const wizardCardInnerTextClass = "text-sm font-semibold text-slate-900";
 
   // Cerrar sugerencias al hacer click fuera (para todos los equipos)
@@ -138,7 +138,7 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
       if (branchSessionStr) {
         try {
           const branchSession = JSON.parse(branchSessionStr);
-          // Si hay sesiÃƒÆ’Ã‚Â³n de sucursal, cargar responsables de esa sucursal
+          // Si hay sesión de sucursal, cargar responsables de esa sucursal
           if (branchSession.type === 'branch' && branchSession.branchId) {
             const sucursalId = branchSession.branchId;
             console.log("[OrderForm] Cargando responsables para sucursal:", sucursalId);
@@ -159,8 +159,8 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
             console.log("[OrderForm] DEBUG - Tipo de sucursalId:", typeof sucursalId);
             
             if (allError) {
-              console.error("[OrderForm] ERROR CRÃƒÆ’Ã‚ÂTICO - No se pueden leer responsables debido a RLS:", allError);
-              console.error("[OrderForm] CÃƒÆ’Ã‚Â³digo de error:", allError.code);
+              console.error("[OrderForm] ERROR CRÍTICO - No se pueden leer responsables debido a RLS:", allError);
+              console.error("[OrderForm] Código de error:", allError.code);
               console.error("[OrderForm] Mensaje:", allError.message);
               console.error("[OrderForm] Detalles:", allError.details);
               console.error("[OrderForm] Hint:", allError.hint);
@@ -176,7 +176,7 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
 
             if (error) {
               console.error("[OrderForm] Error cargando responsables filtrados:", error);
-              console.error("[OrderForm] CÃƒÆ’Ã‚Â³digo de error:", error.code);
+              console.error("[OrderForm] Código de error:", error.code);
               console.error("[OrderForm] Mensaje:", error.message);
               console.error("[OrderForm] Detalles:", error.details);
               console.error("[OrderForm] Hint:", error.hint);
@@ -191,7 +191,7 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
                   branch_id_type: typeof u.branch_id
                 })));
               } else {
-                // Si no hay responsables, mostrar informaciÃƒÆ’Ã‚Â³n de debug
+                // Si no hay responsables, mostrar información de debug
                 console.warn("[OrderForm] No se encontraron responsables para sucursal:", sucursalId);
                 if (allResponsables && allResponsables.length > 0) {
                   console.warn("[OrderForm] Pero hay responsables en el sistema con estos branch_id:", 
@@ -204,8 +204,8 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
                     }))
                   );
                 } else {
-                  console.error("[OrderForm] PROBLEMA: No se pueden leer responsables. Esto indica que las polÃƒÆ’Ã‚Â­ticas RLS estÃƒÆ’Ã‚Â¡n bloqueando la consulta.");
-                  console.error("[OrderForm] SOLUCIÃƒÆ’Ã¢â‚¬Å“N: Ejecuta el script fix_users_rls_simple.sql en Supabase SQL Editor");
+                  console.error("[OrderForm] PROBLEMA: No se pueden leer responsables. Esto indica que las políticas RLS están bloqueando la consulta.");
+                  console.error("[OrderForm] SOLUCIÓN: Ejecuta el script fix_users_rls_simple.sql en Supabase SQL Editor");
                 }
               }
               setResponsibleUsers(data || []);
@@ -213,7 +213,7 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
             setLoadingResponsibleUsers(false);
           }
         } catch (error) {
-          console.error("[OrderForm] Error parseando sesiÃƒÆ’Ã‚Â³n de sucursal:", error);
+          console.error("[OrderForm] Error parseando sesión de sucursal:", error);
           setLoadingResponsibleUsers(false);
         }
       }
@@ -228,7 +228,7 @@ return (
     <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-6 space-y-6">
       <h2 className="text-2xl font-bold text-slate-900">Nueva Orden de Trabajo</h2>
 
-      {/* SelecciÃƒÆ’Ã‚Â³n de Cliente */}
+      {/* Selección de Cliente */}
       <div>
         <label className="block text-sm font-medium text-slate-700 mb-2">
           Cliente *
@@ -239,9 +239,9 @@ return (
         />
       </div>
 
-      {/* Equipos - Mostrar cada equipo en una secciÃƒÆ’Ã‚Â³n separada */}
+      {/* Equipos - Mostrar cada equipo en una sección separada */}
       {devices.map((device, deviceIndex) => (
-        <div key={device.id} className="rounded-3xl border border-indigo-100 bg-gradient-to-b from-white via-indigo-50/30 to-slate-100/60 p-6 shadow-[0_28px_50px_-36px_rgba(79,70,229,0.55)]">
+        <div key={device.id} className="rounded-3xl border border-slate-100 bg-gradient-to-b from-white via-slate-50/30 to-slate-100/60 p-6 shadow-[0_28px_50px_-36px_rgba(15,23,42,0.18)]">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-bold text-slate-900">
               Equipo {deviceIndex + 1}
@@ -250,19 +250,19 @@ return (
               <button
                 type="button"
                 onClick={() => removeDevice(device.id)}
-                className="px-3 py-1 text-sm text-red-600 border border-red-300 rounded-md hover:bg-red-50"
+                className="px-3 py-1 text-sm text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
               >
-                ÃƒÂ°Ã…Â¸Ã¢â‚¬â€Ã¢â‚¬ËœÃƒÂ¯Ã‚Â¸Ã‚Â Eliminar Equipo
+                Eliminar equipo
               </button>
             )}
           </div>
 
-          {/* InformaciÃƒÆ’Ã‚Â³n del Dispositivo */}
+          {/* Información del Dispositivo */}
           {!isDeviceFinalized(device.id) && (
           <>
           {(!device.deviceModel || manualEditOpenByDevice[device.id]) ? (
-          <div ref={wizardPanelRef} tabIndex={-1} className="mb-4 rounded-2xl border border-indigo-100 bg-white p-4 shadow-[0_12px_35px_-30px_rgba(79,70,229,0.65)]">
-            <h4 className="mb-3 text-sm font-semibold uppercase tracking-wide text-indigo-700">Asistente rápido</h4>
+          <div ref={wizardPanelRef} tabIndex={-1} className="mb-4 rounded-2xl border border-slate-100 bg-white p-4 shadow-[0_12px_35px_-30px_rgba(15,23,42,0.22)]">
+            <h4 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-700">Asistente rápido</h4>
             {!manualEntryByDevice[device.id] && (
               <div className="mb-3">
                 <button
@@ -273,9 +273,9 @@ return (
                     setWizardStepByDevice((prev) => ({ ...prev, [device.id]: 6 }));
                     updateDevice(device.id, { deviceType: null, deviceModel: "" });
                   }}
-                  className="rounded-xl border border-indigo-200 px-3 py-2 text-sm font-medium text-indigo-700 transition hover:bg-indigo-50"
+                  className="rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                 >
-                  Ãƒâ€šÃ‚Â¿No encuentras el dispositivo? EscrÃƒÆ’Ã‚Â­belo manual
+                  ¿No encuentras el dispositivo? Escríbelo manual
                 </button>
               </div>
             )}
@@ -283,8 +283,8 @@ return (
               <>
                 <p className="mb-3 text-xl font-semibold text-slate-700">1) ¿Qué dispositivo vas a recibir?</p>
                 {!catalogLoaded ? (
-                  <div className="mb-4 rounded-xl border border-indigo-100 bg-indigo-50 px-4 py-3 text-sm text-indigo-700">
-                    Cargando catÃƒÆ’Ã‚Â¡logo de dispositivos...
+                  <div className="mb-4 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                    Cargando catálogo de dispositivos...
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
@@ -310,7 +310,7 @@ return (
               <>
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-xl font-semibold text-slate-700">2) ¿Qué marca de {wizardTypeOptions.find((option) => option.id === device.deviceType)?.label.toLowerCase()}?</p>
-                  <button type="button" className="text-xs font-medium underline text-indigo-700" onClick={() => setWizardStepByDevice((prev) => ({ ...prev, [device.id]: 1 }))}>
+                  <button type="button" className="text-xs font-medium underline text-slate-700" onClick={() => setWizardStepByDevice((prev) => ({ ...prev, [device.id]: 1 }))}>
                     Volver
                   </button>
                 </div>
@@ -337,7 +337,7 @@ return (
                   <p className="text-xl font-semibold text-slate-700">3) Selecciona serie / línea</p>
                   <button
                     type="button"
-                    className="text-xs font-medium underline text-indigo-700"
+                    className="text-xs font-medium underline text-slate-700"
                     onClick={() => {
                       keepScrollPosition(() => {
                         setSelectedBrandByDevice((prev) => ({ ...prev, [device.id]: null }));
@@ -381,7 +381,7 @@ return (
                   <p className="text-xl font-semibold text-slate-700">4) Modelo exacto</p>
                   <button
                     type="button"
-                    className="text-xs font-medium underline text-indigo-700"
+                    className="text-xs font-medium underline text-slate-700"
                     onClick={() => {
                       keepScrollPosition(() => {
                         setWizardStepByDevice((prev) => ({ ...prev, [device.id]: 3 }));
@@ -427,25 +427,25 @@ return (
                     );
                   })}
                 </div>
-                <div className="mt-3 rounded-xl border border-dashed border-indigo-300 bg-indigo-50/40 p-3">
-                  <p className="text-xs font-semibold text-slate-700 mb-2">Ãƒâ€šÃ‚Â¿No aparece? AgrÃƒÆ’Ã‚Â©galo al catÃƒÆ’Ã‚Â¡logo</p>
+                <div className="mt-3 rounded-xl border border-dashed border-slate-300 bg-slate-50/40 p-3">
+                  <p className="text-xs font-semibold text-slate-700 mb-2">¿No aparece? Agrégalo al catálogo</p>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                     <input
                       value={customCatalogFormByDevice[device.id]?.model ?? ""}
                       onChange={(e) => setCustomCatalogFormByDevice((prev) => ({ ...prev, [device.id]: { ...(prev[device.id] ?? { model: "", variant: "" }), model: e.target.value } }))}
-                      className="rounded-lg border border-indigo-200 px-2 py-1.5 text-sm"
+                      className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
                       placeholder="Modelo (ej: S24)"
                     />
                     <input
                       value={customCatalogFormByDevice[device.id]?.variant ?? ""}
                       onChange={(e) => setCustomCatalogFormByDevice((prev) => ({ ...prev, [device.id]: { ...(prev[device.id] ?? { model: "", variant: "" }), variant: e.target.value } }))}
-                      className="rounded-lg border border-indigo-200 px-2 py-1.5 text-sm"
+                      className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
                       placeholder="Variante (opcional)"
                     />
                     <button
                       type="button"
                       onClick={() => addCustomModelToCatalog(device)}
-                      className="rounded-lg bg-gradient-to-r from-indigo-600 to-violet-600 px-3 py-1.5 text-sm font-medium text-white hover:brightness-110"
+                      className="rounded-lg bg-gradient-to-r from-slate-600 to-zinc-600 px-3 py-1.5 text-sm font-medium text-white hover:brightness-110"
                     >
                       Guardar y usar
                     </button>
@@ -460,7 +460,7 @@ return (
                   <p className="text-xl font-semibold text-slate-700">5) Variante</p>
                   <button
                     type="button"
-                    className="text-xs font-medium underline text-indigo-700"
+                    className="text-xs font-medium underline text-slate-700"
                     onClick={() => setWizardStepByDevice((prev) => ({ ...prev, [device.id]: 4 }))}
                   >
                     Volver
@@ -511,15 +511,15 @@ return (
             )}
           </div>
           ) : (
-            <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 flex items-center justify-between gap-3">
+            <div className="mb-4 rounded-xl border border-zinc-200 bg-zinc-50 p-3 flex items-center justify-between gap-3">
               <div>
-                <p className="text-xs uppercase tracking-wide text-emerald-700 font-semibold">Dispositivo seleccionado</p>
-                <p className="text-sm font-semibold text-emerald-900">{device.deviceModel}</p>
+                <p className="text-xs uppercase tracking-wide text-zinc-700 font-semibold">Dispositivo seleccionado</p>
+                <p className="text-sm font-semibold text-zinc-900">{device.deviceModel}</p>
               </div>
               <button
                 type="button"
                 onClick={() => setManualEditOpenByDevice((prev) => ({ ...prev, [device.id]: true }))}
-                className="rounded-md border border-emerald-300 bg-white px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100"
+                className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100"
               >
                 Editar dispositivo
               </button>
@@ -593,7 +593,7 @@ return (
                             setWizardStepByDevice((prev) => ({ ...prev, [device.id]: 6 }));
                           }
                         }}
-                        className="rounded-md bg-blue-600 px-2 py-1 text-xs text-white hover:bg-blue-700"
+                        className="rounded-md bg-gray-600 px-2 py-1 text-xs text-white hover:bg-gray-700"
                       >
                         Usar valor manual
                       </button>
@@ -604,8 +604,8 @@ return (
 
               if (device.deviceModel) {
                 return (
-                  <div className="flex items-center gap-3 p-4 rounded-xl border border-emerald-200 bg-emerald-50 shadow-sm">
-                    <div className="h-12 w-12 flex items-center justify-center rounded-full bg-white overflow-hidden border border-emerald-200">
+                  <div className="flex items-center gap-3 p-4 rounded-xl border border-zinc-200 bg-zinc-50 shadow-sm">
+                    <div className="h-12 w-12 flex items-center justify-center rounded-full bg-white overflow-hidden border border-zinc-200">
                       <img src={cardImage || "https://dummyimage.com/100x100/e2e8f0/475569&text=?"} alt={fullName || device.deviceModel || "Dispositivo"} className="h-full w-full object-cover" />
                     </div>
                     <div className="flex-1">
@@ -614,7 +614,7 @@ return (
                     </div>
                     <button
                       type="button"
-                      className="rounded-md border border-emerald-300 px-2 py-1 text-xs text-emerald-700 hover:bg-emerald-100"
+                      className="rounded-md border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-100"
                       onClick={() => {
                         setManualEditOpenByDevice((prev) => ({ ...prev, [device.id]: true }));
                         setWizardStepByDevice((prev) => ({ ...prev, [device.id]: isManual ? 6 : 2 }));
@@ -627,8 +627,8 @@ return (
               }
 
               return (
-                <div className="p-3 rounded-md border border-amber-200 bg-amber-50 text-amber-800 text-sm">
-                  Completa el asistente rÃƒÆ’Ã‚Â¡pido para seleccionar el dispositivo.
+                <div className="p-3 rounded-md border border-stone-200 bg-stone-50 text-stone-800 text-sm">
+                  Completa el asistente rápido para seleccionar el dispositivo.
                 </div>
               );
             })()}
@@ -636,7 +636,7 @@ return (
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="block text-sm font-medium text-slate-700">
-              NÃƒÆ’Ã‚Âºmero de Serie (opcional)
+              Número de Serie (opcional)
             </label>
             {!serialFieldOpenByDevice[device.id] && !device.deviceSerial && (
               <button
@@ -644,7 +644,7 @@ return (
                 onClick={() => setSerialFieldOpenByDevice((prev) => ({ ...prev, [device.id]: true }))}
                 className="text-xs rounded-md border border-slate-300 px-2 py-1 hover:bg-slate-100 text-slate-700"
               >
-                + Agregar nÃƒÆ’Ã‚Âºmero de serie
+                + Agregar número de serie
               </button>
             )}
           </div>
@@ -676,7 +676,7 @@ return (
         <div>
           <div className="flex items-center justify-between mb-2">
             <label className="block text-sm font-medium text-slate-700">
-              CÃƒÆ’Ã‚Â³digo/PatrÃƒÆ’Ã‚Â³n de Desbloqueo (opcional)
+              Código/Patrón de Desbloqueo (opcional)
             </label>
             {!unlockFieldOpenByDevice[device.id] && device.unlockType === "none" && (
               <button
@@ -684,7 +684,7 @@ return (
                 onClick={() => setUnlockFieldOpenByDevice((prev) => ({ ...prev, [device.id]: true }))}
                 className="text-xs rounded-md border border-slate-300 px-2 py-1 hover:bg-slate-100 text-slate-700"
               >
-                + Agregar cÃƒÆ’Ã‚Â³digo/patrÃƒÆ’Ã‚Â³n
+                + Agregar código/patrón
               </button>
             )}
           </div>
@@ -711,9 +711,9 @@ return (
                 }
               }}
             >
-              <option value="none">Sin cÃƒÆ’Ã‚Â³digo/patrÃƒÆ’Ã‚Â³n</option>
-              <option value="code">CÃƒÆ’Ã‚Â³digo numÃƒÆ’Ã‚Â©rico</option>
-              <option value="pattern">PatrÃƒÆ’Ã‚Â³n de desbloqueo</option>
+              <option value="none">Sin código/patrón</option>
+              <option value="code">Código numérico</option>
+              <option value="pattern">Patrón de desbloqueo</option>
             </select>
             <button
               type="button"
@@ -740,7 +740,7 @@ return (
             {device.unlockType === "pattern" && device.deviceUnlockPattern.length > 0 && (
               <div className="p-3 bg-slate-50 border border-slate-200 rounded-md">
                 <p className="text-sm text-slate-600 mb-2">
-                  PatrÃƒÆ’Ã‚Â³n guardado ({device.deviceUnlockPattern.length} puntos)
+                  Patrón guardado ({device.deviceUnlockPattern.length} puntos)
                 </p>
                 <div className="flex gap-2">
                   <button
@@ -748,7 +748,7 @@ return (
                     onClick={() => setShowPatternDrawer({ deviceId: device.id })}
                     className="px-3 py-1 text-sm border border-slate-300 rounded-md hover:bg-slate-100"
                   >
-                    Cambiar PatrÃƒÆ’Ã‚Â³n
+                    Cambiar Patrón
                   </button>
                 </div>
               </div>
@@ -758,9 +758,9 @@ return (
               <button
                 type="button"
                 onClick={() => setShowPatternDrawer({ deviceId: device.id })}
-                className="w-full px-4 py-2 border-2 border-dashed border-slate-300 rounded-md text-slate-600 hover:border-brand-light hover:text-brand-light transition-colors"
+                className="w-full px-4 py-2 border-2 border-dashed border-slate-300 rounded-md text-slate-600 hover:border-slate-700 hover:text-slate-700 transition-colors"
               >
-                Dibujar PatrÃƒÆ’Ã‚Â³n
+                Dibujar Patrón
               </button>
             )}
           </div>
@@ -785,7 +785,7 @@ return (
       </div>
       )}
 
-          {/* Modal para seleccionar categorÃƒÆ’Ã‚Â­a de dispositivo */}
+          {/* Modal para seleccionar categoría de dispositivo */}
           {showDeviceCategoryModal?.deviceId === device.id && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
@@ -793,8 +793,8 @@ return (
                   Agregar Nuevo Dispositivo
                 </h3>
                 <p className="text-slate-600 mb-4">
-                  El dispositivo <strong>&quot;{showDeviceCategoryModal.deviceModel || device.deviceModel}&quot;</strong> no estÃƒÆ’Ã‚Â¡ en el listado.
-                  Por favor, selecciona la categorÃƒÆ’Ã‚Â­a del dispositivo:
+                  El dispositivo <strong>&quot;{showDeviceCategoryModal.deviceModel || device.deviceModel}&quot;</strong> no está en el listado.
+                  Por favor, selecciona la categoría del dispositivo:
                 </p>
                 <div className="space-y-2 mb-6">
                   <button
@@ -804,7 +804,7 @@ return (
                     }}
                     className="w-full px-4 py-3 bg-slate-100 hover:bg-slate-200 rounded-md text-left transition-colors"
                   >
-                    <span className="font-medium">ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â± Celular</span>
+                    <span className="font-medium">📱 Celular</span>
                     <p className="text-sm text-slate-600">iPhone, Android, etc.</p>
                   </button>
                   <button
@@ -814,7 +814,7 @@ return (
                     }}
                     className="w-full px-4 py-3 bg-slate-100 hover:bg-slate-200 rounded-md text-left transition-colors"
                   >
-                    <span className="font-medium">ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â± Tablet</span>
+                    <span className="font-medium">📱 Tablet</span>
                     <p className="text-sm text-slate-600">iPad, Android Tablet, etc.</p>
                   </button>
                   <button
@@ -824,7 +824,7 @@ return (
                     }}
                     className="w-full px-4 py-3 bg-slate-100 hover:bg-slate-200 rounded-md text-left transition-colors"
                   >
-                    <span className="font-medium">ÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â» Notebook / Laptop</span>
+                    <span className="font-medium">💻 Notebook / Laptop</span>
                     <p className="text-sm text-slate-600">MacBook, Windows Laptop, etc.</p>
                   </button>
                   <button
@@ -834,7 +834,7 @@ return (
                     }}
                     className="w-full px-4 py-3 bg-slate-100 hover:bg-slate-200 rounded-md text-left transition-colors"
                   >
-                    <span className="font-medium">ÃƒÂ¢Ã…â€™Ã…Â¡ Smartwatch</span>
+                    <span className="font-medium">⌚ Smartwatch</span>
                     <p className="text-sm text-slate-600">Apple Watch, Android Watch, etc.</p>
                   </button>
                   <button
@@ -844,7 +844,7 @@ return (
                     }}
                     className="w-full px-4 py-3 bg-slate-100 hover:bg-slate-200 rounded-md text-left transition-colors"
                   >
-                    <span className="font-medium">ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â§ Otro</span>
+                    <span className="font-medium">🔧 Otro</span>
                     <p className="text-sm text-slate-600">Otro tipo de dispositivo</p>
                   </button>
                 </div>
@@ -860,46 +860,46 @@ return (
             </div>
           )}
 
-          {/* BotÃƒÆ’Ã‚Â³n para agregar categorÃƒÆ’Ã‚Â­a si no se detectÃƒÆ’Ã‚Â³ tipo */}
+          {/* Botón para agregar categoría si no se detectó tipo */}
           {device.deviceModel && !device.deviceType && showDeviceCategoryModal?.deviceId !== device.id && (
-            <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-md">
-              <p className="text-sm text-amber-800 mb-2">
-                No se detectÃƒÆ’Ã‚Â³ la categorÃƒÆ’Ã‚Â­a del dispositivo. Para mostrar el checklist, selecciona la categorÃƒÆ’Ã‚Â­a:
+            <div className="mb-4 p-4 bg-stone-50 border border-stone-200 rounded-md">
+              <p className="text-sm text-stone-800 mb-2">
+                No se detectó la categoría del dispositivo. Para mostrar el checklist, selecciona la categoría:
               </p>
               <button
                 type="button"
                 onClick={() => {
                   setShowDeviceCategoryModal({ deviceId: device.id, deviceModel: device.deviceModel });
                 }}
-                className="px-4 py-2 bg-amber-600 text-white rounded-md hover:bg-amber-700 text-sm font-medium"
+                className="px-4 py-2 bg-stone-600 text-white rounded-md hover:bg-stone-700 text-sm font-medium"
               >
-                ÃƒÂ¢Ã…Â¾Ã¢â‚¬Â¢ Agregar Nuevo Dispositivo
+                ➕ Agregar Nuevo Dispositivo
               </button>
             </div>
           )}
 
-          {/* Flujo de checklist -> descripciÃƒÆ’Ã‚Â³n -> servicios (sin scroll) */}
+          {/* Flujo de checklist -> descripción -> servicios (sin scroll) */}
           {device.deviceModel && !isDeviceFinalized(device.id) && (
             <div className="mt-4 rounded-lg border border-slate-200 bg-white p-4">
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 1 }))}
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${getFlowStep(device.id) === 1 ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-700"}`}
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${getFlowStep(device.id) === 1 ? "bg-gray-600 text-white" : "bg-slate-100 text-slate-700"}`}
                 >
                   1. Checklist
                 </button>
                 <button
                   type="button"
                   onClick={() => setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 2 }))}
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${getFlowStep(device.id) === 2 ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-700"}`}
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${getFlowStep(device.id) === 2 ? "bg-gray-600 text-white" : "bg-slate-100 text-slate-700"}`}
                 >
                   2. Problema
                 </button>
                 <button
                   type="button"
                   onClick={() => setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 3 }))}
-                  className={`rounded-full px-3 py-1 text-xs font-medium ${getFlowStep(device.id) === 3 ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-700"}`}
+                  className={`rounded-full px-3 py-1 text-xs font-medium ${getFlowStep(device.id) === 3 ? "bg-gray-600 text-white" : "bg-slate-100 text-slate-700"}`}
                 >
                   3. Servicios
                 </button>
@@ -916,7 +916,7 @@ return (
 <button
                       type="button"
                       onClick={() => setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 2 }))}
-                      className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                      className="rounded-md bg-gray-600 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
                     >
                       Siguiente: Descripcion
                     </button>
@@ -954,7 +954,7 @@ return (
                   <textarea
                     className={`w-full border rounded-md px-3 py-2 min-h-[100px] ${
                       device.problemDescription.length > MAX_DESCRIPTION_LENGTH
-                        ? "border-red-500 bg-red-50"
+                        ? "border-gray-500 bg-gray-50"
                         : "border-slate-300"
                     }`}
                     value={device.problemDescription}
@@ -970,13 +970,13 @@ return (
                   <div className="mt-1 flex justify-between items-center">
                     <span className={`text-xs ${
                       device.problemDescription.length > MAX_DESCRIPTION_LENGTH
-                        ? "text-red-600 font-semibold"
+                        ? "text-gray-600 font-semibold"
                         : device.problemDescription.length > MAX_DESCRIPTION_LENGTH * 0.9
-                        ? "text-amber-600"
+                        ? "text-stone-600"
                         : "text-slate-500"
                     }`}>
                       {device.problemDescription.length > MAX_DESCRIPTION_LENGTH
-                        ? `ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Excede el lÃƒÆ’Ã‚Â­mite por ${device.problemDescription.length - MAX_DESCRIPTION_LENGTH} caracteres`
+                        ? `⚠️ Excede el límite por ${device.problemDescription.length - MAX_DESCRIPTION_LENGTH} caracteres`
                         : `${device.problemDescription.length} / ${MAX_DESCRIPTION_LENGTH} caracteres`}
                     </span>
                   </div>
@@ -991,7 +991,7 @@ return (
                     <button
                       type="button"
                       onClick={() => setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 3 }))}
-                      className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                      className="rounded-md bg-gray-600 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
                     >
                       Continuar: Servicios
                     </button>
@@ -1016,7 +1016,7 @@ return (
                   servicios: services,
                 });
                 
-                // Validar y eliminar duplicados por ID (protecciÃƒÆ’Ã‚Â³n adicional)
+                // Validar y eliminar duplicados por ID (protección adicional)
                 const uniqueServices: Service[] = [];
                 const seenIds = new Set<string>();
                 
@@ -1044,7 +1044,7 @@ return (
                   selectedServices: uniqueServices,
                   servicePrices: newPrices
                 });
-                console.log(`[OrderForm] Estado actualizado para equipo ${device.id}. Servicios ÃƒÆ’Ã‚Âºnicos:`, uniqueServices.length);
+                console.log(`[OrderForm] Estado actualizado para equipo ${device.id}. Servicios únicos:`, uniqueServices.length);
                     }}
                   />
                   
@@ -1079,7 +1079,7 @@ return (
                       onClick={() => setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 2 }))}
                       className="rounded-md border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
                     >
-                      Volver a descripciÃƒÆ’Ã‚Â³n
+                      Volver a descripción
                     </button>
                     <button
                       type="button"
@@ -1087,7 +1087,7 @@ return (
                         setFinalizedDeviceById((prev) => ({ ...prev, [device.id]: true }));
                         setDetailsOpenByDevice((prev) => ({ ...prev, [device.id]: false }));
                       }}
-                      className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700"
+                      className="rounded-md bg-zinc-600 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-700"
                     >
                       Guardar dispositivo
                     </button>
@@ -1098,9 +1098,9 @@ return (
           )}
 
           {isDeviceFinalized(device.id) && (
-            <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+            <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4">
               <div className="flex items-center gap-3">
-                <div className="h-12 w-12 overflow-hidden rounded-lg border border-emerald-200 bg-white">
+                <div className="h-12 w-12 overflow-hidden rounded-lg border border-zinc-200 bg-white">
                   <img
                     src={(() => {
                       const typeId = getTypeIdForDevice(device);
@@ -1115,14 +1115,14 @@ return (
                   />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-emerald-900">{device.deviceModel || `Equipo ${deviceIndex + 1}`}</p>
-                  <p className="text-xs text-emerald-700">{device.selectedServices.length} servicio(s) registrados</p>
+                  <p className="text-sm font-semibold text-zinc-900">{device.deviceModel || `Equipo ${deviceIndex + 1}`}</p>
+                  <p className="text-xs text-zinc-700">{device.selectedServices.length} servicio(s) registrados</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setDetailsOpenByDevice((prev) => ({ ...prev, [device.id]: !prev[device.id] }))}
-                    className="rounded-md border border-emerald-300 bg-white px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100"
+                    className="rounded-md border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 hover:bg-zinc-100"
                   >
                     {detailsOpenByDevice[device.id] ? "Ocultar detalles" : "Ver detalles"}
                   </button>
@@ -1135,7 +1135,7 @@ return (
                       }
                       removeDevice(device.id);
                     }}
-                    className="rounded-md border border-red-300 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
+                    className="rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50"
                   >
                     Eliminar dispositivo
                   </button>
@@ -1143,14 +1143,14 @@ return (
               </div>
 
               {detailsOpenByDevice[device.id] && (
-                <div className="mt-3 space-y-3 rounded-lg border border-emerald-200 bg-white p-3 text-sm">
+                <div className="mt-3 space-y-3 rounded-lg border border-zinc-200 bg-white p-3 text-sm">
                   <div>
                     <p className="font-semibold text-slate-800">Checklist</p>
                     <p className="text-slate-600">{Object.keys(device.checklistData).length} items registrados</p>
                   </div>
                   <div>
-                    <p className="font-semibold text-slate-800">DescripciÃƒÆ’Ã‚Â³n del problema</p>
-                    <p className="text-slate-600 whitespace-pre-wrap">{device.problemDescription || "Sin descripciÃƒÆ’Ã‚Â³n"}</p>
+                    <p className="font-semibold text-slate-800">Descripción del problema</p>
+                    <p className="text-slate-600 whitespace-pre-wrap">{device.problemDescription || "Sin descripción"}</p>
                   </div>
                   <div>
                     <p className="font-semibold text-slate-800">Servicios</p>
@@ -1158,7 +1158,7 @@ return (
                       <ul className="list-disc pl-5 text-slate-600">
                         {device.selectedServices.map((service) => (
                           <li key={`${device.id}-detail-${service.id}`}>
-                            {service.name} ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â {formatCLP(device.servicePrices[service.id] || 0)}
+                            {service.name} — {formatCLP(device.servicePrices[service.id] || 0)}
                           </li>
                         ))}
                       </ul>
@@ -1185,7 +1185,7 @@ return (
                       }}
                       className="rounded-md border border-slate-300 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50"
                     >
-                      Editar descripciÃƒÆ’Ã‚Â³n
+                      Editar descripción
                     </button>
                     <button
                       type="button"
@@ -1205,14 +1205,14 @@ return (
         </div>
       ))}
 
-      {/* BotÃƒÆ’Ã‚Â³n para agregar otro equipo */}
+      {/* Botón para agregar otro equipo */}
       <div className="flex justify-center">
         <button
           type="button"
           onClick={addNewDevice}
-          className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium flex items-center gap-2"
+          className="px-6 py-3 bg-gray-600 text-white rounded-md hover:bg-gray-700 font-medium flex items-center gap-2"
         >
-          ÃƒÂ¢Ã…Â¾Ã¢â‚¬Â¢ Agregar Otro Equipo
+          ➕ Agregar Otro Equipo
         </button>
       </div>
 
@@ -1234,7 +1234,7 @@ return (
                     <input
                       type="text"
                       list="responsible-users-list"
-                      className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-brand-light"
+                      className="w-full border border-slate-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-slate-700"
                       placeholder="Escribe o selecciona el nombre del responsable..."
                       value={responsibleUserName}
                       onChange={(e) => setResponsibleUserName(e.target.value)}
@@ -1252,15 +1252,15 @@ return (
                     <p className="text-xs text-slate-500 mt-1">Cargando responsables...</p>
                   ) : responsibleUsers.length > 0 ? (
                     <p className="text-xs text-slate-600 mt-1">
-                      ÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â¡ Puedes escribir el nombre o seleccionar de la lista. Si escribes un nombre que no estÃƒÆ’Ã‚Â¡ en la lista, se guardarÃƒÆ’Ã‚Â¡ igual.
+                      💡 Puedes escribir el nombre o seleccionar de la lista. Si escribes un nombre que no está en la lista, se guardará igual.
                     </p>
                   ) : (
                     <p className="text-xs text-slate-600 mt-1">
-                      ÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â¡ Escribe el nombre del responsable. Este campo es obligatorio.
+                      💡 Escribe el nombre del responsable. Este campo es obligatorio.
                     </p>
                   )}
                   {!responsibleUserName && (
-                    <p className="text-sm text-red-600 mt-1">
+                    <p className="text-sm text-gray-600 mt-1">
                       Este campo es obligatorio para crear la orden
                     </p>
                   )}
@@ -1322,7 +1322,7 @@ return (
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-2">
-            GarantÃƒÆ’Ã‚Â­a (dÃƒÆ’Ã‚Â­as)
+            Garantía (días)
           </label>
           <input
             type="number"
@@ -1378,7 +1378,7 @@ return (
         <button
           type="submit"
           disabled={loading || isSubmitting || devices.some(device => device.problemDescription.length > MAX_DESCRIPTION_LENGTH)}
-          className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-6 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading || isSubmitting ? "Guardando..." : `Crear Orden${devices.length > 1 ? ` (${devices.length} equipos)` : ''}`}
         </button>
@@ -1410,7 +1410,6 @@ return (
     </Fragment>
   );
 }
-
 
 
 

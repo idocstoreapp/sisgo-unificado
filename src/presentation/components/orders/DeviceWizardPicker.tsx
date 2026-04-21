@@ -81,7 +81,7 @@ export default function DeviceWizardPicker({ value, onChange, required = false }
   return (
     <div className="space-y-3 rounded-md border border-slate-200 p-3 bg-slate-50/60">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Wizard rÃ¡pido</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Wizard rápido</p>
         <div className="flex flex-wrap gap-2">
           {typeOrder.map((type) => (
             <button
@@ -157,7 +157,7 @@ export default function DeviceWizardPicker({ value, onChange, required = false }
 
       {selectedBase && variantsForBase.length > 0 && (
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">VersiÃ³n</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Versión</p>
           <div className="flex flex-wrap gap-2 max-h-32 overflow-auto pr-1">
             {variantsForBase.map((variant) => (
               <button
@@ -178,7 +178,7 @@ export default function DeviceWizardPicker({ value, onChange, required = false }
       )}
 
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Equipos rÃ¡pidos</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Equipos rápidos</p>
         <div className="flex flex-wrap gap-2">
           {topQuickDevices.map((device) => (
             <button

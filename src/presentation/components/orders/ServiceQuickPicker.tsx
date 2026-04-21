@@ -12,13 +12,13 @@ const fallbackServices = [
   "Cambio de mica",
   "Soldadura",
   "Cambio de pantalla",
-  "Cambio de baterÃ­a",
+  "Cambio de batería",
   "Cambio de pin de carga",
   "Cambio de tapa trasera",
-  "ActualizaciÃ³n de software",
-  "DiagnÃ³stico",
+  "Actualización de software",
+  "Diagnóstico",
   "Limpieza interna",
-  "RecuperaciÃ³n de datos",
+  "Recuperación de datos",
 ];
 
 export default function ServiceQuickPicker({ value, onChange, required = false }: ServiceQuickPickerProps) {
@@ -89,7 +89,7 @@ export default function ServiceQuickPicker({ value, onChange, required = false }
   return (
     <div className="space-y-3 rounded-md border border-slate-200 p-3 bg-slate-50/60" ref={wrapperRef}>
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Servicios mÃ¡s usados (toque rÃ¡pido)</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 mb-2">Servicios más usados (toque rápido)</p>
         <div className="flex flex-wrap gap-2">
           {quickButtons.map((service) => (
             <button
