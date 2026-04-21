@@ -23,7 +23,7 @@ const STATUS_STYLES: Record<string, string> = {
   ok: "border-zinc-200 bg-zinc-50 text-zinc-800 hover:bg-zinc-100",
   funcionando: "border-zinc-200 bg-zinc-50 text-zinc-800 hover:bg-zinc-100",
   damaged: "border-gray-200 bg-gray-50 text-gray-800 hover:bg-gray-100",
-  "dañado": "border-gray-200 bg-gray-50 text-gray-800 hover:bg-gray-100",
+  dañado: "border-gray-200 bg-gray-50 text-gray-800 hover:bg-gray-100",
   replaced: "border-gray-200 bg-gray-50 text-gray-800 hover:bg-gray-100",
   reparado: "border-gray-200 bg-gray-50 text-gray-800 hover:bg-gray-100",
   entregado: "border-stone-200 bg-stone-50 text-stone-800 hover:bg-stone-100",
@@ -35,15 +35,14 @@ function getStatusButtonClass(value: string, selected: boolean): string {
   const normalized = value.toLowerCase();
   const base =
     "min-h-[48px] rounded-xl border px-3 py-2 text-sm font-semibold transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-slate-700/40";
-  const tone = STATUS_STYLES[normalized] || "border-slate-200 bg-white text-slate-700 hover:bg-slate-50";
+  const tone =
+    STATUS_STYLES[normalized] || "border-slate-200 bg-white text-slate-700 hover:bg-slate-50";
   const active = selected ? "ring-2 ring-slate-700 shadow-sm scale-[1.01]" : "";
   return `${base} ${tone} ${active}`.trim();
 }
 
 function formatStatusLabel(value: string): string {
-  return value
-    .replace(/_/g, " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+  return value.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 function normalizeText(value: string): string {
@@ -107,7 +106,9 @@ export default function DeviceChecklist({
   const [modalStatuses, setModalStatuses] = useState<string[]>([]);
   const [modalNewStatus, setModalNewStatus] = useState("");
   const [editingCompletedItem, setEditingCompletedItem] = useState<string | null>(null);
-  const [quickSelectionByCategory, setQuickSelectionByCategory] = useState<Record<QuickCategory, QuickState>>({
+  const [quickSelectionByCategory, setQuickSelectionByCategory] = useState<
+    Record<QuickCategory, QuickState>
+  >({
     fisico: null,
     funcional: null,
   });
@@ -150,16 +151,19 @@ export default function DeviceChecklist({
     try {
       const parsed = JSON.parse(raw);
       if (parsed && typeof parsed === "object") {
-        const normalized = Object.entries(parsed).reduce<Record<string, string[]>>((acc, [itemName, statuses]) => {
-          if (typeof itemName !== "string" || !Array.isArray(statuses)) return acc;
-          const validStatuses = statuses
-            .filter((value) => typeof value === "string" && value.trim())
-            .map((value) => value.trim());
-          if (validStatuses.length > 0) {
-            acc[itemName] = Array.from(new Set(validStatuses));
-          }
-          return acc;
-        }, {});
+        const normalized = Object.entries(parsed).reduce<Record<string, string[]>>(
+          (acc, [itemName, statuses]) => {
+            if (typeof itemName !== "string" || !Array.isArray(statuses)) return acc;
+            const validStatuses = statuses
+              .filter((value) => typeof value === "string" && value.trim())
+              .map((value) => value.trim());
+            if (validStatuses.length > 0) {
+              acc[itemName] = Array.from(new Set(validStatuses));
+            }
+            return acc;
+          },
+          {},
+        );
         setCustomItemStatuses(normalized);
       } else {
         setCustomItemStatuses({});
@@ -196,10 +200,9 @@ export default function DeviceChecklist({
     });
 
     setExpandedByItem((prev) =>
-      allItems.reduce<Record<string, boolean>>(
-        (acc, itemName) => ({ ...acc, [itemName]: false }),
-        { ...prev },
-      ),
+      allItems.reduce<Record<string, boolean>>((acc, itemName) => ({ ...acc, [itemName]: false }), {
+        ...prev,
+      }),
     );
     setEditingCompletedItem(null);
   }
@@ -237,7 +240,10 @@ export default function DeviceChecklist({
       return;
     }
 
-    if (customItems.some((item) => item.toLowerCase() === itemName.toLowerCase()) || items.some((item) => item.item_name.toLowerCase() === itemName.toLowerCase())) {
+    if (
+      customItems.some((item) => item.toLowerCase() === itemName.toLowerCase()) ||
+      items.some((item) => item.item_name.toLowerCase() === itemName.toLowerCase())
+    ) {
       alert("Este checklist ya existe");
       return;
     }
@@ -258,7 +264,7 @@ export default function DeviceChecklist({
   }
 
   function handleRemoveCustomItem(itemName: string) {
-    setCustomItems(customItems.filter(item => item !== itemName));
+    setCustomItems(customItems.filter((item) => item !== itemName));
     const nextStatuses = { ...customItemStatuses };
     delete nextStatuses[itemName];
     setCustomItemStatuses(nextStatuses);
@@ -270,11 +276,15 @@ export default function DeviceChecklist({
 
   // Combinar items de BD y items personalizados
   const allItems = [
-    ...items.map(item => item.item_name),
-    ...customItems.filter(item => !items.some(dbItem => dbItem.item_name === item))
+    ...items.map((item) => item.item_name),
+    ...customItems.filter((item) => !items.some((dbItem) => dbItem.item_name === item)),
   ];
-  const physicalItems = allItems.filter((itemName) => getQuickCategoryForItem(itemName) === "fisico");
-  const functionalItems = allItems.filter((itemName) => getQuickCategoryForItem(itemName) === "funcional");
+  const physicalItems = allItems.filter(
+    (itemName) => getQuickCategoryForItem(itemName) === "fisico",
+  );
+  const functionalItems = allItems.filter(
+    (itemName) => getQuickCategoryForItem(itemName) === "funcional",
+  );
   const quickCategoryHasItems = {
     fisico: physicalItems.length > 0,
     funcional: functionalItems.length > 0,
@@ -287,7 +297,8 @@ export default function DeviceChecklist({
       .filter((value): value is string => Boolean(value && value.trim()));
     if (values.length === 0) return null;
     if (values.every((value) => value === "ok" || value === "funcionando")) return "ok";
-    if (values.every((value) => value === "no_probado" || value === "no probado")) return "no_probado";
+    if (values.every((value) => value === "no_probado" || value === "no probado"))
+      return "no_probado";
     return "detalles";
   }
 
@@ -296,31 +307,41 @@ export default function DeviceChecklist({
     funcional: getQuickStateForItems(functionalItems),
   };
 
-  function applyQuickCategoryState(category: QuickCategory, value: "ok" | "detalles" | "no_probado") {
+  function applyQuickCategoryState(
+    category: QuickCategory,
+    value: "ok" | "detalles" | "no_probado",
+  ) {
     const categoryItems = category === "fisico" ? physicalItems : functionalItems;
     if (categoryItems.length === 0) return;
 
     if (value === "detalles") {
       // Guardar que el usuario quiere ver los detalles de esta categoría
       setDetallesMode((prev) => ({ ...prev, [category]: true }));
-      
+
       const clearedData = { ...checklistData };
       categoryItems.forEach((itemName) => {
-        if (clearedData[itemName] === "ok" || clearedData[itemName] === "funcionando" || clearedData[itemName] === "no_probado") {
+        if (
+          clearedData[itemName] === "ok" ||
+          clearedData[itemName] === "funcionando" ||
+          clearedData[itemName] === "no_probado"
+        ) {
           delete clearedData[itemName];
         }
       });
       onChecklistChange(clearedData);
       setExpandedByItem((prev) => ({
         ...prev,
-        ...categoryItems.reduce<Record<string, boolean>>((acc, itemName) => ({ ...acc, [itemName]: true }), {}),
+        ...categoryItems.reduce<Record<string, boolean>>(
+          (acc, itemName) => ({ ...acc, [itemName]: true }),
+          {},
+        ),
       }));
       return;
     }
 
     // Si selecciona OK o No probado, quitar el modo detalles
     setDetallesMode((prev) => ({ ...prev, [category]: false }));
-    
+
     const normalizedValue = value === "no_probado" ? "no_probado" : "ok";
     const nextData = { ...checklistData };
     categoryItems.forEach((itemName) => {
@@ -329,24 +350,33 @@ export default function DeviceChecklist({
     onChecklistChange(nextData);
     setExpandedByItem((prev) => ({
       ...prev,
-      ...categoryItems.reduce<Record<string, boolean>>((acc, itemName) => ({ ...acc, [itemName]: false }), {}),
+      ...categoryItems.reduce<Record<string, boolean>>(
+        (acc, itemName) => ({ ...acc, [itemName]: false }),
+        {},
+      ),
     }));
   }
 
   const pendingItems = allItems.filter((itemName) => !checklistData[itemName]);
   const completedItems = allItems.filter((itemName) => Boolean(checklistData[itemName]));
-  
+
   // Mostrar todos los items de las categorías que están en "detalles", no solo los pendientes
   const visibleItems = editingCompletedItem
     ? [...allItems, editingCompletedItem].filter((item, index, arr) => arr.indexOf(item) === index)
     : allItems;
-    
+
   // Mostrar items si: la categoría está en modo "detalles" O el estado de quickCategory tiene "detalles"
   const filteredVisibleItems = visibleItems.filter((itemName) => {
     const category = getQuickCategoryForItem(itemName);
     // Mostrar si el usuario seleccionó "Con detalles" O si ya tiene items con estado "detalles"
-    if (category === "fisico" && !detallesMode.fisico && quickCategoryState.fisico !== "detalles") return false;
-    if (category === "funcional" && !detallesMode.funcional && quickCategoryState.funcional !== "detalles") return false;
+    if (category === "fisico" && !detallesMode.fisico && quickCategoryState.fisico !== "detalles")
+      return false;
+    if (
+      category === "funcional" &&
+      !detallesMode.funcional &&
+      quickCategoryState.funcional !== "detalles"
+    )
+      return false;
     return true;
   });
 
@@ -367,7 +397,12 @@ export default function DeviceChecklist({
     // const ref = itemRefs.current[firstPending];
     // if (!ref) return;
     // ref.scrollIntoView({ behavior: "smooth", block: "nearest" });
-  }, [Object.entries(checklistData).map(([k, v]) => `${k}:${v}`).join("|"), allItems.join("|")]);
+  }, [
+    Object.entries(checklistData)
+      .map(([k, v]) => `${k}:${v}`)
+      .join("|"),
+    allItems.join("|"),
+  ]);
 
   useEffect(() => {
     setQuickSelectionByCategory({ fisico: null, funcional: null });
@@ -376,16 +411,19 @@ export default function DeviceChecklist({
   function getStatusOptionsForItem(itemName: string) {
     const itemFromDb = items.find((item) => item.item_name === itemName);
     const statusOptionsFromDb = Array.isArray(itemFromDb?.status_options)
-      ? (itemFromDb?.status_options || []).filter((value) => typeof value === "string" && value.trim()).map((value) => value.trim())
+      ? (itemFromDb?.status_options || [])
+          .filter((value) => typeof value === "string" && value.trim())
+          .map((value) => value.trim())
       : [];
 
     const customItemOptionValues = customItemStatuses[itemName] || [];
 
-    const optionValues = statusOptionsFromDb.length > 0
-      ? statusOptionsFromDb
-      : customItemOptionValues.length > 0
-        ? customItemOptionValues
-      : DEFAULT_STATUS_OPTIONS.map((option) => option.value);
+    const optionValues =
+      statusOptionsFromDb.length > 0
+        ? statusOptionsFromDb
+        : customItemOptionValues.length > 0
+          ? customItemOptionValues
+          : DEFAULT_STATUS_OPTIONS.map((option) => option.value);
 
     const currentValue = checklistData[itemName];
     if (currentValue && !optionValues.includes(currentValue)) {
@@ -403,20 +441,23 @@ export default function DeviceChecklist({
 
   if (loading) {
     return (
-      <div className="border border-slate-200 rounded-md p-4">
+      <div className="rounded-md border border-slate-200 p-4">
         <p className="text-slate-600">Cargando checklist...</p>
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-5">
-      <h3 className="mb-4 text-lg font-semibold text-slate-900 md:text-xl">Checklist de Verificación *</h3>
+    <div className="rounded-3xl border border-indigo-100 bg-white p-4 shadow-[0_24px_55px_-38px_rgba(79,70,229,0.65)] md:p-5">
+      <h3 className="mb-4 text-lg font-semibold text-slate-900 md:text-xl">
+        Checklist de Verificación *
+      </h3>
 
       {completedItems.length > 0 && (
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
           <p className="text-sm font-medium text-zinc-800">
-            {completedItems.length} checklist{completedItems.length > 1 ? "s" : ""} completado{completedItems.length > 1 ? "s" : ""}.
+            {completedItems.length} checklist{completedItems.length > 1 ? "s" : ""} completado
+            {completedItems.length > 1 ? "s" : ""}.
           </p>
           <button
             type="button"
@@ -427,11 +468,12 @@ export default function DeviceChecklist({
           </button>
         </div>
       )}
-      
+
       {items.length === 0 && customItems.length === 0 && (
         <div className="mb-4 rounded-xl border border-yellow-200 bg-yellow-50 p-3">
           <p className="mb-2 text-sm text-yellow-800">
-            No hay checklist configurado para este tipo de dispositivo. Puedes crear items personalizados abajo.
+            No hay checklist configurado para este tipo de dispositivo. Puedes crear items
+            personalizados abajo.
           </p>
         </div>
       )}
@@ -440,7 +482,8 @@ export default function DeviceChecklist({
         <div className="mb-4 rounded-2xl border border-slate-100 bg-gradient-to-r from-white to-slate-50 p-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-slate-700">
-              ¿No puedes probar ninguna función ahora? Puedes marcar todo como <span className="font-semibold">No probado</span> y continuar al siguiente paso.
+              ¿No puedes probar ninguna función ahora? Puedes marcar todo como{" "}
+              <span className="font-semibold">No probado</span> y continuar al siguiente paso.
             </p>
             <button
               type="button"
@@ -453,31 +496,88 @@ export default function DeviceChecklist({
         </div>
       )}
 
-      <div className="mb-4 rounded-2xl border border-slate-200 bg-gradient-to-r from-slate-600 via-zinc-600 to-zinc-600 p-3 shadow-lg shadow-slate-500/25">
+      <div className="mb-4 rounded-2xl border border-indigo-200 bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-700 p-3 shadow-lg shadow-indigo-500/25">
         <p className="text-sm font-semibold text-white">Recepción rápida (40 segundos)</p>
         <p className="mt-1 text-xs text-white/90">
-          Primero marca estado global. Solo entra al detalle cuando el bloque está en <strong>Con detalles</strong>.
+          Primero marca estado global. Solo entra al detalle cuando el bloque está en{" "}
+          <strong>Con detalles</strong>.
         </p>
         <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-3">
-          <div className="rounded-xl border border-white/30 bg-white/95 p-3 shadow-sm">
+          <div className="rounded-xl border border-indigo-100 bg-white/95 p-3 shadow-sm">
             <p className="text-sm font-semibold text-slate-800">1) Estado físico externo</p>
             <div className="mt-2 grid grid-cols-3 gap-2">
-              <button type="button" onClick={() => applyQuickCategoryState("fisico", "ok")} className={getStatusButtonClass("ok", quickCategoryState.fisico === "ok")}>OK</button>
-              <button type="button" onClick={() => applyQuickCategoryState("fisico", "detalles")} className={getStatusButtonClass("damaged", quickCategoryState.fisico === "detalles")}>Con detalles</button>
-              <button type="button" onClick={() => applyQuickCategoryState("fisico", "no_probado")} className={getStatusButtonClass("no_probado", quickCategoryState.fisico === "no_probado")}>No probado</button>
+              <button
+                type="button"
+                onClick={() => applyQuickCategoryState("fisico", "ok")}
+                className={getStatusButtonClass("ok", quickCategoryState.fisico === "ok")}
+              >
+                OK
+              </button>
+              <button
+                type="button"
+                onClick={() => applyQuickCategoryState("fisico", "detalles")}
+                className={getStatusButtonClass(
+                  "damaged",
+                  quickCategoryState.fisico === "detalles",
+                )}
+              >
+                Con detalles
+              </button>
+              <button
+                type="button"
+                onClick={() => applyQuickCategoryState("fisico", "no_probado")}
+                className={getStatusButtonClass(
+                  "no_probado",
+                  quickCategoryState.fisico === "no_probado",
+                )}
+              >
+                No probado
+              </button>
             </div>
-            {!quickCategoryHasItems.fisico && <p className="mt-2 text-xs text-slate-500">No hay ítems físicos configurados para este equipo.</p>}
+            {!quickCategoryHasItems.fisico && (
+              <p className="mt-2 text-xs text-slate-500">
+                No hay ítems físicos configurados para este equipo.
+              </p>
+            )}
           </div>
-          <div className="rounded-xl border border-white/30 bg-white/95 p-3 shadow-sm">
+          <div className="rounded-xl border border-indigo-100 bg-white/95 p-3 shadow-sm">
             <p className="text-sm font-semibold text-slate-800">2) Pruebas funcionales</p>
             <div className="mt-2 grid grid-cols-3 gap-2">
-              <button type="button" onClick={() => applyQuickCategoryState("funcional", "ok")} className={getStatusButtonClass("ok", quickCategoryState.funcional === "ok")}>OK</button>
-              <button type="button" onClick={() => applyQuickCategoryState("funcional", "detalles")} className={getStatusButtonClass("damaged", quickCategoryState.funcional === "detalles")}>Con detalles</button>
-              <button type="button" onClick={() => applyQuickCategoryState("funcional", "no_probado")} className={getStatusButtonClass("no_probado", quickCategoryState.funcional === "no_probado")}>No probado</button>
+              <button
+                type="button"
+                onClick={() => applyQuickCategoryState("funcional", "ok")}
+                className={getStatusButtonClass("ok", quickCategoryState.funcional === "ok")}
+              >
+                OK
+              </button>
+              <button
+                type="button"
+                onClick={() => applyQuickCategoryState("funcional", "detalles")}
+                className={getStatusButtonClass(
+                  "damaged",
+                  quickCategoryState.funcional === "detalles",
+                )}
+              >
+                Con detalles
+              </button>
+              <button
+                type="button"
+                onClick={() => applyQuickCategoryState("funcional", "no_probado")}
+                className={getStatusButtonClass(
+                  "no_probado",
+                  quickCategoryState.funcional === "no_probado",
+                )}
+              >
+                No probado
+              </button>
             </div>
-            {!quickCategoryHasItems.funcional && <p className="mt-2 text-xs text-slate-500">No hay ítems funcionales configurados para este equipo.</p>}
+            {!quickCategoryHasItems.funcional && (
+              <p className="mt-2 text-xs text-slate-500">
+                No hay ítems funcionales configurados para este equipo.
+              </p>
+            )}
           </div>
-          <div className="rounded-xl border border-white/30 bg-white/95 p-3 shadow-sm">
+          <div className="rounded-xl border border-indigo-100 bg-white/95 p-3 shadow-sm">
             <p className="text-sm font-semibold text-slate-800">3) Elementos entregados</p>
             <div className="mt-2 space-y-2">
               <label className="flex items-center justify-between text-sm text-slate-700">
@@ -485,7 +585,12 @@ export default function DeviceChecklist({
                 <input
                   type="checkbox"
                   checked={checklistData.entrega_chip === "si"}
-                  onChange={(e) => onChecklistChange({ ...checklistData, entrega_chip: e.target.checked ? "si" : "no" })}
+                  onChange={(e) =>
+                    onChecklistChange({
+                      ...checklistData,
+                      entrega_chip: e.target.checked ? "si" : "no",
+                    })
+                  }
                   className="h-4 w-4"
                 />
               </label>
@@ -494,7 +599,12 @@ export default function DeviceChecklist({
                 <input
                   type="checkbox"
                   checked={checklistData.entrega_microchip_sd === "si"}
-                  onChange={(e) => onChecklistChange({ ...checklistData, entrega_microchip_sd: e.target.checked ? "si" : "no" })}
+                  onChange={(e) =>
+                    onChecklistChange({
+                      ...checklistData,
+                      entrega_microchip_sd: e.target.checked ? "si" : "no",
+                    })
+                  }
                   className="h-4 w-4"
                 />
               </label>
@@ -505,7 +615,8 @@ export default function DeviceChecklist({
 
       <div className="mb-5 grid grid-cols-1 gap-3 md:grid-cols-2">
         {filteredVisibleItems.map((itemName) => {
-          const isCustom = customItems.includes(itemName) && !items.some(item => item.item_name === itemName);
+          const isCustom =
+            customItems.includes(itemName) && !items.some((item) => item.item_name === itemName);
           const selectedValue = checklistData[itemName] || "";
           const statusOptions = getStatusOptionsForItem(itemName);
           return (
@@ -518,7 +629,9 @@ export default function DeviceChecklist({
             >
               <div className="mb-3 flex items-center justify-between gap-2">
                 <div className="flex min-w-0 items-center gap-2">
-                  <span className="truncate text-base font-semibold text-slate-800">{itemName}</span>
+                  <span className="truncate text-base font-semibold text-slate-800">
+                    {itemName}
+                  </span>
                   {selectedValue && (
                     <span className="rounded-full border border-slate-700/30 bg-slate-700/10 px-2 py-0.5 text-[11px] font-semibold text-slate-900">
                       {formatStatusLabel(selectedValue)}
@@ -526,11 +639,13 @@ export default function DeviceChecklist({
                   )}
                 </div>
                 {isCustom && (
-                  <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">Personalizado</span>
+                  <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
+                    Personalizado
+                  </span>
                 )}
               </div>
 
-              {(expandedByItem[itemName] || !selectedValue) ? (
+              {expandedByItem[itemName] || !selectedValue ? (
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
                   {statusOptions.map((statusOption) => {
                     const isSelected = selectedValue === statusOption.value;
@@ -564,7 +679,9 @@ export default function DeviceChecklist({
 
               <div className="mt-3 flex items-center justify-between gap-2">
                 <span className="text-xs text-slate-500">
-                  {selectedValue ? "Toca otro estado para cambiar rápido." : "Selecciona un estado."}
+                  {selectedValue
+                    ? "Toca otro estado para cambiar rápido."
+                    : "Selecciona un estado."}
                 </span>
                 {isCustom && (
                   <button
@@ -606,7 +723,9 @@ export default function DeviceChecklist({
             <div className="max-h-[65vh] space-y-2 overflow-y-auto pr-1">
               {completedItems.map((itemName) => {
                 const selectedValue = checklistData[itemName] || "";
-                const isCustom = customItems.includes(itemName) && !items.some(item => item.item_name === itemName);
+                const isCustom =
+                  customItems.includes(itemName) &&
+                  !items.some((item) => item.item_name === itemName);
                 return (
                   <div
                     key={itemName}
@@ -614,11 +733,15 @@ export default function DeviceChecklist({
                   >
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-slate-800">{itemName}</p>
-                      <p className="text-xs text-slate-600">Estado: {formatStatusLabel(selectedValue)}</p>
+                      <p className="text-xs text-slate-600">
+                        Estado: {formatStatusLabel(selectedValue)}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2">
                       {isCustom && (
-                        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">Personalizado</span>
+                        <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-700">
+                          Personalizado
+                        </span>
                       )}
                       <button
                         type="button"
@@ -666,7 +789,9 @@ export default function DeviceChecklist({
 
             <div className="space-y-4">
               <div>
-                <label className="mb-1 block text-sm font-medium text-slate-700">Nombre de checklist</label>
+                <label className="mb-1 block text-sm font-medium text-slate-700">
+                  Nombre de checklist
+                </label>
                 <input
                   type="text"
                   value={modalChecklistName}
@@ -677,7 +802,9 @@ export default function DeviceChecklist({
               </div>
 
               <div>
-                <p className="mb-2 text-sm font-medium text-slate-700">Estados (puedes quitar o agregar más)</p>
+                <p className="mb-2 text-sm font-medium text-slate-700">
+                  Estados (puedes quitar o agregar más)
+                </p>
                 <div className="flex gap-2">
                   <input
                     type="text"
@@ -703,7 +830,10 @@ export default function DeviceChecklist({
 
                 <div className="mt-3 flex flex-wrap gap-2">
                   {modalStatuses.map((status) => (
-                    <span key={status} className="inline-flex items-center gap-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-700">
+                    <span
+                      key={status}
+                      className="inline-flex items-center gap-2 rounded bg-slate-100 px-2 py-1 text-xs text-slate-700"
+                    >
                       {formatStatusLabel(status)}
                       <button
                         type="button"
