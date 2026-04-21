@@ -107,6 +107,10 @@ export default function DeviceChecklist({
   const [modalStatuses, setModalStatuses] = useState<string[]>([]);
   const [modalNewStatus, setModalNewStatus] = useState("");
   const [editingCompletedItem, setEditingCompletedItem] = useState<string | null>(null);
+  const [quickSelectionByCategory, setQuickSelectionByCategory] = useState<Record<QuickCategory, QuickState>>({
+    fisico: null,
+    funcional: null,
+  });
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
@@ -349,6 +353,10 @@ export default function DeviceChecklist({
     // ref.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [Object.entries(checklistData).map(([k, v]) => `${k}:${v}`).join("|"), allItems.join("|")]);
 
+  useEffect(() => {
+    setQuickSelectionByCategory({ fisico: null, funcional: null });
+  }, [deviceType]);
+
   function getStatusOptionsForItem(itemName: string) {
     const itemFromDb = items.find((item) => item.item_name === itemName);
     const statusOptionsFromDb = Array.isArray(itemFromDb?.status_options)
@@ -554,7 +562,10 @@ export default function DeviceChecklist({
               </div>
             </div>
           );
-        })}
+              })}
+            </div>
+          </div>
+        )}
       </div>
 
       {filteredVisibleItems.length === 0 && allItems.length > 0 && (
