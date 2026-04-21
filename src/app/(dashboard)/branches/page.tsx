@@ -8,9 +8,9 @@ import { BranchesManagement } from "@/presentation/components/branches/BranchesM
 
 export default async function BranchesPage() {
   const supabase = await getSupabaseServerClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     redirect("/login");
   }
 

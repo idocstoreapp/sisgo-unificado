@@ -54,7 +54,7 @@ const ingredientRepository = new SupabaseIngredientRepository();
 const recipeRepository = new SupabaseRecipeRepository();
 
 // Use Cases
-export const registerCompanyUseCase = new RegisterCompanyUseCase(companyRepository, userRepository);
+export const registerCompanyUseCase = new RegisterCompanyUseCase(companyRepository, userRepository, branchRepository);
 export const createUserUseCase = new CreateUserUseCase(userRepository);
 export const createBranchUseCase = new CreateBranchUseCase(branchRepository);
 export const createOrderUseCase = new CreateOrderUseCase(workOrderRepository);

@@ -1,5 +1,5 @@
 /**
- * Register form - creates user and company in one step
+ * Register form - creates user, company and main branch in 3 steps
  */
 
 "use client";
@@ -29,15 +29,28 @@ export function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // User fields
+  // Step 1: User account
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // Company fields
+  // Step 2: Company details
   const [companyName, setCompanyName] = useState("");
   const [businessType, setBusinessType] = useState("");
+  const [rut, setRut] = useState("");
+  const [razonSocial, setRazonSocial] = useState("");
+  const [companyPhone, setCompanyPhone] = useState("");
+  const [companyAddress, setCompanyAddress] = useState("");
+  const [ivaPercentage, setIvaPercentage] = useState("19");
+  const [commissionPercentage, setCommissionPercentage] = useState("40");
+
+  // Step 3: Main branch
+  const [branchName, setBranchName] = useState("Casa Matriz");
+  const [branchCode, setBranchCode] = useState("MAT");
+  const [branchPhone, setBranchPhone] = useState("");
+  const [branchAddress, setBranchAddress] = useState("");
+  const [branchEmail, setBranchEmail] = useState("");
 
   function validateStep1(): boolean {
     setError(null);
@@ -77,10 +90,25 @@ export function RegisterForm() {
     return true;
   }
 
+  function validateStep3(): boolean {
+    setError(null);
+
+    if (!branchName.trim()) {
+      setError("El nombre de la sucursal es requerido");
+      return false;
+    }
+    if (!branchCode.trim()) {
+      setError("El código de la sucursal es requerido");
+      return false;
+    }
+
+    return true;
+  }
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
-    if (!validateStep2()) return;
+    if (!validateStep3()) return;
 
     setIsLoading(true);
     setError(null);
@@ -105,13 +133,27 @@ export function RegisterForm() {
         return;
       }
 
-      // Step 2: Create company and link user as admin
+      // Step 2: Create company, branch and link user as admin
       const companyResult = await registerCompany(
         userResult.value.userId,
         userResult.value.email,
         {
           name: companyName,
           businessType: businessType as BusinessType,
+          rut: rut || undefined,
+          razonSocial: razonSocial || undefined,
+          email: email,
+          phone: companyPhone || undefined,
+          address: companyAddress || undefined,
+          ivaPercentage: parseFloat(ivaPercentage) || 19,
+          commissionPercentage: parseFloat(commissionPercentage) || 40,
+          mainBranch: {
+            name: branchName,
+            code: branchCode || undefined,
+            phone: branchPhone || undefined,
+            address: branchAddress || undefined,
+            email: branchEmail || undefined,
+          },
         }
       );
 
@@ -132,15 +174,23 @@ export function RegisterForm() {
   }
 
   return (
-    <div className="bg-card border border-border rounded-2xl p-8 shadow-lg">
-      {/* Progress indicator */}
+    <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
+      {/* Progress indicator - 3 steps */}
       <div className="flex items-center gap-2 mb-6">
         <div className={`flex-1 h-2 rounded-full ${step >= 1 ? "bg-primary" : "bg-muted"}`} />
         <div className={`flex-1 h-2 rounded-full ${step >= 2 ? "bg-primary" : "bg-muted"}`} />
+        <div className={`flex-1 h-2 rounded-full ${step >= 3 ? "bg-primary" : "bg-muted"}`} />
+      </div>
+
+      {/* Step indicators */}
+      <div className="flex justify-between mb-6 text-sm">
+        <span className={step >= 1 ? "text-primary font-medium" : "text-muted-foreground"}>1. Cuenta</span>
+        <span className={step >= 2 ? "text-primary font-medium" : "text-muted-foreground"}>2. Empresa</span>
+        <span className={step >= 3 ? "text-primary font-medium" : "text-muted-foreground"}>3. Sucursal</span>
       </div>
 
       <h2 className="text-xl font-semibold mb-6 text-card-foreground">
-        {step === 1 ? "Crear Cuenta" : "Datos de la Empresa"}
+        {step === 1 ? "Crear Cuenta de Admin" : step === 2 ? "Datos de la Empresa" : "Sucursal Principal"}
       </h2>
 
       {error && (
@@ -149,7 +199,8 @@ export function RegisterForm() {
         </div>
       )}
 
-      <form onSubmit={step === 2 ? handleSubmit : undefined} className="space-y-4">
+      <form onSubmit={step === 3 ? handleSubmit : undefined} className="space-y-4">
+        {/* STEP 1: Account */}
         {step === 1 && (
           <>
             <div className="space-y-2">
@@ -210,15 +261,16 @@ export function RegisterForm() {
                 if (validateStep1()) setStep(2);
               }}
             >
-              Siguiente
+              Siguiente: Datos de Empresa
             </Button>
           </>
         )}
 
+        {/* STEP 2: Company */}
         {step === 2 && (
           <>
             <div className="space-y-2">
-              <Label htmlFor="company-name">Nombre de la Empresa</Label>
+              <Label htmlFor="company-name">Nombre de la Empresa *</Label>
               <Input
                 id="company-name"
                 type="text"
@@ -230,7 +282,7 @@ export function RegisterForm() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="business-type">Tipo de Negocio</Label>
+              <Label htmlFor="business-type">Tipo de Negocio *</Label>
               <Select value={businessType} onValueChange={setBusinessType} required>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecciona un tipo" />
@@ -243,9 +295,78 @@ export function RegisterForm() {
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Esto determinará las funcionalidades disponibles
-              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="rut">RUT / NIT</Label>
+                <Input
+                  id="rut"
+                  type="text"
+                  placeholder="12.345.678-9"
+                  value={rut}
+                  onChange={(e) => setRut(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="razon-social">Razón Social</Label>
+                <Input
+                  id="razon-social"
+                  type="text"
+                  placeholder="Mi Empresa SpA"
+                  value={razonSocial}
+                  onChange={(e) => setRazonSocial(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="company-phone">Teléfono de Contacto</Label>
+              <Input
+                id="company-phone"
+                type="tel"
+                placeholder="+56 9 1234 5678"
+                value={companyPhone}
+                onChange={(e) => setCompanyPhone(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="company-address">Dirección Fiscal</Label>
+              <Input
+                id="company-address"
+                type="text"
+                placeholder="Calle 123, Ciudad"
+                value={companyAddress}
+                onChange={(e) => setCompanyAddress(e.target.value)}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="iva-percentage">% IVA</Label>
+                <Input
+                  id="iva-percentage"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={ivaPercentage}
+                  onChange={(e) => setIvaPercentage(e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="commission-percentage">% Comisión Técnico</Label>
+                <Input
+                  id="commission-percentage"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={commissionPercentage}
+                  onChange={(e) => setCommissionPercentage(e.target.value)}
+                />
+              </div>
             </div>
 
             <div className="flex gap-3">
@@ -258,8 +379,101 @@ export function RegisterForm() {
               >
                 Atrás
               </Button>
+              <Button
+                type="button"
+                className="flex-1"
+                onClick={() => {
+                  if (validateStep2()) setStep(3);
+                }}
+              >
+                Siguiente: Sucursal
+              </Button>
+            </div>
+          </>
+        )}
+
+        {/* STEP 3: Main Branch */}
+        {step === 3 && (
+          <>
+            <div className="bg-muted/50 rounded-lg p-4 mb-4">
+              <p className="text-sm text-muted-foreground">
+                La sucursal principal es donde comenzarás a operar. Podrás agregar más sucursales después.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="branch-name">Nombre de Sucursal *</Label>
+              <Input
+                id="branch-name"
+                type="text"
+                placeholder="Casa Matriz"
+                value={branchName}
+                onChange={(e) => setBranchName(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="branch-code">Código Corto *</Label>
+              <Input
+                id="branch-code"
+                type="text"
+                placeholder="MAT"
+                maxLength={5}
+                value={branchCode}
+                onChange={(e) => setBranchCode(e.target.value.toUpperCase())}
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                Código breve para identificar la sucursal (ej: MAT, SCL, VAP)
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="branch-phone">Teléfono</Label>
+              <Input
+                id="branch-phone"
+                type="tel"
+                placeholder="+56 9 1234 5678"
+                value={branchPhone}
+                onChange={(e) => setBranchPhone(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="branch-address">Dirección</Label>
+              <Input
+                id="branch-address"
+                type="text"
+                placeholder="Calle 123, Ciudad"
+                value={branchAddress}
+                onChange={(e) => setBranchAddress(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="branch-email">Email</Label>
+              <Input
+                id="branch-email"
+                type="email"
+                placeholder="sucursal@empresa.com"
+                value={branchEmail}
+                onChange={(e) => setBranchEmail(e.target.value)}
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1"
+                onClick={() => setStep(2)}
+                disabled={isLoading}
+              >
+                Atrás
+              </Button>
               <Button type="submit" className="flex-1" disabled={isLoading || isCompanyLoading}>
-                {isLoading || isCompanyLoading ? "Registrando..." : "Registrarse"}
+                {isLoading || isCompanyLoading ? "Registrando..." : "Completar Registro"}
               </Button>
             </div>
           </>

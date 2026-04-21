@@ -183,7 +183,6 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
   const [activeStageByDevice, setActiveStageByDevice] = useState<
     Record<string, "unlock" | "checklist" | "services">
   >({});
-  const [orderStep, setOrderStep] = useState<1 | 2 | 3 | 4>(1);
   const keepScrollPosition = (fn: () => void) => {
     if (typeof window === "undefined") {
       fn();
@@ -399,7 +398,7 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
         )}
 
         {/* Equipos - Mostrar cada equipo en una sección separada */}
-        {devices.map((device, deviceIndex) => (
+        {orderStep >= 2 && devices.map((device, deviceIndex) => (
           <div
             key={device.id}
             className="rounded-3xl border border-slate-100 bg-gradient-to-b from-white via-slate-50/30 to-slate-100/60 p-6 shadow-[0_28px_50px_-36px_rgba(15,23,42,0.18)]"
@@ -804,64 +803,64 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
               </>
             )}
 
-            {!isDeviceFinalized(device.id) && orderStep === 3 && (
+            {!isDeviceFinalized(device.id) && (
               <div className="grid grid-cols-1 gap-4 xl:grid-cols-[250px_minmax(0,1fr)]">
                 <aside className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/90 p-4">
                   <div>
                     <p className="text-base font-semibold text-slate-900">Tu progreso</p>
                     <div className="mt-3 space-y-2">
                       {[
-                        { label: "Checklist", key: "checklist" },
-                        { label: "Desbloqueo", key: "unlock" },
-                        { label: "Servicios", key: "services" },
-                        { label: "Resumen", key: "pending" },
-                        { label: "Confirmación", key: "pending" },
+                        { label: "Checklist", state: getFlowStep(device.id) > 1 ? "done" : getFlowStep(device.id) === 1 ? "active" : "pending" },
+                        { label: "Desbloqueo", state: "active" },
+                        { label: "Servicios", state: getFlowStep(device.id) === 3 ? "active" : getFlowStep(device.id) > 3 ? "done" : "pending" },
+                        { label: "Resumen", state: "pending" },
+                        { label: "Confirmación", state: "pending" },
                       ].map((step, stepIndex) => (
-                        <button
+                        <div
                           key={`${device.id}-sidebar-step-${step.label}`}
-                          type="button"
-                          onClick={() => {
-                            if (step.key === "checklist") {
-                              setActiveStageByDevice((prev) => ({ ...prev, [device.id]: "checklist" }));
-                              setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 1 }));
-                            }
-                            if (step.key === "unlock") {
-                              setActiveStageByDevice((prev) => ({ ...prev, [device.id]: "unlock" }));
-                            }
-                            if (step.key === "services") {
-                              setActiveStageByDevice((prev) => ({ ...prev, [device.id]: "services" }));
-                              setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 3 }));
-                            }
-                          }}
-                          disabled={step.key === "pending"}
                           className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm ${
-                            (activeStageByDevice[device.id] ?? "unlock") === step.key
+                            step.state === "active"
                               ? "border border-violet-200 bg-violet-50 text-violet-900"
-                              : step.key === "pending"
-                                ? "cursor-not-allowed text-slate-400"
-                                : "text-slate-600 hover:bg-slate-100"
+                              : "text-slate-600"
                           }`}
                         >
                           <div className="flex items-center gap-2">
                             <span
                               className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${
-                                (activeStageByDevice[device.id] ?? "unlock") === step.key
-                                  ? "border border-violet-300 bg-white text-violet-700"
-                                  : "bg-slate-200 text-slate-600"
+                                step.state === "done"
+                                  ? "bg-violet-600 text-white"
+                                  : step.state === "active"
+                                    ? "border border-violet-300 bg-white text-violet-700"
+                                    : "bg-slate-200 text-slate-600"
                               }`}
                             >
-                              {stepIndex + 1}
+                              {step.state === "done" ? "✓" : stepIndex + 1}
                             </span>
                             {step.label}
                           </div>
-                        </button>
+                        </div>
                       ))}
                     </div>
+                  </div>
+                  <div className="rounded-xl border border-slate-200 bg-white p-3">
+                    <p className="mb-2 text-sm font-semibold text-slate-900">Resumen rápido</p>
+                    <p className="text-sm text-slate-700">{device.deviceModel || "Dispositivo pendiente"}</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Desbloqueo:{" "}
+                      {device.unlockType === "pattern"
+                        ? "Patrón"
+                        : device.unlockType === "code"
+                          ? "PIN"
+                          : "Sin bloqueo"}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      Servicios: {device.selectedServices.length} seleccionados
+                    </p>
                   </div>
                 </aside>
 
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="relative">
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     Dispositivo seleccionado *
@@ -1127,6 +1126,7 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
                       })}
                     </div>
 
+                    {orderStep === 2 && (
                     <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
                       <div className="rounded-2xl border border-violet-100 bg-violet-50/40 p-4">
                         {device.unlockType === "code" && (
@@ -1203,48 +1203,21 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
                         </ul>
                       </div>
                     </div>
-                  </div>
-                </div>
-
-                </div>
-              </div>
-              </div>
+                  )}
             )}
 
-            {!isDeviceFinalized(device.id) && orderStep === 2 && (
-              <div className="mt-4 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setOrderStep(3)}
-                  disabled={!device.deviceModel}
-                  className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  Continuar: Desbloqueo
-                </button>
-              </div>
-            )}
-
-            {!isDeviceFinalized(device.id) && orderStep === 3 && (
-              <div className="mt-4 flex justify-between">
-                <button
-                  type="button"
-                  onClick={() => setOrderStep(2)}
-                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
-                >
-                  Volver a dispositivo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOrderStep(4);
-                    setActiveStageByDevice((prev) => ({ ...prev, [device.id]: "checklist" }));
-                    setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 1 }));
-                  }}
-                  className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 text-sm font-medium text-white"
-                >
-                  Continuar: Checklist
-                </button>
-              </div>
+            {showPatternDrawer?.deviceId === device.id && (
+              <PatternDrawer
+                onPatternComplete={(pattern) => {
+                  updateDevice(device.id, {
+                    unlockType: "pattern",
+                    deviceUnlockPattern: pattern,
+                    deviceUnlockCode: "",
+                  });
+                  setShowPatternDrawer(null);
+                }}
+                onClose={() => setShowPatternDrawer(null)}
+              />
             )}
 
             {/* Modal para seleccionar categoría de dispositivo */}
@@ -1352,7 +1325,6 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
             {/* Flujo de checklist -> descripción -> servicios (sin scroll) */}
             {device.deviceModel &&
               !isDeviceFinalized(device.id) &&
-              orderStep === 4 &&
               (activeStageByDevice[device.id] ?? "unlock") !== "unlock" && (
               <div className="mt-4 rounded-2xl border border-indigo-100 bg-gradient-to-br from-white via-indigo-50/20 to-slate-50 p-4 shadow-[0_20px_40px_-30px_rgba(79,70,229,0.5)]">
                 <div className="mb-3 flex justify-start">
