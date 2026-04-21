@@ -111,6 +111,11 @@ export default function DeviceChecklist({
     fisico: null,
     funcional: null,
   });
+  // Estado para recordar que el usuario seleccionó "Con detalles"
+  const [detallesMode, setDetallesMode] = useState<Record<QuickCategory, boolean>>({
+    fisico: false,
+    funcional: false,
+  });
   const itemRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
@@ -296,6 +301,9 @@ export default function DeviceChecklist({
     if (categoryItems.length === 0) return;
 
     if (value === "detalles") {
+      // Guardar que el usuario quiere ver los detalles de esta categoría
+      setDetallesMode((prev) => ({ ...prev, [category]: true }));
+      
       const clearedData = { ...checklistData };
       categoryItems.forEach((itemName) => {
         if (clearedData[itemName] === "ok" || clearedData[itemName] === "funcionando" || clearedData[itemName] === "no_probado") {
@@ -310,6 +318,9 @@ export default function DeviceChecklist({
       return;
     }
 
+    // Si selecciona OK o No probado, quitar el modo detalles
+    setDetallesMode((prev) => ({ ...prev, [category]: false }));
+    
     const normalizedValue = value === "no_probado" ? "no_probado" : "ok";
     const nextData = { ...checklistData };
     categoryItems.forEach((itemName) => {
@@ -324,13 +335,18 @@ export default function DeviceChecklist({
 
   const pendingItems = allItems.filter((itemName) => !checklistData[itemName]);
   const completedItems = allItems.filter((itemName) => Boolean(checklistData[itemName]));
-  const baseVisibleItems = editingCompletedItem
-    ? [...pendingItems, editingCompletedItem].filter((item, index, arr) => arr.indexOf(item) === index)
-    : pendingItems;
+  
+  // Mostrar todos los items de las categorías que están en "detalles", no solo los pendientes
+  const visibleItems = editingCompletedItem
+    ? [...allItems, editingCompletedItem].filter((item, index, arr) => arr.indexOf(item) === index)
+    : allItems;
+    
+  // Mostrar items si: la categoría está en modo "detalles" O el estado de quickCategory tiene "detalles"
   const filteredVisibleItems = visibleItems.filter((itemName) => {
     const category = getQuickCategoryForItem(itemName);
-    if (category === "fisico" && quickCategoryState.fisico !== "detalles") return false;
-    if (category === "funcional" && quickCategoryState.funcional !== "detalles") return false;
+    // Mostrar si el usuario seleccionó "Con detalles" O si ya tiene items con estado "detalles"
+    if (category === "fisico" && !detallesMode.fisico && quickCategoryState.fisico !== "detalles") return false;
+    if (category === "funcional" && !detallesMode.funcional && quickCategoryState.funcional !== "detalles") return false;
     return true;
   });
 
@@ -562,10 +578,7 @@ export default function DeviceChecklist({
               </div>
             </div>
           );
-              })}
-            </div>
-          </div>
-        )}
+        })}
       </div>
 
       {filteredVisibleItems.length === 0 && allItems.length > 0 && (
