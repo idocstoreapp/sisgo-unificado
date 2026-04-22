@@ -117,6 +117,8 @@ export interface OrderWizardContextType {
   setIsSubmitting: (l: boolean) => void;
   responsibleUsers: User[];
   loadingResponsibleUsers: boolean;
+  orderStep: number;
+  setOrderStep: React.Dispatch<React.SetStateAction<number>>;
   
   // Shared actions
   applyDeviceType: (deviceId: string, type: DeviceType) => void;
@@ -172,6 +174,7 @@ export function OrderWizardProvider({
   const [responsibleUsers, setResponsibleUsers] = useState<User[]>([]);
   const [loadingResponsibleUsers, setLoadingResponsibleUsers] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [orderStep, setOrderStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // UI State Maps
@@ -452,7 +455,7 @@ export function OrderWizardProvider({
     createdOrder, setCreatedOrder, createdOrderServices, setCreatedOrderServices, showPDFPreview, setShowPDFPreview,
     detailsOpenByDevice, setDetailsOpenByDevice, serialFieldOpenByDevice, setSerialFieldOpenByDevice, unlockFieldOpenByDevice, setUnlockFieldOpenByDevice, manualEditOpenByDevice, setManualEditOpenByDevice, showPatternDrawer, setShowPatternDrawer, showDeviceCategoryModal, setShowDeviceCategoryModal,
     catalog, catalogCards, catalogLoaded, customDeviceTypes, recentDeviceModels, deviceSuggestions, setDeviceSuggestions, showDeviceSuggestions, setShowDeviceSuggestions,
-    loading, setLoading, isSubmitting, setIsSubmitting, responsibleUsers, loadingResponsibleUsers,
+    loading, setLoading, isSubmitting, setIsSubmitting, responsibleUsers, loadingResponsibleUsers, orderStep, setOrderStep,
     applyDeviceType, applyBrand, getCombinedSuggestions, applySuggestedModel, addCustomModelToCatalog, getTypeIdForDevice, getBrandsForDevice, getLinesForDevice, getModelsForDevice, getVariantsForModel, getCardImage, mapCatalogCodeToDeviceType, wizardTypeOptions
   };
 

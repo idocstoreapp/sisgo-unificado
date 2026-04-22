@@ -137,6 +137,8 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
     setIsSubmitting,
     responsibleUsers,
     loadingResponsibleUsers,
+    orderStep,
+    setOrderStep,
     showPDFPreview,
     setShowPDFPreview,
     createdOrder,
