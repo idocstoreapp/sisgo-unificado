@@ -17,6 +17,13 @@ export interface CreateCompanyDTO {
   address?: string;
   ivaPercentage?: number;
   commissionPercentage?: number;
+  mainBranch?: {
+    name: string;
+    code?: string;
+    address?: string;
+    phone?: string;
+    email?: string;
+  };
 }
 
 /**

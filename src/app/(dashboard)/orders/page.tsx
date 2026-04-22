@@ -8,9 +8,9 @@ import { OrdersList } from "@/presentation/components/orders/OrdersList";
 
 export default async function OrdersPage() {
   const supabase = await getSupabaseServerClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     redirect("/login");
   }
 
