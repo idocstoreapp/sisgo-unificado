@@ -439,7 +439,7 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
         {orderStep >= 2 && devices.map((device, deviceIndex) => (
           <div
             key={device.id}
-            className="rounded-3xl border border-slate-100 bg-gradient-to-b from-white via-slate-50/30 to-slate-100/60 p-6 shadow-[0_28px_50px_-36px_rgba(15,23,42,0.18)]"
+            className={`rounded-3xl border border-slate-100 bg-gradient-to-b from-white via-slate-50/30 to-slate-100/60 p-6 shadow-[0_28px_50px_-36px_rgba(15,23,42,0.18)] ${orderStep === 2 ? "min-h-[72vh]" : ""}`}
           >
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-bold text-slate-900">Equipo {deviceIndex + 1}</h3>
