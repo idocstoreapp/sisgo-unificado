@@ -1553,6 +1553,9 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
                 )}
               </div>
             )}
+                </div>
+              </div>
+            )}
 
             {isDeviceFinalized(device.id) && (
               <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4">
