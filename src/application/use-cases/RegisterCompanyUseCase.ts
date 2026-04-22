@@ -1,26 +1,30 @@
 /**
- * RegisterCompanyUseCase - creates a company and links the registering user as admin
+ * RegisterCompanyUseCase - creates a company, main branch and links the registering user as admin
  */
 
 import { Result, ValidationError, RepositoryError, UnexpectedError } from "@/shared/kernel";
 import { Company } from "@/domain/entities/Company";
 import { User } from "@/domain/entities/User";
+import { Branch } from "@/domain/entities/Branch";
 import type { ICompanyRepository } from "@/domain/repositories/ICompanyRepository";
 import type { IUserRepository } from "@/domain/repositories/IUserRepository";
+import type { IBranchRepository } from "@/domain/repositories/IBranchRepository";
 import type { CreateCompanyDTO } from "@/application/dtos/CreateCompanyDTO";
-import type { UserOutputDTO, CompanyOutputDTO } from "@/application/dtos/CreateCompanyDTO";
+import type { UserOutputDTO, CompanyOutputDTO, BranchOutputDTO } from "@/application/dtos/CreateCompanyDTO";
 
 type RegisterCompanyError = ValidationError | RepositoryError | UnexpectedError;
 
 export interface RegisterCompanyResult {
   company: CompanyOutputDTO;
   user: UserOutputDTO;
+  mainBranch: BranchOutputDTO;
 }
 
 export class RegisterCompanyUseCase {
   constructor(
     private readonly companyRepository: ICompanyRepository,
-    private readonly userRepository: IUserRepository
+    private readonly userRepository: IUserRepository,
+    private readonly branchRepository: IBranchRepository
   ) {}
 
   /**
@@ -92,10 +96,37 @@ export class RegisterCompanyUseCase {
 
       const savedUser = savedUserResult.getValue();
 
-      // Step 5: Return result as DTOs
+      // Step 5: Create main branch if provided
+      let savedBranch;
+      if (input.mainBranch) {
+        const branchResult = Branch.create({
+          id: crypto.randomUUID(),
+          companyId: savedCompany.id,
+          name: input.mainBranch.name,
+          code: input.mainBranch.code,
+          address: input.mainBranch.address,
+          phone: input.mainBranch.phone,
+          email: input.mainBranch.email,
+        });
+
+        if (branchResult.isFailure) {
+          await this.companyRepository.delete(savedCompany.id);
+          return Result.fail(branchResult.getError());
+        }
+
+        const savedBranchResult = await this.branchRepository.create(branchResult.getValue());
+        if (savedBranchResult.isFailure) {
+          await this.companyRepository.delete(savedCompany.id);
+          return Result.fail(savedBranchResult.getError());
+        }
+        savedBranch = savedBranchResult.getValue();
+      }
+
+      // Step 6: Return result as DTOs
       return Result.ok({
         company: this.toCompanyOutput(savedCompany),
         user: this.toUserOutput(savedUser),
+        mainBranch: savedBranch ? this.toBranchOutput(savedBranch) : this.createDefaultBranchOutput(savedCompany.id),
       });
     } catch (error) {
       return Result.fail(UnexpectedError.from(error));
@@ -137,6 +168,38 @@ export class RegisterCompanyUseCase {
       isActive: user.isActive,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt ?? null,
+    };
+  }
+
+  private toBranchOutput(branch: Branch): BranchOutputDTO {
+    return {
+      id: branch.id,
+      companyId: branch.companyId,
+      name: branch.name,
+      code: branch.code ?? null,
+      address: branch.address ?? null,
+      phone: branch.phone ?? null,
+      email: branch.email ?? null,
+      logoUrl: branch.logoUrl ?? null,
+      isActive: branch.isActive,
+      createdAt: branch.createdAt,
+      updatedAt: branch.updatedAt ?? null,
+    };
+  }
+
+  private createDefaultBranchOutput(companyId: string): BranchOutputDTO {
+    return {
+      id: "",
+      companyId,
+      name: "Casa Matriz",
+      code: "MAT",
+      address: null,
+      phone: null,
+      email: null,
+      logoUrl: null,
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: null,
     };
   }
 }

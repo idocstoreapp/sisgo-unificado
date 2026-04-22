@@ -6,12 +6,12 @@
 
 import { useState, useCallback } from "react";
 import { registerCompanyUseCase, createBranchUseCase } from "@/application/di-container";
-import type { CreateCompanyDTO, CreateBranchDTO } from "@/application/dtos/CreateCompanyDTO";
+import type { CreateCompanyDTO, CreateBranchDTO, BranchOutputDTO } from "@/application/dtos/CreateCompanyDTO";
 
 interface UseCompanyReturn {
   isLoading: boolean;
   error: string | null;
-  registerCompany: (userId: string, userEmail: string, data: CreateCompanyDTO) => Promise<{ success: boolean; error?: string }>;
+  registerCompany: (userId: string, userEmail: string, data: CreateCompanyDTO) => Promise<{ success: boolean; error?: string; mainBranch?: BranchOutputDTO }>;
   createBranch: (data: CreateBranchDTO) => Promise<{ success: boolean; error?: string }>;
 }
 
@@ -33,8 +33,9 @@ export function useCompany(): UseCompanyReturn {
         return { success: false, error: errorMessage };
       }
 
+      const value = result.getValue();
       setIsLoading(false);
-      return { success: true };
+      return { success: true, mainBranch: value.mainBranch };
     },
     []
   );
