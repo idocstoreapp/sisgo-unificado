@@ -429,10 +429,16 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
               </div>
             </div>
           </section>
-        ) : (
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
-            Cliente seleccionado: <strong>{selectedCustomer?.name || "Sin cliente"}</strong>
-          </div>
+        )}
+
+        {/* Barra lateral - Mostrar desde paso 2 */}
+        {orderStep >= 2 && orderStep <= 3 && (
+          <aside className="mb-4 rounded-xl border border-violet-200 bg-violet-50/80 p-3">
+            <div className="flex items-center gap-2 text-sm">
+              <span className="font-semibold text-violet-700">Cliente:</span>
+              <span className="text-slate-700">{selectedCustomer?.name || "Sin cliente"}</span>
+            </div>
+          </aside>
         )}
 
         {/* Equipos - Mostrar cada equipo en una sección separada */}
@@ -862,7 +868,7 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
                     : "grid grid-cols-1 gap-4 xl:grid-cols-[250px_minmax(0,1fr)]"
                 }
               >
-                {orderStep !== 3 && (
+                {orderStep !== 3 && orderStep !== 4 && (
                 <aside className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/90 p-4">
                   <div>
                     <p className="text-base font-semibold text-slate-900">Tu progreso</p>
