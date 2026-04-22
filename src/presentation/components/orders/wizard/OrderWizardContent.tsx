@@ -137,6 +137,8 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
     setIsSubmitting,
     responsibleUsers,
     loadingResponsibleUsers,
+    orderStep,
+    setOrderStep,
     showPDFPreview,
     setShowPDFPreview,
     createdOrder,
@@ -183,7 +185,6 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
   const [activeStageByDevice, setActiveStageByDevice] = useState<
     Record<string, "unlock" | "checklist" | "services">
   >({});
-  const [orderStep, setOrderStep] = useState<1 | 2 | 3 | 4>(1);
   const keepScrollPosition = (fn: () => void) => {
     if (typeof window === "undefined") {
       fn();
@@ -379,111 +380,63 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
           </div>
         </div>
 
-        <div className="grid gap-4 xl:grid-cols-[280px_minmax(0,1fr)]">
-          <aside className="rounded-2xl border border-slate-200 bg-slate-50/90 p-4">
-            <p className="text-base font-semibold text-slate-900">Tu progreso</p>
-            <div className="mt-3 space-y-2">
-              {[
-                { num: 1, label: "Cliente" },
-                { num: 2, label: "Dispositivo" },
-                { num: 3, label: "Desbloqueo" },
-                { num: 4, label: "Checklist/Servicios" },
-              ].map((step) => (
-                <div
-                  key={`global-step-${step.num}`}
-                  className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm ${
-                    orderStep === step.num
-                      ? "border border-violet-200 bg-violet-50 text-violet-900"
-                      : "text-slate-600"
-                  }`}
-                >
-                  <span
-                    className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${
-                      orderStep > step.num
-                        ? "bg-violet-600 text-white"
-                        : orderStep === step.num
-                          ? "border border-violet-300 bg-white text-violet-700"
-                          : "bg-slate-200 text-slate-600"
-                    }`}
-                  >
-                    {orderStep > step.num ? "✓" : step.num}
-                  </span>
-                  {step.label}
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 rounded-xl border border-slate-200 bg-white p-3 text-sm">
-              <p className="font-semibold text-slate-900">Resumen rápido</p>
-              <p className="mt-2 text-slate-700">
-                Cliente: <strong>{selectedCustomer?.name || "Pendiente"}</strong>
-              </p>
-              <p className="text-slate-600">
-                Dispositivo: <strong>{devices[0]?.deviceModel || "Pendiente"}</strong>
-              </p>
-              <p className="text-slate-600">
-                Servicios: <strong>{devices[0]?.selectedServices.length || 0}</strong>
-              </p>
-            </div>
-          </aside>
-
-          <div className="space-y-6">
-
         {/* Selección de Cliente */}
         {orderStep === 1 ? (
-          <div className="flex min-h-[78vh] flex-col justify-between rounded-3xl border border-violet-100 bg-gradient-to-br from-white via-violet-50/50 to-indigo-50/40 p-6">
-            <div>
-              <h3 className="text-2xl font-semibold text-slate-900">Paso 1 · Selecciona cliente</h3>
-              <p className="mt-1 text-sm text-slate-600">
-                Busca por nombre, correo o número de celular para continuar.
-              </p>
-            </div>
-            <div className="space-y-4">
-              <label className="mb-2 block text-sm font-medium text-slate-700">Cliente *</label>
-            <CustomerSearch
-              selectedCustomer={selectedCustomer}
-              onCustomerSelect={setSelectedCustomer}
-            />
-              <div className="grid gap-3 md:grid-cols-3">
-                <div className="rounded-2xl border border-violet-200 bg-white p-4">
-                  <p className="text-sm font-semibold text-slate-900">Clientes recientes</p>
-                  <p className="mt-1 text-xs text-slate-600">Acceso rápido para recepciones frecuentes.</p>
+          <section className="mx-auto flex min-h-[58vh] w-full max-w-5xl items-center justify-center">
+            <div className="w-full space-y-6 rounded-3xl border border-violet-100 bg-gradient-to-b from-white via-violet-50/30 to-white p-6 shadow-[0_28px_60px_-40px_rgba(79,70,229,0.55)] md:p-10">
+              <div className="text-center">
+                <p className="text-xs font-semibold tracking-[0.2em] text-violet-600 uppercase">
+                  Paso 1 · Cliente
+                </p>
+                <h3 className="mt-2 text-3xl font-bold text-slate-900 md:text-4xl">
+                  ¿Quién trae el dispositivo?
+                </h3>
+                <p className="mt-2 text-sm text-slate-600 md:text-base">
+                  Busca por nombre, correo o teléfono. También puedes crear un cliente nuevo en
+                  segundos.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 md:p-5">
+                <label className="mb-2 block text-base font-semibold text-slate-700">Cliente *</label>
+                <CustomerSearch
+                  selectedCustomer={selectedCustomer}
+                  onCustomerSelect={setSelectedCustomer}
+                />
+              </div>
+
+              <div className="grid gap-3 text-sm text-slate-600 md:grid-cols-3">
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                  ⚡ Selección rápida del cliente en el mismo paso.
                 </div>
-                <div className="rounded-2xl border border-violet-200 bg-white p-4">
-                  <p className="text-sm font-semibold text-slate-900">Búsqueda inteligente</p>
-                  <p className="mt-1 text-xs text-slate-600">Encuentra por nombre, correo o celular.</p>
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                  👥 Ideal para clientes recurrentes y atenciones rápidas.
                 </div>
-                <div className="rounded-2xl border border-violet-200 bg-white p-4">
-                  <p className="text-sm font-semibold text-slate-900">Validación inmediata</p>
-                  <p className="mt-1 text-xs text-slate-600">Evita duplicados antes de continuar.</p>
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                  ✅ Menos ruido visual, foco total en una sola acción.
                 </div>
               </div>
-              <div className="flex flex-wrap gap-2 text-xs">
-                <span className="rounded-full border border-violet-200 bg-white px-3 py-1 text-violet-700">
-                  Buscar por nombre
-                </span>
-                <span className="rounded-full border border-violet-200 bg-white px-3 py-1 text-violet-700">
-                  Buscar por correo
-                </span>
-                <span className="rounded-full border border-violet-200 bg-white px-3 py-1 text-violet-700">
-                  Buscar por celular
-                </span>
+
+              <div className="flex justify-center md:justify-end">
+                <button
+                  type="button"
+                  onClick={() => setOrderStep(2)}
+                  disabled={!selectedCustomer}
+                  className="w-full rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-3 text-base font-semibold text-white transition hover:from-indigo-500 hover:to-violet-500 disabled:cursor-not-allowed disabled:opacity-40 md:w-auto"
+                >
+                  Continuar · Seleccionar dispositivo
+                </button>
               </div>
             </div>
-            <div className="flex justify-end pt-4">
-              <button
-                type="button"
-                onClick={() => setOrderStep(2)}
-                disabled={!selectedCustomer}
-                className="rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-8 py-3 text-base font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Continuar: Dispositivo
-              </button>
-            </div>
+          </section>
+        ) : (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
+            Cliente seleccionado: <strong>{selectedCustomer?.name || "Sin cliente"}</strong>
           </div>
-        ) : null}
+        )}
 
         {/* Equipos - Mostrar cada equipo en una sección separada */}
-        {devices.map((device, deviceIndex) => (
+        {orderStep >= 2 && devices.map((device, deviceIndex) => (
           <div
             key={device.id}
             className="rounded-3xl border border-slate-100 bg-gradient-to-b from-white via-slate-50/30 to-slate-100/60 p-6 shadow-[0_28px_50px_-36px_rgba(15,23,42,0.18)]"
@@ -888,63 +841,84 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
               </>
             )}
 
-            {!isDeviceFinalized(device.id) && orderStep === 3 && (
-              <div className="min-h-[78vh] space-y-4">
-                <aside className="hidden space-y-3 rounded-2xl border border-slate-200 bg-slate-50/90 p-4">
+            {!isDeviceFinalized(device.id) && orderStep === 2 && (
+              <div className="mt-4 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setOrderStep(3)}
+                  disabled={!device.deviceModel}
+                  className="rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Continuar · Desbloqueo
+                </button>
+              </div>
+            )}
+
+            {!isDeviceFinalized(device.id) && orderStep >= 3 && (
+              <div
+                className={
+                  orderStep === 3
+                    ? "space-y-4"
+                    : "grid grid-cols-1 gap-4 xl:grid-cols-[250px_minmax(0,1fr)]"
+                }
+              >
+                {orderStep !== 3 && (
+                <aside className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/90 p-4">
                   <div>
                     <p className="text-base font-semibold text-slate-900">Tu progreso</p>
                     <div className="mt-3 space-y-2">
                       {[
-                        { label: "Checklist", key: "checklist" },
-                        { label: "Desbloqueo", key: "unlock" },
-                        { label: "Servicios", key: "services" },
-                        { label: "Resumen", key: "pending" },
-                        { label: "Confirmación", key: "pending" },
+                        { label: "Checklist", state: getFlowStep(device.id) > 1 ? "done" : getFlowStep(device.id) === 1 ? "active" : "pending" },
+                        { label: "Desbloqueo", state: "active" },
+                        { label: "Servicios", state: getFlowStep(device.id) === 3 ? "active" : getFlowStep(device.id) > 3 ? "done" : "pending" },
+                        { label: "Resumen", state: "pending" },
+                        { label: "Confirmación", state: "pending" },
                       ].map((step, stepIndex) => (
-                        <button
+                        <div
                           key={`${device.id}-sidebar-step-${step.label}`}
-                          type="button"
-                          onClick={() => {
-                            if (step.key === "checklist") {
-                              setActiveStageByDevice((prev) => ({ ...prev, [device.id]: "checklist" }));
-                              setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 1 }));
-                            }
-                            if (step.key === "unlock") {
-                              setActiveStageByDevice((prev) => ({ ...prev, [device.id]: "unlock" }));
-                            }
-                            if (step.key === "services") {
-                              setActiveStageByDevice((prev) => ({ ...prev, [device.id]: "services" }));
-                              setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 3 }));
-                            }
-                          }}
-                          disabled={step.key === "pending"}
                           className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm ${
-                            (activeStageByDevice[device.id] ?? "unlock") === step.key
+                            step.state === "active"
                               ? "border border-violet-200 bg-violet-50 text-violet-900"
-                              : step.key === "pending"
-                                ? "cursor-not-allowed text-slate-400"
-                                : "text-slate-600 hover:bg-slate-100"
+                              : "text-slate-600"
                           }`}
                         >
                           <div className="flex items-center gap-2">
                             <span
                               className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${
-                                (activeStageByDevice[device.id] ?? "unlock") === step.key
-                                  ? "border border-violet-300 bg-white text-violet-700"
-                                  : "bg-slate-200 text-slate-600"
+                                step.state === "done"
+                                  ? "bg-violet-600 text-white"
+                                  : step.state === "active"
+                                    ? "border border-violet-300 bg-white text-violet-700"
+                                    : "bg-slate-200 text-slate-600"
                               }`}
                             >
-                              {stepIndex + 1}
+                              {step.state === "done" ? "✓" : stepIndex + 1}
                             </span>
                             {step.label}
                           </div>
-                        </button>
+                        </div>
                       ))}
                     </div>
                   </div>
+                  <div className="rounded-xl border border-slate-200 bg-white p-3">
+                    <p className="mb-2 text-sm font-semibold text-slate-900">Resumen rápido</p>
+                    <p className="text-sm text-slate-700">{device.deviceModel || "Dispositivo pendiente"}</p>
+                    <p className="mt-1 text-xs text-slate-500">
+                      Desbloqueo:{" "}
+                      {device.unlockType === "pattern"
+                        ? "Patrón"
+                        : device.unlockType === "code"
+                          ? "PIN"
+                          : "Sin bloqueo"}
+                    </p>
+                    <p className="text-xs text-slate-500">
+                      Servicios: {device.selectedServices.length} seleccionados
+                    </p>
+                  </div>
                 </aside>
+                )}
 
-                <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
+                <div className="space-y-4">
                   <div className="grid grid-cols-1 gap-4">
                 <div className="relative">
                   <label className="mb-2 block text-sm font-medium text-slate-700">
@@ -1071,48 +1045,6 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
                     );
                   })()}
                 </div>
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <label className="block text-sm font-medium text-slate-700">
-                      Número de Serie (opcional)
-                    </label>
-                    {!serialFieldOpenByDevice[device.id] && !device.deviceSerial && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setSerialFieldOpenByDevice((prev) => ({ ...prev, [device.id]: true }))
-                        }
-                        className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
-                      >
-                        + Agregar número de serie
-                      </button>
-                    )}
-                  </div>
-                  {serialFieldOpenByDevice[device.id] || !!device.deviceSerial ? (
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        className="w-full rounded-md border border-slate-300 px-3 py-2"
-                        value={device.deviceSerial}
-                        onChange={(e) => updateDevice(device.id, { deviceSerial: e.target.value })}
-                        placeholder="Ej: R58N12345AB"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          updateDevice(device.id, { deviceSerial: "" });
-                          setSerialFieldOpenByDevice((prev) => ({ ...prev, [device.id]: false }));
-                        }}
-                        className="rounded-md border border-slate-300 px-3 py-2 text-xs text-slate-700 hover:bg-slate-100"
-                      >
-                        Quitar
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-slate-500">No agregado.</p>
-                  )}
-                </div>
-
                 <div className="overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-[0_24px_45px_-35px_rgba(79,70,229,0.5)]">
                   <div className="border-b border-violet-100 bg-gradient-to-r from-violet-50 via-indigo-50 to-white px-5 py-4">
                     <div className="mb-3 flex items-center justify-between">
@@ -1140,6 +1072,47 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
                   </div>
 
                   <div className="space-y-4 p-5">
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+                      <div className="mb-2 flex items-center justify-between">
+                        <label className="block text-sm font-medium text-slate-700">
+                          Número de Serie (opcional)
+                        </label>
+                        {!serialFieldOpenByDevice[device.id] && !device.deviceSerial && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSerialFieldOpenByDevice((prev) => ({ ...prev, [device.id]: true }))
+                            }
+                            className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
+                          >
+                            + Agregar número de serie
+                          </button>
+                        )}
+                      </div>
+                      {serialFieldOpenByDevice[device.id] || !!device.deviceSerial ? (
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2"
+                            value={device.deviceSerial}
+                            onChange={(e) => updateDevice(device.id, { deviceSerial: e.target.value })}
+                            placeholder="Ej: R58N12345AB"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateDevice(device.id, { deviceSerial: "" });
+                              setSerialFieldOpenByDevice((prev) => ({ ...prev, [device.id]: false }));
+                            }}
+                            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700 hover:bg-slate-100"
+                          >
+                            Quitar
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-500">No agregado.</p>
+                      )}
+                    </div>
                     <div className="grid gap-3 md:grid-cols-3">
                       {[
                         {
@@ -1211,6 +1184,7 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
                       })}
                     </div>
 
+                    {orderStep === 2 && (
                     <div className="grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
                       <div className="rounded-2xl border border-violet-100 bg-violet-50/40 p-4">
                         {device.unlockType === "code" && (
@@ -1287,48 +1261,23 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
                         </ul>
                       </div>
                     </div>
+                  )}
                   </div>
                 </div>
+              </div>
 
-                </div>
-              </div>
-              </div>
-            )}
-
-            {!isDeviceFinalized(device.id) && orderStep === 2 && (
-              <div className="mt-4 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setOrderStep(3)}
-                  disabled={!device.deviceModel}
-                  className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  Continuar: Desbloqueo
-                </button>
-              </div>
-            )}
-
-            {!isDeviceFinalized(device.id) && orderStep === 3 && (
-              <div className="sticky bottom-0 z-10 mt-4 flex justify-between rounded-2xl border border-violet-100 bg-white/95 p-3 backdrop-blur">
-                <button
-                  type="button"
-                  onClick={() => setOrderStep(2)}
-                  className="rounded-xl border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
-                >
-                  Volver a dispositivo
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOrderStep(4);
-                    setActiveStageByDevice((prev) => ({ ...prev, [device.id]: "checklist" }));
-                    setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 1 }));
-                  }}
-                  className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-2.5 text-sm font-semibold text-white"
-                >
-                  Continuar: Checklist
-                </button>
-              </div>
+            {showPatternDrawer?.deviceId === device.id && (
+              <PatternDrawer
+                onPatternComplete={(pattern) => {
+                  updateDevice(device.id, {
+                    unlockType: "pattern",
+                    deviceUnlockPattern: pattern,
+                    deviceUnlockCode: "",
+                  });
+                  setShowPatternDrawer(null);
+                }}
+                onClose={() => setShowPatternDrawer(null)}
+              />
             )}
 
             {/* Modal para seleccionar categoría de dispositivo */}
@@ -1436,7 +1385,6 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
             {/* Flujo de checklist -> descripción -> servicios (sin scroll) */}
             {device.deviceModel &&
               !isDeviceFinalized(device.id) &&
-              orderStep === 4 &&
               (activeStageByDevice[device.id] ?? "unlock") !== "unlock" && (
               <div className="mt-4 rounded-2xl border border-indigo-100 bg-gradient-to-br from-white via-indigo-50/20 to-slate-50 p-4 shadow-[0_20px_40px_-30px_rgba(79,70,229,0.5)]">
                 <div className="mb-3 flex justify-start">
@@ -1660,6 +1608,9 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
                 )}
               </div>
             )}
+                </div>
+              </div>
+            )}
 
             {isDeviceFinalized(device.id) && (
               <div className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4">
@@ -1788,19 +1739,24 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
           </div>
         ))}
 
-        {showPatternDrawer && patternDrawerDevice && (
-          <PatternDrawer
-            onPatternComplete={(pattern) => {
-              updateDevice(patternDrawerDevice.id, {
-                unlockType: "pattern",
-                deviceUnlockPattern: pattern,
-                deviceUnlockCode: "",
-              });
-              setShowPatternDrawer(null);
-            }}
-            onClose={() => setShowPatternDrawer(null)}
-          />
-        )}
+        {showPatternDrawer &&
+          (() => {
+            const targetDevice = devices.find((d) => d.id === showPatternDrawer.deviceId);
+            if (!targetDevice) return null;
+            return (
+              <PatternDrawer
+                onPatternComplete={(pattern) => {
+                  updateDevice(targetDevice.id, {
+                    unlockType: "pattern",
+                    deviceUnlockPattern: pattern,
+                    deviceUnlockCode: "",
+                  });
+                  setShowPatternDrawer(null);
+                }}
+                onClose={() => setShowPatternDrawer(null)}
+              />
+            );
+          })()}
 
         {/* Botón para agregar otro equipo */}
         {orderStep === 2 && (
@@ -1992,8 +1948,6 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
               : `Crear Orden${devices.length > 1 ? ` (${devices.length} equipos)` : ""}`}
           </button>
         </div>}
-          </div>
-        </div>
       </form>
 
       {/* PDFPreview fuera del formulario para evitar que los botones disparen el submit */}
