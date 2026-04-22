@@ -382,23 +382,53 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
 
         {/* Selección de Cliente */}
         {orderStep === 1 ? (
-          <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4">
-            <label className="mb-2 block text-sm font-medium text-slate-700">Cliente *</label>
-            <CustomerSearch
-              selectedCustomer={selectedCustomer}
-              onCustomerSelect={setSelectedCustomer}
-            />
-            <div className="flex justify-end">
-              <button
-                type="button"
-                onClick={() => setOrderStep(2)}
-                disabled={!selectedCustomer}
-                className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-40"
-              >
-                Continuar: Dispositivo
-              </button>
+          <section className="mx-auto flex min-h-[58vh] w-full max-w-5xl items-center justify-center">
+            <div className="w-full space-y-6 rounded-3xl border border-violet-100 bg-gradient-to-b from-white via-violet-50/30 to-white p-6 shadow-[0_28px_60px_-40px_rgba(79,70,229,0.55)] md:p-10">
+              <div className="text-center">
+                <p className="text-xs font-semibold tracking-[0.2em] text-violet-600 uppercase">
+                  Paso 1 · Cliente
+                </p>
+                <h3 className="mt-2 text-3xl font-bold text-slate-900 md:text-4xl">
+                  ¿Quién trae el dispositivo?
+                </h3>
+                <p className="mt-2 text-sm text-slate-600 md:text-base">
+                  Busca por nombre, correo o teléfono. También puedes crear un cliente nuevo en
+                  segundos.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 md:p-5">
+                <label className="mb-2 block text-base font-semibold text-slate-700">Cliente *</label>
+                <CustomerSearch
+                  selectedCustomer={selectedCustomer}
+                  onCustomerSelect={setSelectedCustomer}
+                />
+              </div>
+
+              <div className="grid gap-3 text-sm text-slate-600 md:grid-cols-3">
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                  ⚡ Selección rápida del cliente en el mismo paso.
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                  👥 Ideal para clientes recurrentes y atenciones rápidas.
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                  ✅ Menos ruido visual, foco total en una sola acción.
+                </div>
+              </div>
+
+              <div className="flex justify-center md:justify-end">
+                <button
+                  type="button"
+                  onClick={() => setOrderStep(2)}
+                  disabled={!selectedCustomer}
+                  className="w-full rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-3 text-base font-semibold text-white transition hover:from-indigo-500 hover:to-violet-500 disabled:cursor-not-allowed disabled:opacity-40 md:w-auto"
+                >
+                  Continuar · Seleccionar dispositivo
+                </button>
+              </div>
             </div>
-          </div>
+          </section>
         ) : (
           <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">
             Cliente seleccionado: <strong>{selectedCustomer?.name || "Sin cliente"}</strong>
@@ -811,8 +841,28 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
               </>
             )}
 
-            {!isDeviceFinalized(device.id) && (
-              <div className="grid grid-cols-1 gap-4 xl:grid-cols-[250px_minmax(0,1fr)]">
+            {!isDeviceFinalized(device.id) && orderStep === 2 && (
+              <div className="mt-4 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setOrderStep(3)}
+                  disabled={!device.deviceModel}
+                  className="rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  Continuar · Desbloqueo
+                </button>
+              </div>
+            )}
+
+            {!isDeviceFinalized(device.id) && orderStep >= 3 && (
+              <div
+                className={
+                  orderStep === 3
+                    ? "space-y-4"
+                    : "grid grid-cols-1 gap-4 xl:grid-cols-[250px_minmax(0,1fr)]"
+                }
+              >
+                {orderStep !== 3 && (
                 <aside className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/90 p-4">
                   <div>
                     <p className="text-base font-semibold text-slate-900">Tu progreso</p>
@@ -866,9 +916,10 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
                     </p>
                   </div>
                 </aside>
+                )}
 
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-4">
                 <div className="relative">
                   <label className="mb-2 block text-sm font-medium text-slate-700">
                     Dispositivo seleccionado *
@@ -994,48 +1045,6 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
                     );
                   })()}
                 </div>
-                <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <label className="block text-sm font-medium text-slate-700">
-                      Número de Serie (opcional)
-                    </label>
-                    {!serialFieldOpenByDevice[device.id] && !device.deviceSerial && (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setSerialFieldOpenByDevice((prev) => ({ ...prev, [device.id]: true }))
-                        }
-                        className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
-                      >
-                        + Agregar número de serie
-                      </button>
-                    )}
-                  </div>
-                  {serialFieldOpenByDevice[device.id] || !!device.deviceSerial ? (
-                    <div className="flex gap-2">
-                      <input
-                        type="text"
-                        className="w-full rounded-md border border-slate-300 px-3 py-2"
-                        value={device.deviceSerial}
-                        onChange={(e) => updateDevice(device.id, { deviceSerial: e.target.value })}
-                        placeholder="Ej: R58N12345AB"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => {
-                          updateDevice(device.id, { deviceSerial: "" });
-                          setSerialFieldOpenByDevice((prev) => ({ ...prev, [device.id]: false }));
-                        }}
-                        className="rounded-md border border-slate-300 px-3 py-2 text-xs text-slate-700 hover:bg-slate-100"
-                      >
-                        Quitar
-                      </button>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-slate-500">No agregado.</p>
-                  )}
-                </div>
-
                 <div className="overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-[0_24px_45px_-35px_rgba(79,70,229,0.5)]">
                   <div className="border-b border-violet-100 bg-gradient-to-r from-violet-50 via-indigo-50 to-white px-5 py-4">
                     <div className="mb-3 flex items-center justify-between">
@@ -1063,6 +1072,47 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
                   </div>
 
                   <div className="space-y-4 p-5">
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+                      <div className="mb-2 flex items-center justify-between">
+                        <label className="block text-sm font-medium text-slate-700">
+                          Número de Serie (opcional)
+                        </label>
+                        {!serialFieldOpenByDevice[device.id] && !device.deviceSerial && (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setSerialFieldOpenByDevice((prev) => ({ ...prev, [device.id]: true }))
+                            }
+                            className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
+                          >
+                            + Agregar número de serie
+                          </button>
+                        )}
+                      </div>
+                      {serialFieldOpenByDevice[device.id] || !!device.deviceSerial ? (
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2"
+                            value={device.deviceSerial}
+                            onChange={(e) => updateDevice(device.id, { deviceSerial: e.target.value })}
+                            placeholder="Ej: R58N12345AB"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              updateDevice(device.id, { deviceSerial: "" });
+                              setSerialFieldOpenByDevice((prev) => ({ ...prev, [device.id]: false }));
+                            }}
+                            className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700 hover:bg-slate-100"
+                          >
+                            Quitar
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate-500">No agregado.</p>
+                      )}
+                    </div>
                     <div className="grid gap-3 md:grid-cols-3">
                       {[
                         {
