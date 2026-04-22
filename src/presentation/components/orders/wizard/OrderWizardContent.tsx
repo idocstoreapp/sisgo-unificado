@@ -357,7 +357,10 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
   const { handleSubmit } = useOrderSubmit(onSaved);
   return (
     <Fragment>
-      <form onSubmit={handleSubmit} className="space-y-6 rounded-lg bg-white p-6 shadow-md">
+      <form
+        onSubmit={handleSubmit}
+        className="min-h-[calc(100vh-5rem)] space-y-6 rounded-lg bg-white p-6 shadow-md"
+      >
         <h2 className="text-2xl font-bold text-slate-900">Nueva Orden de Trabajo</h2>
         <div className="rounded-2xl border border-violet-100 bg-violet-50/60 p-3">
           <div className="mb-2 flex items-center justify-between text-xs font-semibold text-violet-700">
@@ -1706,7 +1709,8 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
           })()}
 
         {/* Botón para agregar otro equipo */}
-        <div className="flex justify-center">
+        {orderStep === 2 && (
+          <div className="flex justify-center">
           <button
             type="button"
             onClick={addNewDevice}
@@ -1714,7 +1718,8 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
           >
             ➕ Agregar Otro Equipo
           </button>
-        </div>
+          </div>
+        )}
 
         {/* Campo de Responsable con Autocompletado (solo para sucursales) */}
         {(() => {
@@ -1776,7 +1781,7 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
         })()}
 
         {/* Prioridad y Fechas */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        {orderStep === 4 && <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-700">Prioridad *</label>
             <select
@@ -1829,10 +1834,11 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
               min="0"
             />
           </div>
-        </div>
+        </div>}
 
         {/* Total General - Suma de todos los equipos */}
-        {(() => {
+        {orderStep === 4 &&
+          (() => {
           const totalReplacementCost = devices.reduce(
             (sum, device) => sum + device.replacementCost,
             0,
@@ -1867,10 +1873,10 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
               </div>
             </div>
           );
-        })()}
+          })()}
 
         {/* Botones */}
-        <div className="flex justify-end gap-4">
+        {orderStep === 4 && <div className="flex justify-end gap-4">
           <button
             type="button"
             onClick={onSaved}
@@ -1891,7 +1897,7 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
               ? "Guardando..."
               : `Crear Orden${devices.length > 1 ? ` (${devices.length} equipos)` : ""}`}
           </button>
-        </div>
+        </div>}
       </form>
 
       {/* PDFPreview fuera del formulario para evitar que los botones disparen el submit */}
