@@ -31,12 +31,15 @@ export function LoginForm() {
 
       if (result.isFailure) {
         setError(result.error?.message ?? "Error al iniciar sesión");
+        setIsLoading(false);
         return;
       }
 
-      // Redirect to dashboard or original destination
-      router.push(redirect);
-      router.refresh();
+      // Use window.location for reliable redirect
+      // Force a small delay to ensure session cookie is set
+      setTimeout(() => {
+        window.location.href = redirect;
+      }, 100);
     } catch {
       setError("Error inesperado. Intenta nuevamente.");
     } finally {
