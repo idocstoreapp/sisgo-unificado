@@ -1207,7 +1207,9 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
                       </div>
                     </div>
                   )}
-            )}
+                  </div>
+                </div>
+              </div>
 
             {showPatternDrawer?.deviceId === device.id && (
               <PatternDrawer
@@ -1549,6 +1551,9 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
                     </div>
                   </>
                 )}
+              </div>
+            )}
+                </div>
               </div>
             )}
 
