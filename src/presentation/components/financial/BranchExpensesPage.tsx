@@ -218,7 +218,7 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
           .or(`and(paid_at.gte.${startUTC.toISOString()},paid_at.lte.${endUTC.toISOString()}),and(paid_at.is.null,created_at.gte.${startUTC.toISOString()},created_at.lte.${endUTC.toISOString()})`);
 
         if (ordersError) {
-          console.warn("No se pudo filtrar por receipt_number en pagos técnicos globales, reintentando sin ese filtro:", ordersError);
+          console.error("Error cargando órdenes con receipt_number para pagos técnicos globales, reintentando sin ese filtro:", ordersError);
           const fallbackResult = await supabase
             .from("orders")
             .select("commission_amount, technician_id, paid_at, created_at")
@@ -230,7 +230,7 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
         }
 
         if (ordersError) {
-          console.warn("No se pudieron cargar órdenes pagadas para calcular pagos técnicos globales:", ordersError);
+          console.error("Error cargando órdenes pagadas para calcular pagos técnicos:", ordersError);
         }
 
         // Sumar comisiones de todas las órdenes pagadas (esto es lo que se debe/pagó a técnicos)
@@ -368,7 +368,7 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
           .or(`and(paid_at.gte.${startUTC.toISOString()},paid_at.lte.${endUTC.toISOString()}),and(paid_at.is.null,created_at.gte.${startUTC.toISOString()},created_at.lte.${endUTC.toISOString()})`);
 
         if (ordersError) {
-          console.warn("No se pudo filtrar por receipt_number en pagos técnicos de sucursal, reintentando sin ese filtro:", ordersError);
+          console.error("Error cargando órdenes con receipt_number para pagos técnicos de sucursal, reintentando sin ese filtro:", ordersError);
           const fallbackResult = await supabase
             .from("orders")
             .select("commission_amount, technician_id, paid_at, created_at")
@@ -380,7 +380,7 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
         }
 
         if (ordersError) {
-          console.warn("No se pudieron cargar órdenes pagadas para calcular pagos técnicos de sucursal:", ordersError);
+          console.error("Error cargando órdenes pagadas para calcular pagos técnicos de sucursal:", ordersError);
         }
 
         // Sumar comisiones de todas las órdenes pagadas
