@@ -41,37 +41,23 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
   const [priority, setPriority] = useState<string>("media");
   const [commitmentDate, setCommitmentDate] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
-  const [loadError, setLoadError] = useState<string>("");
 
   const loadOrder = useCallback(async () => {
     setLoading(true);
-    setLoadError("");
-
     const { data, error } = await supabase
       .from("work_orders")
-      .select("id, order_number, status, priority, commitment_date, receipt_url, notes, total_price, total_cost, created_at, customer_id")
+      .select("id, order_number, status, priority, commitment_date, receipt_url, notes, total_price, total_cost, created_at, customer_id, customers:customer_id(name, phone)")
       .eq("id", orderId)
       .single();
 
     if (error) {
+      console.error("[OrderDetailView] Error loading order", error);
       setOrder(null);
-      setLoadError("No se pudo cargar la orden. Verifica permisos o si la orden existe.");
       setLoading(false);
       return;
     }
 
     const loaded = data as unknown as OrderDetail;
-
-    if (loaded.customer_id) {
-      const { data: customerData } = await supabase
-        .from("customers")
-        .select("name, phone")
-        .eq("id", loaded.customer_id)
-        .maybeSingle();
-
-      loaded.customers = customerData || null;
-    }
-
     setOrder(loaded);
     setStatus(loaded.status || "en_proceso");
     setPriority(loaded.priority || "media");
@@ -128,9 +114,7 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
     return (
       <div className="mx-auto max-w-5xl space-y-4 p-8">
         <h1 className="text-2xl font-bold">Orden no encontrada</h1>
-        <p className="text-muted-foreground">
-          {loadError || "La orden no existe o no tienes permisos para verla."}
-        </p>
+        <p className="text-muted-foreground">La orden no existe o no tienes permisos para verla.</p>
         <Button asChild>
           <Link href="/orders">Volver a órdenes</Link>
         </Button>
