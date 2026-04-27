@@ -8,6 +8,12 @@ import { uploadPDFToStorage } from "@/lib/upload-pdf";
 
 const MAX_DESCRIPTION_LENGTH = 500;
 
+function isMissingColumnError(error: unknown, columnName: string) {
+  if (!error || typeof error !== "object") return false;
+  const err = error as { code?: string; message?: string };
+  return err.code === "42703" || err.message?.includes(columnName) || false;
+}
+
 export function useOrderSubmit(onSaved: () => void) {
   const context = useOrderWizard();
   const {
@@ -554,6 +560,21 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
             pdfUrl = await uploadPDFToStorage(pdfBlob, createdOrder.order_number);
             if (pdfUrl) {
               console.log("[ORDER FORM] PDF subido exitosamente a:", pdfUrl);
+
+              const { error: savePdfUrlError } = await supabase
+                .from("work_orders")
+                .update({ receipt_url: pdfUrl })
+                .eq("id", createdOrder.id);
+
+              if (savePdfUrlError) {
+                if (isMissingColumnError(savePdfUrlError, "receipt_url")) {
+                  console.warn("[ORDER FORM] No se guardó receipt_url porque la columna no existe aún en work_orders.");
+                } else {
+                  console.warn("[ORDER FORM] Error guardando receipt_url en work_orders:", savePdfUrlError);
+                }
+              } else {
+                console.log("[ORDER FORM] receipt_url guardada en la orden:", createdOrder.id);
+              }
             } else {
               console.warn("[ORDER FORM] No se pudo subir PDF a Storage, usando base64 como fallback");
               // Si no se pudo subir, generar base64 como fallback
