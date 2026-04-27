@@ -60,12 +60,6 @@ function formatOrderLoadError(error: unknown) {
   return { message: String(error), raw: error };
 }
 
-function isMissingColumnError(error: unknown, columnName: string) {
-  if (!error || typeof error !== "object") return false;
-  const err = error as { code?: string; message?: string };
-  return err.code === "42703" || err.message?.includes(columnName) || false;
-}
-
 export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
