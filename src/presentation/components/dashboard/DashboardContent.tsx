@@ -1,6 +1,6 @@
 /**
  * Dashboard content - main layout with sidebar and content area
- * Fetches real data from work_orders and customers tables.
+ * Fetches real data from work_orders table.
  */
 
 "use client";
@@ -50,7 +50,6 @@ const navItems = [
 
 interface QuickStats {
   ordersToday: number;
-  totalCustomers: number;
   revenueMonth: number;
   pendingOrders: number;
 }
@@ -61,7 +60,6 @@ export default function DashboardContent({ user }: DashboardContentProps) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [stats, setStats] = useState<QuickStats>({
     ordersToday: 0,
-    totalCustomers: 0,
     revenueMonth: 0,
     pendingOrders: 0,
   });
@@ -79,7 +77,7 @@ export default function DashboardContent({ user }: DashboardContentProps) {
       });
   }, [user.id]);
 
-  // Load real stats from work_orders and customers
+  // Load real stats from work_orders
   useEffect(() => {
     async function loadStats() {
       setStatsLoading(true);
@@ -88,24 +86,15 @@ export default function DashboardContent({ user }: DashboardContentProps) {
         const todayStart = new Date(
           today.getFullYear(),
           today.getMonth(),
-          today.getDate()
+          today.getDate(),
         ).toISOString();
-        const monthStart = new Date(
-          today.getFullYear(),
-          today.getMonth(),
-          1
-        ).toISOString();
+        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
 
         // Órdenes creadas hoy
         const { count: ordersToday } = await supabase
           .from("work_orders")
           .select("id", { count: "exact", head: true })
           .gte("created_at", todayStart);
-
-        // Total clientes registrados
-        const { count: totalCustomers } = await supabase
-          .from("customers")
-          .select("id", { count: "exact", head: true });
 
         // Ingresos del mes (suma de total_cost en órdenes entregadas)
         const { data: monthOrders } = await supabase
@@ -116,7 +105,7 @@ export default function DashboardContent({ user }: DashboardContentProps) {
 
         const revenueMonth = ((monthOrders as any[]) || []).reduce(
           (sum: number, o: any) => sum + (Number(o.total_cost) || 0),
-          0
+          0,
         );
 
         // Órdenes pendientes / en proceso (activas)
@@ -127,7 +116,6 @@ export default function DashboardContent({ user }: DashboardContentProps) {
 
         setStats({
           ordersToday: ordersToday || 0,
-          totalCustomers: totalCustomers || 0,
           revenueMonth: revenueMonth || 0,
           pendingOrders: pendingOrders || 0,
         });
@@ -160,11 +148,6 @@ export default function DashboardContent({ user }: DashboardContentProps) {
       color: "bg-blue-500",
     },
     {
-      label: "Clientes",
-      value: statsLoading ? "..." : String(stats.totalCustomers),
-      color: "bg-green-500",
-    },
-    {
       label: "Ingresos Mes",
       value: statsLoading ? "..." : formatCurrency(stats.revenueMonth),
       color: "bg-yellow-500",
@@ -176,46 +159,43 @@ export default function DashboardContent({ user }: DashboardContentProps) {
     },
   ];
 
+  const isAdminRole =
+    profile?.role === "admin" || profile?.role === "superadmin" || profile?.role === "super_admin";
+
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Mobile overlay */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`
-          fixed lg:static inset-y-0 left-0 z-50
-          ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"}
-          lg:translate-x-0
-          w-64 bg-card border-r border-border flex flex-col
-          transition-transform duration-200 ease-in-out
-        `}
+        className={`fixed inset-y-0 left-0 z-50 lg:static ${mobileMenuOpen ? "translate-x-0" : "-translate-x-full"} bg-card border-border flex w-64 flex-col border-r transition-transform duration-200 ease-in-out lg:translate-x-0`}
       >
         {/* Logo */}
-        <div className="p-6 border-b border-border">
+        <div className="border-border border-b p-6">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-primary rounded-xl flex items-center justify-center">
-              <span className="text-lg font-bold text-primary-foreground">S</span>
+            <div className="bg-primary flex h-10 w-10 items-center justify-center rounded-xl">
+              <span className="text-primary-foreground text-lg font-bold">S</span>
             </div>
             <div>
-              <h1 className="font-bold text-foreground">SISGO</h1>
-              <p className="text-xs text-muted-foreground">Gestión Unificado</p>
+              <h1 className="text-foreground font-bold">SISGO</h1>
+              <p className="text-muted-foreground text-xs">Gestión Unificado</p>
             </div>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 space-y-1 overflow-y-auto p-4">
           {navItems.map((item) => (
             <a
               key={item.href}
               href={item.href}
-              className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+              className="text-muted-foreground hover:bg-accent hover:text-accent-foreground flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors"
               onClick={() => setMobileMenuOpen(false)}
             >
               <item.icon className="size-5" />
@@ -225,106 +205,99 @@ export default function DashboardContent({ user }: DashboardContentProps) {
         </nav>
 
         {/* User section */}
-        <div className="p-4 border-t border-border">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 bg-secondary rounded-full flex items-center justify-center">
-              <span className="text-sm font-medium text-secondary-foreground">
+        <div className="border-border border-t p-4">
+          <div className="mb-3 flex items-center gap-3">
+            <div className="bg-secondary flex h-10 w-10 items-center justify-center rounded-full">
+              <span className="text-secondary-foreground text-sm font-medium">
                 {user.email?.charAt(0).toUpperCase()}
               </span>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-foreground truncate">
+            <div className="min-w-0 flex-1">
+              <p className="text-foreground truncate text-sm font-medium">
                 {profile?.name || user.email}
               </p>
               {profile && (
-                <p className="text-xs text-muted-foreground capitalize">
-                  {profile.role}
-                </p>
+                <p className="text-muted-foreground text-xs capitalize">{profile.role}</p>
               )}
             </div>
           </div>
           <Button variant="outline" size="sm" className="w-full" onClick={handleSignOut}>
-            <LogOut className="size-4 mr-2" />
+            <LogOut className="mr-2 size-4" />
             Cerrar Sesión
           </Button>
         </div>
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <main className="flex flex-1 flex-col overflow-hidden">
         {/* Header */}
-        <header className="flex items-center justify-between p-4 border-b border-border bg-card">
+        <header className="border-border bg-card flex items-center justify-between border-b p-4">
           <button
-            className="lg:hidden p-2 rounded-lg hover:bg-accent"
+            className="hover:bg-accent rounded-lg p-2 lg:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
           </button>
-          <button className="hidden lg:block p-2 rounded-lg hover:bg-accent">
+          <button className="hover:bg-accent hidden rounded-lg p-2 lg:block">
             <Menu className="size-5" />
           </button>
-          <h2 className="text-lg font-semibold text-foreground">Dashboard</h2>
+          <h2 className="text-foreground text-lg font-semibold">Dashboard</h2>
           <div className="w-9" />
         </header>
 
         {/* Content area */}
         <div className="flex-1 overflow-y-auto p-4 lg:p-8">
-          <div className="max-w-7xl mx-auto space-y-6">
+          <div className="mx-auto max-w-7xl space-y-6">
             {/* Welcome */}
-            <div className="bg-gradient-to-r from-primary/10 to-primary/5 rounded-2xl p-6 border border-primary/20">
-              <h3 className="text-xl font-semibold text-foreground mb-2">
+            <div className="from-primary/10 to-primary/5 border-primary/20 rounded-2xl border bg-gradient-to-r p-6">
+              <h3 className="text-foreground mb-2 text-xl font-semibold">
                 ¡Bienvenido{profile?.name ? `, ${profile.name}` : ""}!
               </h3>
               <p className="text-muted-foreground">
-                Este es tu panel de control. Desde aquí puedes gestionar órdenes, clientes, finanzas y más.
+                Este es tu panel de control. Desde aquí puedes gestionar órdenes, clientes, finanzas
+                y más.
               </p>
             </div>
 
-            {/* Quick stats — real data */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {quickStats.map((stat) => (
-                <div
-                  key={stat.label}
-                  className="bg-card border border-border rounded-xl p-4 shadow-sm"
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className={`w-2 h-2 rounded-full ${stat.color}`} />
-                    <p className="text-sm text-muted-foreground">{stat.label}</p>
+            {/* Quick stats — real data (solo roles no-admin para evitar duplicar KPIs) */}
+            {!isAdminRole && (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {quickStats.map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="bg-card border-border rounded-xl border p-4 shadow-sm"
+                  >
+                    <div className="mb-2 flex items-center gap-2">
+                      <div className={`h-2 w-2 rounded-full ${stat.color}`} />
+                      <p className="text-muted-foreground text-sm">{stat.label}</p>
+                    </div>
+                    <p className="text-foreground text-2xl font-bold">{stat.value}</p>
                   </div>
-                  <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
 
             {/* Role-based Dashboard */}
-            {(profile?.role === "admin" ||
-              profile?.role === "superadmin" ||
-              profile?.role === "super_admin") && <AdminDashboard />}
+            {isAdminRole && <AdminDashboard />}
 
             {profile?.role === "encargado" && <EncargadoDashboard />}
 
-            {profile &&
-              profile.role !== "admin" &&
-              profile.role !== "superadmin" &&
-              profile.role !== "super_admin" &&
-              profile.role !== "encargado" && (
-                <div className="bg-card border border-border rounded-xl p-8 text-center mt-4">
-                  <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                  <h4 className="text-lg font-semibold text-foreground mb-2">
-                    Dashboard de Técnico
-                  </h4>
-                  <p className="text-muted-foreground mb-4">
-                    Dirígete a la pestaña &ldquo;Órdenes&rdquo; para ver tus trabajos asignados.
-                  </p>
-                  <a
-                    href="/orders/tech"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
-                  >
-                    <Package className="size-4" />
-                    Ver mis órdenes
-                  </a>
-                </div>
-              )}
+            {profile && !isAdminRole && profile.role !== "encargado" && (
+              <div className="bg-card border-border mt-4 rounded-xl border p-8 text-center">
+                <Package className="text-muted-foreground mx-auto mb-4 h-12 w-12" />
+                <h4 className="text-foreground mb-2 text-lg font-semibold">Dashboard de Técnico</h4>
+                <p className="text-muted-foreground mb-4">
+                  Dirígete a la pestaña &ldquo;Órdenes&rdquo; para ver tus trabajos asignados.
+                </p>
+                <a
+                  href="/orders/tech"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors"
+                >
+                  <Package className="size-4" />
+                  Ver mis órdenes
+                </a>
+              </div>
+            )}
           </div>
         </div>
       </main>
