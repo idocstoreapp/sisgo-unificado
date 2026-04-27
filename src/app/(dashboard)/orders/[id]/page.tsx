@@ -1,6 +1,6 @@
 import { getSupabaseServerClient } from "@/infrastructure/database/supabase/server";
 import { redirect } from "next/navigation";
-import OrderDetailPanel from "@/presentation/components/orders/OrderDetailPanel";
+import OrderDetailView from "@/presentation/components/orders/OrderDetailView";
 
 interface OrderDetailPageProps {
   params: Promise<{ id: string }>;
@@ -20,7 +20,7 @@ export default async function OrderDetailPage({ params }: OrderDetailPageProps) 
 
   return (
     <div className="min-h-screen bg-background">
-      <OrderDetailPanel orderId={id} />
+      <OrderDetailView orderId={id} />
     </div>
   );
 }
