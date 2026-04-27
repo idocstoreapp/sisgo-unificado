@@ -71,11 +71,22 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
 
   const loadOrder = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    let queryResult = await supabase
       .from("work_orders")
       .select("id, order_number, status, priority, commitment_date, receipt_url, notes, total_price, total_cost, created_at, customer_id, customers:customer_id(name, phone)")
       .eq("id", orderId)
       .single();
+
+    if (queryResult.error && isMissingColumnError(queryResult.error, "receipt_url")) {
+      console.warn("[OrderDetailView] Columna receipt_url no existe, reintentando consulta sin ese campo.");
+      queryResult = await supabase
+        .from("work_orders")
+        .select("id, order_number, status, priority, commitment_date, notes, total_price, total_cost, created_at, customer_id, customers:customer_id(name, phone)")
+        .eq("id", orderId)
+        .single();
+    }
+
+    const { data, error } = queryResult;
 
     if (error) {
       console.error("[OrderDetailView] Error loading order", formatOrderLoadError(error));
