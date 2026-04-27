@@ -208,9 +208,8 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
         const startUTC = dateStringToUTCStart(start);
         const endUTC = dateStringToUTCEnd(end);
         
-        // Incluir pendientes y pagadas para reflejar comisiones por pagar + ya pagadas
-        // (algunas instalaciones no usan receipt_number y provocaban error en frontend)
-        const { data: payableOrders, error: ordersError } = await supabase
+        // Buscar órdenes pagadas con recibo en el rango (igual que el historial)
+        let { data: paidOrders, error: ordersError } = await supabase
           .from("orders")
           .select("commission_amount, technician_id, paid_at, created_at")
           .in("status", ["pending", "paid"])
@@ -218,7 +217,19 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
           .or(`and(paid_at.gte.${startUTC.toISOString()},paid_at.lte.${endUTC.toISOString()}),and(paid_at.is.null,created_at.gte.${startUTC.toISOString()},created_at.lte.${endUTC.toISOString()})`);
 
         if (ordersError) {
-          console.warn("No se pudieron cargar órdenes pendientes/pagadas para calcular pagos técnicos globales:", ordersError);
+          console.error("Error cargando órdenes con receipt_number para pagos técnicos globales, reintentando sin ese filtro:", ordersError);
+          const fallbackResult = await supabase
+            .from("orders")
+            .select("commission_amount, technician_id, paid_at, created_at")
+            .eq("status", "paid")
+            .in("technician_id", technicianIds)
+            .or(`and(paid_at.gte.${startUTC.toISOString()},paid_at.lte.${endUTC.toISOString()}),and(paid_at.is.null,created_at.gte.${startUTC.toISOString()},created_at.lte.${endUTC.toISOString()})`);
+          paidOrders = fallbackResult.data;
+          ordersError = fallbackResult.error;
+        }
+
+        if (ordersError) {
+          console.error("Error cargando órdenes pagadas para calcular pagos técnicos:", ordersError);
         }
 
         // Sumar comisiones de órdenes pendientes + pagadas (total por pagar/pagado a técnicos)
@@ -327,7 +338,7 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
         0
       );
 
-      // Pagos a técnicos de la sucursal - CALCULADO DESDE ÓRDENES PENDIENTES/PAGADAS
+      // Pagos a técnicos de la sucursal - CALCULADO DESDE ÓRDENES PAGADAS
       const { data: branchTechnicians, error: branchTechniciansError } = await supabase
         .from("users")
         .select("id")
@@ -346,8 +357,8 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
         const startUTC = dateStringToUTCStart(start);
         const endUTC = dateStringToUTCEnd(end);
         
-        // Incluir pendientes y pagadas para reflejar comisiones por pagar + ya pagadas
-        const { data: payableOrders, error: ordersError } = await supabase
+        // Buscar órdenes pagadas con recibo de técnicos de esta sucursal
+        let { data: paidOrders, error: ordersError } = await supabase
           .from("orders")
           .select("commission_amount, technician_id, paid_at, created_at")
           .in("status", ["pending", "paid"])
@@ -355,7 +366,19 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
           .or(`and(paid_at.gte.${startUTC.toISOString()},paid_at.lte.${endUTC.toISOString()}),and(paid_at.is.null,created_at.gte.${startUTC.toISOString()},created_at.lte.${endUTC.toISOString()})`);
 
         if (ordersError) {
-          console.warn("No se pudieron cargar órdenes pendientes/pagadas para calcular pagos técnicos de sucursal:", ordersError);
+          console.error("Error cargando órdenes con receipt_number para pagos técnicos de sucursal, reintentando sin ese filtro:", ordersError);
+          const fallbackResult = await supabase
+            .from("orders")
+            .select("commission_amount, technician_id, paid_at, created_at")
+            .eq("status", "paid")
+            .in("technician_id", technicianIds)
+            .or(`and(paid_at.gte.${startUTC.toISOString()},paid_at.lte.${endUTC.toISOString()}),and(paid_at.is.null,created_at.gte.${startUTC.toISOString()},created_at.lte.${endUTC.toISOString()})`);
+          paidOrders = fallbackResult.data;
+          ordersError = fallbackResult.error;
+        }
+
+        if (ordersError) {
+          console.error("Error cargando órdenes pagadas para calcular pagos técnicos de sucursal:", ordersError);
         }
 
         // Sumar comisiones de órdenes pendientes + pagadas
