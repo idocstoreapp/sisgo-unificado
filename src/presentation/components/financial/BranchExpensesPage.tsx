@@ -233,7 +233,7 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
         }
 
         // Sumar comisiones de órdenes pendientes + pagadas (total por pagar/pagado a técnicos)
-        total_pagos_tecnicos = (payableOrders || []).reduce(
+        total_pagos_tecnicos = (paidOrders || []).reduce(
           (sum, order) => sum + (order.commission_amount || 0),
           0
         );
@@ -244,7 +244,7 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
           startUTC: startUTC.toISOString(),
           endUTC: endUTC.toISOString(),
           technicianIds: technicianIds.length,
-          paidOrdersCount: payableOrders?.length || 0,
+          paidOrdersCount: paidOrders?.length || 0,
           total: total_pagos_tecnicos
         });
       }
@@ -382,7 +382,7 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
         }
 
         // Sumar comisiones de órdenes pendientes + pagadas
-        total_pagos_tecnicos = (payableOrders || []).reduce(
+        total_pagos_tecnicos = (paidOrders || []).reduce(
           (sum, order) => sum + (order.commission_amount || 0),
           0
         );
@@ -393,7 +393,7 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
           startUTC: startUTC.toISOString(),
           endUTC: endUTC.toISOString(),
           technicianIdsCount: technicianIds.length,
-          paidOrdersCount: payableOrders?.length || 0,
+          paidOrdersCount: paidOrders?.length || 0,
           total: total_pagos_tecnicos
         });
       }
