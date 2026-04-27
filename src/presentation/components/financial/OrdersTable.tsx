@@ -229,7 +229,7 @@ export default function OrdersTable({ technicianId, refreshKey = 0, onUpdate, is
       setLoadingTechnicians(true);
       const { data, error } = await supabase
         .from("users")
-        .select("id, name, local")
+        .select("id, name, branch_id, branches(name)")
         .eq("role", "technician")
         .order("name");
 
@@ -238,7 +238,11 @@ export default function OrdersTable({ technicianId, refreshKey = 0, onUpdate, is
           console.error("Error loading technicians for admin search:", error);
           setTechnicianOptions([]);
         } else {
-          setTechnicianOptions((data as Profile[]) ?? []);
+          const normalizedTechnicians = ((data ?? []) as any[]).map((tech) => ({
+            ...tech,
+            local: tech.local ?? tech.branches?.name ?? "",
+          }));
+          setTechnicianOptions(normalizedTechnicians as Profile[]);
         }
         setLoadingTechnicians(false);
       }

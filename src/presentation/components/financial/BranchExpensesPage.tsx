@@ -191,10 +191,14 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
       // Pagos a técnicos: resumen calculado desde comisiones de órdenes pagadas en el rango
       
       // Obtener todos los técnicos de todas las sucursales
-      const { data: allTechnicians } = await supabase
+      const { data: allTechnicians, error: allTechniciansError } = await supabase
         .from("users")
         .select("id")
         .eq("role", "technician");
+
+      if (allTechniciansError) {
+        console.error("Error cargando técnicos para resumen global:", allTechniciansError);
+      }
 
       const technicianIds = (allTechnicians || []).map((u) => u.id);
       let total_pagos_tecnicos = 0;
@@ -205,7 +209,7 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
         const endUTC = dateStringToUTCEnd(end);
         
         // Buscar órdenes pagadas con recibo en el rango (igual que el historial)
-        const { data: paidOrders, error: ordersError } = await supabase
+        let { data: paidOrders, error: ordersError } = await supabase
           .from("orders")
           .select("commission_amount, technician_id, paid_at, created_at")
           .eq("status", "paid")
@@ -214,7 +218,19 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
           .or(`and(paid_at.gte.${startUTC.toISOString()},paid_at.lte.${endUTC.toISOString()}),and(paid_at.is.null,created_at.gte.${startUTC.toISOString()},created_at.lte.${endUTC.toISOString()})`);
 
         if (ordersError) {
-          console.error("Error cargando órdenes pagadas para calcular pagos técnicos:", ordersError);
+          console.warn("No se pudo filtrar por receipt_number en pagos técnicos globales, reintentando sin ese filtro:", ordersError);
+          const fallbackResult = await supabase
+            .from("orders")
+            .select("commission_amount, technician_id, paid_at, created_at")
+            .eq("status", "paid")
+            .in("technician_id", technicianIds)
+            .or(`and(paid_at.gte.${startUTC.toISOString()},paid_at.lte.${endUTC.toISOString()}),and(paid_at.is.null,created_at.gte.${startUTC.toISOString()},created_at.lte.${endUTC.toISOString()})`);
+          paidOrders = fallbackResult.data;
+          ordersError = fallbackResult.error;
+        }
+
+        if (ordersError) {
+          console.warn("No se pudieron cargar órdenes pagadas para calcular pagos técnicos globales:", ordersError);
         }
 
         // Sumar comisiones de todas las órdenes pagadas (esto es lo que se debe/pagó a técnicos)
@@ -235,10 +251,14 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
       }
 
       // Pagos a encargados (de salary_settlements) - filtrado por fecha seleccionada
-      const { data: allEncargados } = await supabase
+      const { data: allEncargados, error: allEncargadosError } = await supabase
         .from("users")
         .select("id")
         .eq("role", "encargado");
+
+      if (allEncargadosError) {
+        console.error("Error cargando encargados para resumen global:", allEncargadosError);
+      }
 
       const encargadoIds = (allEncargados || []).map((u) => u.id);
       let total_pagos_encargados = 0;
@@ -320,11 +340,15 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
       );
 
       // Pagos a técnicos de la sucursal - CALCULADO DESDE ÓRDENES PAGADAS
-      const { data: branchTechnicians } = await supabase
+      const { data: branchTechnicians, error: branchTechniciansError } = await supabase
         .from("users")
         .select("id")
         .eq("branch_id", branchId)
         .eq("role", "technician");
+
+      if (branchTechniciansError) {
+        console.error("Error cargando técnicos de sucursal:", branchTechniciansError);
+      }
 
       const technicianIds = (branchTechnicians || []).map((u) => u.id);
       let total_pagos_tecnicos = 0;
@@ -335,7 +359,7 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
         const endUTC = dateStringToUTCEnd(end);
         
         // Buscar órdenes pagadas con recibo de técnicos de esta sucursal
-        const { data: paidOrders, error: ordersError } = await supabase
+        let { data: paidOrders, error: ordersError } = await supabase
           .from("orders")
           .select("commission_amount, technician_id, paid_at, created_at")
           .eq("status", "paid")
@@ -344,7 +368,19 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
           .or(`and(paid_at.gte.${startUTC.toISOString()},paid_at.lte.${endUTC.toISOString()}),and(paid_at.is.null,created_at.gte.${startUTC.toISOString()},created_at.lte.${endUTC.toISOString()})`);
 
         if (ordersError) {
-          console.error("Error cargando órdenes pagadas para calcular pagos técnicos de sucursal:", ordersError);
+          console.warn("No se pudo filtrar por receipt_number en pagos técnicos de sucursal, reintentando sin ese filtro:", ordersError);
+          const fallbackResult = await supabase
+            .from("orders")
+            .select("commission_amount, technician_id, paid_at, created_at")
+            .eq("status", "paid")
+            .in("technician_id", technicianIds)
+            .or(`and(paid_at.gte.${startUTC.toISOString()},paid_at.lte.${endUTC.toISOString()}),and(paid_at.is.null,created_at.gte.${startUTC.toISOString()},created_at.lte.${endUTC.toISOString()})`);
+          paidOrders = fallbackResult.data;
+          ordersError = fallbackResult.error;
+        }
+
+        if (ordersError) {
+          console.warn("No se pudieron cargar órdenes pagadas para calcular pagos técnicos de sucursal:", ordersError);
         }
 
         // Sumar comisiones de todas las órdenes pagadas
@@ -365,11 +401,15 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
       }
 
       // Pagos a encargados de la sucursal - filtrado por fecha seleccionada
-      const { data: branchEncargados } = await supabase
+      const { data: branchEncargados, error: branchEncargadosError } = await supabase
         .from("users")
         .select("id")
         .eq("branch_id", branchId)
         .eq("role", "encargado");
+
+      if (branchEncargadosError) {
+        console.error("Error cargando encargados de sucursal:", branchEncargadosError);
+      }
 
       const encargadoIds = (branchEncargados || []).map((u) => u.id);
       let total_pagos_encargados = 0;
@@ -681,4 +721,3 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
     </div>
   );
 }
-

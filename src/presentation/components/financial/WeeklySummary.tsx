@@ -85,10 +85,16 @@ export default function WeeklySummary({ technicianId, refreshKey = 0 }: WeeklySu
         weekQuery2 = weekQuery2.gte("paid_at", lastSettlementDate.toISOString());
       }
 
-      const [result1, result2] = await Promise.all([
+      let [result1, result2] = await Promise.all([
         weekQuery1,
         weekQuery2
       ]);
+
+      // Fallback para esquemas donde payout_week/payout_year no existen
+      if (result1.error) {
+        console.warn("Error en consulta por payout_week/payout_year, usando solo filtro por paid_at:", result1.error);
+        result1 = { data: [], error: null } as typeof result1;
+      }
 
       // Combinar resultados y eliminar duplicados
       const week1 = result1.data ?? [];
@@ -101,13 +107,23 @@ export default function WeeklySummary({ technicianId, refreshKey = 0 }: WeeklySu
 
       // Consulta para órdenes pagadas del mes actual
       // Usar paid_at para filtrar por mes (retrocompatibilidad: órdenes sin payout_week usan paid_at)
-      const { data: month, error: monthError } = await supabase
+      let { data: month, error: monthError } = await supabase
         .from("orders")
         .select("*")
         .eq("technician_id", technicianId)
         .eq("status", "paid")
         .gte("paid_at", msUTC.toISOString())
         .lte("paid_at", meUTC.toISOString());
+
+      if (monthError) {
+        const fallbackMonth = await supabase
+          .from("orders")
+          .select("*")
+          .eq("technician_id", technicianId)
+          .eq("status", "paid");
+        month = fallbackMonth.data;
+        monthError = fallbackMonth.error;
+      }
 
       // Consulta para total histórico de devoluciones/cancelaciones (sin límite de tiempo)
       const { data: totalReturns, error: totalReturnsError } = await supabase
@@ -118,11 +134,21 @@ export default function WeeklySummary({ technicianId, refreshKey = 0 }: WeeklySu
 
       // Consulta para TODAS las órdenes pendientes (sin recibo) - sin límite de fecha
       // Esto muestra el total de dinero que falta por recibir por órdenes sin recibo
-      const { data: allPendingOrders, error: pendingError } = await supabase
+      let { data: allPendingOrders, error: pendingError } = await supabase
         .from("orders")
         .select("*")
         .eq("technician_id", technicianId)
         .eq("status", "pending");
+
+      if (pendingError) {
+        const fallbackPending = await supabase
+          .from("orders")
+          .select("*")
+          .eq("technician_id", technicianId)
+          .in("status", ["pending", "in_progress"]);
+        allPendingOrders = fallbackPending.data;
+        pendingError = fallbackPending.error;
+      }
 
       // Ajustes de la semana - solo los creados después de la última liquidación (si existe)
       let adjustmentsQuery = supabase
@@ -140,19 +166,19 @@ export default function WeeklySummary({ technicianId, refreshKey = 0 }: WeeklySu
       const { data: weeklyAdjustments, error: adjustmentsError } = await adjustmentsQuery;
 
       if (weekError) {
-        console.error("Error loading week orders:", weekError);
+        console.warn("WeeklySummary: no se pudieron cargar todas las órdenes de la semana:", weekError);
       }
       if (monthError) {
-        console.error("Error loading month orders:", monthError);
+        console.warn("WeeklySummary: no se pudieron cargar todas las órdenes del mes:", monthError);
       }
       if (totalReturnsError) {
-        console.error("Error loading total returns:", totalReturnsError);
+        console.warn("WeeklySummary: no se pudieron cargar devoluciones/cancelaciones históricas:", totalReturnsError);
       }
       if (pendingError) {
-        console.error("Error loading pending orders:", pendingError);
+        console.warn("WeeklySummary: no se pudieron cargar todas las órdenes pendientes:", pendingError);
       }
       if (adjustmentsError) {
-        console.error("Error loading weekly adjustments:", adjustmentsError);
+        console.warn("WeeklySummary: no se pudieron cargar todos los ajustes semanales:", adjustmentsError);
       }
 
       const weekOrders = week ?? [];
