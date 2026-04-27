@@ -188,7 +188,7 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
         0
       );
 
-      // Pagos a técnicos: resumen calculado desde comisiones de órdenes pagadas en el rango
+      // Pagos a técnicos: resumen calculado desde comisiones de órdenes pendientes/pagadas en el rango
       
       // Obtener todos los técnicos de todas las sucursales
       const { data: allTechnicians, error: allTechniciansError } = await supabase
@@ -203,7 +203,7 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
       const technicianIds = (allTechnicians || []).map((u) => u.id);
       let total_pagos_tecnicos = 0;
       if (technicianIds.length > 0) {
-        // Calcular desde órdenes pagadas en el rango de fechas
+        // Calcular desde órdenes pendientes/pagadas en el rango de fechas
         // Usar funciones helper para evitar problemas de zona horaria
         const startUTC = dateStringToUTCStart(start);
         const endUTC = dateStringToUTCEnd(end);
@@ -212,8 +212,7 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
         let { data: paidOrders, error: ordersError } = await supabase
           .from("orders")
           .select("commission_amount, technician_id, paid_at, created_at")
-          .eq("status", "paid")
-          .not("receipt_number", "is", null)
+          .in("status", ["pending", "paid"])
           .in("technician_id", technicianIds)
           .or(`and(paid_at.gte.${startUTC.toISOString()},paid_at.lte.${endUTC.toISOString()}),and(paid_at.is.null,created_at.gte.${startUTC.toISOString()},created_at.lte.${endUTC.toISOString()})`);
 
@@ -233,8 +232,8 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
           console.error("Error cargando órdenes pagadas para calcular pagos técnicos:", ordersError);
         }
 
-        // Sumar comisiones de todas las órdenes pagadas (esto es lo que se debe/pagó a técnicos)
-        total_pagos_tecnicos = (paidOrders || []).reduce(
+        // Sumar comisiones de órdenes pendientes + pagadas (total por pagar/pagado a técnicos)
+        total_pagos_tecnicos = (payableOrders || []).reduce(
           (sum, order) => sum + (order.commission_amount || 0),
           0
         );
@@ -245,7 +244,7 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
           startUTC: startUTC.toISOString(),
           endUTC: endUTC.toISOString(),
           technicianIds: technicianIds.length,
-          paidOrdersCount: paidOrders?.length || 0,
+          paidOrdersCount: payableOrders?.length || 0,
           total: total_pagos_tecnicos
         });
       }
@@ -353,7 +352,7 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
       const technicianIds = (branchTechnicians || []).map((u) => u.id);
       let total_pagos_tecnicos = 0;
       if (technicianIds.length > 0) {
-        // Calcular desde órdenes pagadas en el rango de fechas
+        // Calcular desde órdenes pendientes/pagadas en el rango de fechas
         // Usar funciones helper para evitar problemas de zona horaria
         const startUTC = dateStringToUTCStart(start);
         const endUTC = dateStringToUTCEnd(end);
@@ -362,8 +361,7 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
         let { data: paidOrders, error: ordersError } = await supabase
           .from("orders")
           .select("commission_amount, technician_id, paid_at, created_at")
-          .eq("status", "paid")
-          .not("receipt_number", "is", null)
+          .in("status", ["pending", "paid"])
           .in("technician_id", technicianIds)
           .or(`and(paid_at.gte.${startUTC.toISOString()},paid_at.lte.${endUTC.toISOString()}),and(paid_at.is.null,created_at.gte.${startUTC.toISOString()},created_at.lte.${endUTC.toISOString()})`);
 
@@ -383,8 +381,8 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
           console.error("Error cargando órdenes pagadas para calcular pagos técnicos de sucursal:", ordersError);
         }
 
-        // Sumar comisiones de todas las órdenes pagadas
-        total_pagos_tecnicos = (paidOrders || []).reduce(
+        // Sumar comisiones de órdenes pendientes + pagadas
+        total_pagos_tecnicos = (payableOrders || []).reduce(
           (sum, order) => sum + (order.commission_amount || 0),
           0
         );
@@ -395,7 +393,7 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
           startUTC: startUTC.toISOString(),
           endUTC: endUTC.toISOString(),
           technicianIdsCount: technicianIds.length,
-          paidOrdersCount: paidOrders?.length || 0,
+          paidOrdersCount: payableOrders?.length || 0,
           total: total_pagos_tecnicos
         });
       }
