@@ -4,7 +4,7 @@
 
 import { getSupabaseServerClient } from "@/infrastructure/database/supabase/server";
 import { redirect } from "next/navigation";
-import { DashboardContent } from "@/presentation/components/dashboard/DashboardContent";
+import DashboardContent from "@/presentation/components/dashboard/DashboardContent";
 
 export default async function DashboardPage() {
   const supabase = await getSupabaseServerClient();
