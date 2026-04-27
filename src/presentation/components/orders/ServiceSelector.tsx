@@ -13,6 +13,18 @@ interface ServiceSelectorProps {
   showSelectedServicesList?: boolean;
 }
 
+interface ServiceCategoryGroup {
+  key: string;
+  label: string;
+  icon: React.ReactNode;
+  bg: string;
+  text: string;
+  border: string;
+  desc: string;
+  imageUrl: string | null;
+  services: Service[];
+}
+
 export default function ServiceSelector({
   selectedServices,
   onServicesChange,
@@ -114,7 +126,7 @@ export default function ServiceSelector({
     return fallbackServiceCategories.find(c => c.key === key) || fallbackServiceCategories[fallbackServiceCategories.length - 1];
   };
 
-  const categorizedByDb = availableServices.reduce<Record<string, any>>((acc, service) => {
+  const categorizedByDb = availableServices.reduce<Record<string, ServiceCategoryGroup>>((acc, service) => {
     const key = (service.category || "otros").trim().toLowerCase();
     if (!acc[key]) {
       const defaults = getCategoryDefaults(key);
@@ -139,7 +151,7 @@ export default function ServiceSelector({
     return acc;
   }, {});
 
-  const servicesByCategory = Object.values(categorizedByDb).length > 0
+  const servicesByCategory: ServiceCategoryGroup[] = Object.values(categorizedByDb).length > 0
     ? Object.values(categorizedByDb)
     : fallbackServiceCategories.map((category) => ({
       ...category,
@@ -185,12 +197,12 @@ export default function ServiceSelector({
     setLoading(true);
     try {
       const { data: rawData, error } = await supabase
-        .from("catalog_services")
+        .from("catalog_services" as any)
         .insert({
           name: newServiceName.trim(),
           description: null,
           base_price: 0,
-        })
+        } as any)
         .select()
         .single();
         

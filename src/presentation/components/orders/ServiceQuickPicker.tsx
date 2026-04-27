@@ -42,8 +42,10 @@ export default function ServiceQuickPicker({ value, onChange, required = false }
         return;
       }
 
+      const rows = data as Array<{ service_description: string | null }>;
+
       const countMap = new Map<string, number>();
-      data.forEach((row) => {
+      rows.forEach((row) => {
         const clean = row.service_description?.trim();
         if (!clean) return;
         countMap.set(clean, (countMap.get(clean) ?? 0) + 1);
