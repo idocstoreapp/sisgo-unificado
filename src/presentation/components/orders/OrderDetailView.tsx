@@ -33,6 +33,33 @@ interface OrderDetail {
   customers?: { name?: string | null; phone?: string | null } | null;
 }
 
+function formatOrderLoadError(error: unknown) {
+  if (!error) return { message: "Unknown error", raw: error };
+
+  if (typeof error === "object") {
+    const supabaseError = error as {
+      message?: string;
+      details?: string;
+      hint?: string;
+      code?: string;
+      name?: string;
+      stack?: string;
+    };
+
+    return {
+      message: supabaseError.message || "Unknown error",
+      details: supabaseError.details || null,
+      hint: supabaseError.hint || null,
+      code: supabaseError.code || null,
+      name: supabaseError.name || null,
+      stack: supabaseError.stack || null,
+      raw: error,
+    };
+  }
+
+  return { message: String(error), raw: error };
+}
+
 export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -51,7 +78,7 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
       .single();
 
     if (error) {
-      console.error("[OrderDetailView] Error loading order", error);
+      console.error("[OrderDetailView] Error loading order", formatOrderLoadError(error));
       setOrder(null);
       setLoading(false);
       return;
