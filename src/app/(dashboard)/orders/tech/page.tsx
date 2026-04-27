@@ -29,7 +29,6 @@ interface TechStats {
 
 interface OrderWithCustomer extends WorkOrder {
   customers?: { id: string; name: string; phone?: string } | null;
-  priority?: string;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -328,8 +327,8 @@ export default function TechnicianDashboardPage() {
   const handleTakeOrder = async (orderId: string) => {
     if (!profile) return;
     await supabase
-      .from("work_orders")
-      .update({ status: "en_reparacion", assigned_to: profile.id, updated_at: new Date().toISOString() })
+      .from("work_orders" as any)
+      .update({ status: "en_reparacion", assigned_to: profile.id, updated_at: new Date().toISOString() } as any)
       .eq("id", orderId);
     await loadOrders();
     await loadStats();
