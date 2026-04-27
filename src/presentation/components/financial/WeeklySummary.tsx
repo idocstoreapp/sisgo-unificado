@@ -166,19 +166,19 @@ export default function WeeklySummary({ technicianId, refreshKey = 0 }: WeeklySu
       const { data: weeklyAdjustments, error: adjustmentsError } = await adjustmentsQuery;
 
       if (weekError) {
-        console.error("Error loading week orders:", weekError);
+        console.warn("WeeklySummary: no se pudieron cargar todas las órdenes de la semana:", weekError);
       }
       if (monthError) {
-        console.error("Error loading month orders:", monthError);
+        console.warn("WeeklySummary: no se pudieron cargar todas las órdenes del mes:", monthError);
       }
       if (totalReturnsError) {
-        console.error("Error loading total returns:", totalReturnsError);
+        console.warn("WeeklySummary: no se pudieron cargar devoluciones/cancelaciones históricas:", totalReturnsError);
       }
       if (pendingError) {
-        console.error("Error loading pending orders:", pendingError);
+        console.warn("WeeklySummary: no se pudieron cargar todas las órdenes pendientes:", pendingError);
       }
       if (adjustmentsError) {
-        console.error("Error loading weekly adjustments:", adjustmentsError);
+        console.warn("WeeklySummary: no se pudieron cargar todos los ajustes semanales:", adjustmentsError);
       }
 
       const weekOrders = week ?? [];
