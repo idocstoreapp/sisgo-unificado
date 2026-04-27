@@ -91,9 +91,36 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
         }
       }
 
-      const { data: expensesData, error: expensesError } = await query
+      let { data: expensesData, error: expensesError } = await query
         .order("fecha", { ascending: false })
         .order("created_at", { ascending: false });
+
+      // Fallback: algunos entornos no permiten joins por permisos/RLS
+      if (expensesError) {
+        console.warn("Fallo cargando gastos generales con joins, reintentando consulta simple:", expensesError);
+        let fallbackQuery = supabase
+          .from("general_expenses")
+          .select("*");
+
+        if (sucursalId) {
+          fallbackQuery = fallbackQuery.eq("branch_id", sucursalId);
+        }
+
+        if (!showAllHistory) {
+          if (localDateFilter) {
+            fallbackQuery = fallbackQuery.gte("fecha", localDateFilter.start).lte("fecha", localDateFilter.end);
+          } else if (dateFilter) {
+            fallbackQuery = fallbackQuery.gte("fecha", dateFilter.start).lte("fecha", dateFilter.end);
+          }
+        }
+
+        const fallbackResult = await fallbackQuery
+          .order("fecha", { ascending: false })
+          .order("created_at", { ascending: false });
+
+        expensesData = fallbackResult.data;
+        expensesError = fallbackResult.error;
+      }
 
       if (expensesError) throw expensesError;
 
@@ -795,5 +822,4 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
     </div>
   );
 }
-
 
