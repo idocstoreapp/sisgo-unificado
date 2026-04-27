@@ -116,7 +116,9 @@ export interface OrderWizardContextType {
   isSubmitting: boolean;
   setIsSubmitting: (l: boolean) => void;
   responsibleUsers: User[];
+  setResponsibleUsers: React.Dispatch<React.SetStateAction<User[]>>;
   loadingResponsibleUsers: boolean;
+  setLoadingResponsibleUsers: React.Dispatch<React.SetStateAction<boolean>>;
   orderStep: number;
   setOrderStep: React.Dispatch<React.SetStateAction<number>>;
   
@@ -346,6 +348,7 @@ export function OrderWizardProvider({
     setFlowStepByDevice((prev) => ({ ...prev, [deviceId]: 1 }));
     setFinalizedDeviceById((prev) => ({ ...prev, [deviceId]: false }));
     setManualEditOpenByDevice((prev) => ({ ...prev, [deviceId]: false }));
+    setOrderStep(3);
   };
 
   const getCombinedSuggestions = (input: string): string[] => {
@@ -377,7 +380,7 @@ export function OrderWizardProvider({
       const chain = await ensureCatalogChain({ deviceTypeId: typeId, brandName: brand.name, lineName: line.name, modelName: form.model.trim(), variantName: form.variant.trim() || undefined });
       const displName = buildDeviceDisplayName({ brandName: brand.name, lineName: line.name, modelName: form.model.trim(), variantName: form.variant.trim() });
       const payload = { device_type_id: typeId, brand_id: chain.brandId, product_line_id: chain.lineId, model_id: chain.modelId, variant_id: chain.variantId, display_name: displName, is_active: true };
-      await supabase.from("device_catalog_items").insert(payload);
+      await supabase.from("device_catalog_items").insert(payload as any);
       applySuggestedModel(device.id, displName);
       setCustomCatalogFormByDevice((prev) => ({ ...prev, [device.id]: { model: "", variant: "" } }));
       // Reload
@@ -455,7 +458,7 @@ export function OrderWizardProvider({
     createdOrder, setCreatedOrder, createdOrderServices, setCreatedOrderServices, showPDFPreview, setShowPDFPreview,
     detailsOpenByDevice, setDetailsOpenByDevice, serialFieldOpenByDevice, setSerialFieldOpenByDevice, unlockFieldOpenByDevice, setUnlockFieldOpenByDevice, manualEditOpenByDevice, setManualEditOpenByDevice, showPatternDrawer, setShowPatternDrawer, showDeviceCategoryModal, setShowDeviceCategoryModal,
     catalog, catalogCards, catalogLoaded, customDeviceTypes, recentDeviceModels, deviceSuggestions, setDeviceSuggestions, showDeviceSuggestions, setShowDeviceSuggestions,
-    loading, setLoading, isSubmitting, setIsSubmitting, responsibleUsers, loadingResponsibleUsers, orderStep, setOrderStep,
+    loading, setLoading, isSubmitting, setIsSubmitting, responsibleUsers, setResponsibleUsers, loadingResponsibleUsers, setLoadingResponsibleUsers, orderStep, setOrderStep,
     applyDeviceType, applyBrand, getCombinedSuggestions, applySuggestedModel, addCustomModelToCatalog, getTypeIdForDevice, getBrandsForDevice, getLinesForDevice, getModelsForDevice, getVariantsForModel, getCardImage, mapCatalogCodeToDeviceType, wizardTypeOptions
   };
 

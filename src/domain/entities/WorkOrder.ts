@@ -79,12 +79,14 @@ export class WorkOrder {
   changeStatus(newStatus: OrderStatus): Result<void, ValidationError | BusinessRuleError> {
     // Business rules for status transitions
     const validTransitions: Record<OrderStatus, OrderStatus[]> = {
-      en_proceso: ["por_entregar", "rechazada", "sin_solucion"],
-      por_entregar: ["entregada", "en_proceso"],
+      pendiente: ["en_reparacion", "rechazada", "sin_solucion"],
+      en_reparacion: ["por_entregar", "rechazada", "sin_solucion", "en_proceso"],
+      en_proceso: ["por_entregar", "rechazada", "sin_solucion", "en_reparacion"],
+      por_entregar: ["entregada", "en_proceso", "en_reparacion"],
       entregada: ["garantia"],
       rechazada: [],
       sin_solucion: [],
-      garantia: ["en_proceso"],
+      garantia: ["en_proceso", "en_reparacion"],
     };
 
     if (this.props.status === newStatus) {
@@ -248,7 +250,7 @@ export class WorkOrder {
     return Result.ok(
       new WorkOrder({
         ...props,
-        status: props.status ?? "en_proceso",
+        status: props.status ?? "pendiente",
         metadata: props.metadata ?? {},
         totalCost: props.totalCost ?? totalCost,
         totalPrice: props.totalPrice ?? 0,

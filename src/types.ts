@@ -100,11 +100,20 @@ export interface WorkOrder {
   paid_at?: string | null;
   warranty_days: number;
   warranty_expires_at?: string | null;
+  // Campos adicionales de la BD
+  total_cost?: number | null;
+  metadata?: Record<string, any> | null;
+  assigned_to?: string | null;
+  branch_id?: string | null;
+  company_id?: string | null;
+  repair_completed_at?: string | null;
+  notes?: string | null;
   // Relaciones
   customer?: Customer;
   technician?: User;
   sucursal?: Branch;
-  // responsible_user_name ya está definido arriba como string
+  customers?: { id: string; name: string; phone?: string } | null;
+  branches?: { name: string } | null;
 }
 
 export interface OrderService {
@@ -119,17 +128,87 @@ export interface OrderService {
   service?: Service;
 }
 
-export interface OrderNote {
-  id: string;
-  order_id: string;
-  user_id?: string | null;
-  note: string;
-  note_type: 'interno' | 'publico';
-  created_at: string;
-  user?: User;
-}
+
+
 
 export type DeviceType = string; // Ahora permite cualquier tipo de dispositivo
 export type OrderStatus = 'en_proceso' | 'por_entregar' | 'entregada' | 'rechazada' | 'sin_solucion' | 'garantia';
 export type Priority = 'baja' | 'media' | 'urgente';
 export type PaymentMethod = 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA';
+
+// ─── Legacy type aliases (needed by sistema-reparaciones components) ────────────
+// These allow AdminReports, OrdersTable, TechnicianPayments etc. to compile
+
+export interface Order {
+  id: string;
+  order_number?: string | null;
+  technician_id?: string | null;
+  status: string;
+  device?: string;
+  service_description?: string;
+  replacement_cost?: number | null;
+  repair_cost?: number | null;
+  commission_amount?: number | null;
+  payment_method?: string | null;
+  receipt_number?: string | null;
+  receipt_url?: string | null;
+  paid_at?: string | null;
+  payout_week?: number | null;
+  payout_year?: number | null;
+  original_created_at?: string | null;
+  created_at: string;
+  updated_at?: string;
+  supplier_id?: string | null;
+  [key: string]: any; // allow extra fields from joins
+}
+
+export interface Profile {
+  id: string;
+  name: string;
+  email?: string;
+  role: string;
+  local?: string | null;
+  sucursal_id?: string | null;
+  branch_id?: string | null;
+  commission_percentage?: number | null;
+  sueldo_base?: number | null;
+  sueldo_frecuencia?: string | null;
+  [key: string]: any;
+}
+
+export interface SalaryAdjustment {
+  id: string;
+  technician_id: string;
+  amount: number;
+  type: string;
+  note?: string | null;
+  available_from?: string | null;
+  created_at: string;
+  remaining?: number;
+  appliedTotal?: number;
+  [key: string]: any;
+}
+
+export interface SalarySettlement {
+  id: string;
+  technician_id: string;
+  amount: number;
+  payment_method?: string | null;
+  note?: string | null;
+  details?: Record<string, any> | null;
+  week_start?: string | null;
+  created_at: string;
+  [key: string]: any;
+}
+
+export interface OrderNote {
+  id: string;
+  order_id: string;
+  technician_id?: string | null;
+  user_id?: string | null;
+  note: string;
+  note_type?: 'interno' | 'publico' | string;
+  created_at: string;
+  user?: User;
+}
+

@@ -44,6 +44,8 @@ export type UserRole =
 
 /** Order status values */
 export type OrderStatus =
+  | "pendiente"
+  | "en_reparacion"
   | "en_proceso"
   | "por_entregar"
   | "entregada"

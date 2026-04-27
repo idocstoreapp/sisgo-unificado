@@ -17,8 +17,7 @@ import PatternDrawer from "../PatternDrawer";
 import PatternViewer from "../PatternViewer";
 import ServiceSelector from "../ServiceSelector";
 import PDFPreview from "../PDFPreview";
-import { generatePDFBlob } from "@/lib/generate-pdf-blob";
-import { uploadPDFToStorage } from "@/lib/upload-pdf";
+
 import { useOrderWizard } from "./OrderWizardContext";
 import { useOrderSubmit } from "./useOrderSubmit";
 import {
@@ -31,6 +30,7 @@ import {
   ShieldCheck,
   Sparkles,
   Wrench,
+  Inbox,
 } from "lucide-react";
 
 interface OrderWizardContentProps {
@@ -136,7 +136,9 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
     isSubmitting,
     setIsSubmitting,
     responsibleUsers,
+    setResponsibleUsers,
     loadingResponsibleUsers,
+    setLoadingResponsibleUsers,
     orderStep,
     setOrderStep,
     showPDFPreview,
@@ -185,6 +187,9 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
   const [activeStageByDevice, setActiveStageByDevice] = useState<
     Record<string, "unlock" | "checklist" | "services">
   >({});
+  const [isAddingServiceByDevice, setIsAddingServiceByDevice] = useState<Record<string, boolean>>({});
+  const [savingDeviceId, setSavingDeviceId] = useState<string | null>(null);
+  const [showAddDevicePrompt, setShowAddDevicePrompt] = useState(false);
   const keepScrollPosition = (fn: () => void) => {
     if (typeof window === "undefined") {
       fn();
@@ -307,7 +312,7 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
               if (data && data.length > 0) {
                 console.log(
                   "[OrderForm] Responsables encontrados:",
-                  data.map((u) => ({
+                  data.map((u: any) => ({
                     id: u.id,
                     name: u.name,
                     branch_id: u.branch_id,
@@ -323,7 +328,7 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
                 if (allResponsables && allResponsables.length > 0) {
                   console.warn(
                     "[OrderForm] Pero hay responsables en el sistema con estos branch_id:",
-                    allResponsables.map((u) => ({
+                    allResponsables.map((u: any) => ({
                       name: u.name,
                       branch_id: u.branch_id,
                       branch_id_type: typeof u.branch_id,
@@ -359,29 +364,30 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
     <Fragment>
       <form
         onSubmit={handleSubmit}
-        className="min-h-[calc(100vh-5rem)] space-y-6 rounded-lg bg-white p-6 shadow-md"
+        className="min-h-screen space-y-4 bg-slate-50/50 pb-20"
       >
-        <h2 className="text-2xl font-bold text-slate-900">Nueva Orden de Trabajo</h2>
-        <div className="rounded-2xl border border-violet-100 bg-violet-50/60 p-3">
-          <div className="mb-2 flex items-center justify-between text-xs font-semibold text-violet-700">
-            <span>Paso {orderStep} de 4</span>
-            <span>
-              {orderStep === 1 && "Cliente"}
-              {orderStep === 2 && "Dispositivo"}
-              {orderStep === 3 && "Desbloqueo + Serie"}
-              {orderStep === 4 && "Checklist / Servicios"}
-            </span>
+        {orderStep >= 1 && orderStep <= 4 && (
+          <div className="rounded-2xl border border-violet-100 bg-violet-50/60 p-3">
+            <div className="mb-2 flex items-center justify-between text-xs font-semibold text-violet-700">
+              <span>Paso {orderStep} de 4</span>
+              <span>
+                {orderStep === 1 && "Cliente"}
+                {orderStep === 2 && "Dispositivo"}
+                {orderStep === 3 && "Desbloqueo + Serie"}
+                {orderStep === 4 && "Checklist / Servicios"}
+              </span>
+            </div>
+            <div className="h-2 rounded-full bg-violet-100">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 transition-all"
+                style={{ width: `${(orderStep / 4) * 100}%` }}
+              />
+            </div>
           </div>
-          <div className="h-2 rounded-full bg-violet-100">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 transition-all"
-              style={{ width: `${(orderStep / 4) * 100}%` }}
-            />
-          </div>
-        </div>
+        )}
 
         {/* Selección de Cliente */}
-        {orderStep === 1 ? (
+        {orderStep === 1 && (
           <section className="mx-auto flex min-h-[58vh] w-full max-w-5xl items-center justify-center">
             <div className="w-full space-y-6 rounded-3xl border border-violet-100 bg-gradient-to-b from-white via-violet-50/30 to-white p-6 shadow-[0_28px_60px_-40px_rgba(79,70,229,0.55)] md:p-10">
               <div className="text-center">
@@ -431,34 +437,182 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
           </section>
         )}
 
-        {/* Barra lateral - Mostrar desde paso 2 */}
-        {orderStep >= 2 && orderStep <= 3 && (
-          <aside className="mb-4 rounded-xl border border-violet-200 bg-violet-50/80 p-3">
-            <div className="flex items-center gap-2 text-sm">
-              <span className="font-semibold text-violet-700">Cliente:</span>
-              <span className="text-slate-700">{selectedCustomer?.name || "Sin cliente"}</span>
-            </div>
-          </aside>
-        )}
-
         {/* Equipos - Mostrar cada equipo en una sección separada */}
-        {orderStep >= 2 && devices.map((device, deviceIndex) => (
+        {orderStep >= 2 && orderStep < 5 && devices.map((device, deviceIndex) => (
           <div
             key={device.id}
-            className={`rounded-3xl border border-slate-100 bg-gradient-to-b from-white via-slate-50/30 to-slate-100/60 p-6 shadow-[0_28px_50px_-36px_rgba(15,23,42,0.18)] ${orderStep === 2 ? "min-h-[72vh]" : ""}`}
+            className={`grid grid-cols-1 xl:grid-cols-[280px_minmax(0,1fr)] items-start gap-6 rounded-3xl border border-slate-100 bg-gradient-to-b from-white via-slate-50/30 to-slate-100/60 p-6 shadow-[0_28px_50px_-36px_rgba(15,23,42,0.18)] ${orderStep === 2 ? "min-h-[72vh]" : ""}`}
           >
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-slate-900">Equipo {deviceIndex + 1}</h3>
-              {devices.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeDevice(device.id)}
-                  className="rounded-md border border-gray-300 px-3 py-1 text-sm text-gray-600 hover:bg-gray-50"
-                >
-                  Eliminar equipo
-                </button>
-              )}
-            </div>
+            {/* SIDEBAR (Columna Izquierda) */}
+            <aside className="sticky top-6 hidden xl:flex flex-col gap-4">
+              {/* Tu Progreso */}
+              <div className="rounded-2xl border border-slate-200 bg-slate-50/90 p-4">
+                <p className="text-base font-semibold text-slate-900">Tu progreso</p>
+                <div className="mt-4 space-y-2">
+                  {[
+                    { label: "Dispositivo", state: orderStep > 2 ? "done" : "active" },
+                    { label: "Desbloqueo", state: orderStep > 3 ? "done" : orderStep === 3 ? "active" : "pending" },
+                    { label: "Checklist", state: getFlowStep(device.id) > 1 ? "done" : getFlowStep(device.id) === 1 && orderStep === 4 ? "active" : "pending" },
+                    { label: "Servicios", state: getFlowStep(device.id) === 3 ? "active" : getFlowStep(device.id) > 3 ? "done" : "pending" },
+                    { label: "Resumen", state: orderStep > 4 ? "done" : orderStep === 5 ? "active" : "pending" },
+                  ].map((step, stepIndex) => (
+                    <div
+                      key={`${device.id}-sidebar-step-${step.label}`}
+                      className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm ${
+                        step.state === "active"
+                          ? "border border-violet-200 bg-violet-50 text-violet-900 font-medium"
+                          : step.state === "done"
+                            ? "text-slate-800"
+                            : "text-slate-400"
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${
+                            step.state === "done"
+                              ? "bg-violet-600 text-white"
+                              : step.state === "active"
+                                ? "border border-violet-400 bg-white text-violet-700"
+                                : "bg-slate-100 text-slate-400"
+                          }`}
+                        >
+                          {step.state === "done" ? "✓" : stepIndex + 1}
+                        </span>
+                        {step.label}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Información de Cliente */}
+              <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                <p className="mb-2 text-sm font-semibold text-slate-900">Cliente seleccionado</p>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-bold text-slate-600">
+                    {selectedCustomer?.name?.charAt(0).toUpperCase() || "C"}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-slate-800">{selectedCustomer?.name || "Sin cliente"}</p>
+                    {selectedCustomer?.email && <p className="truncate text-xs text-slate-500">{selectedCustomer.email}</p>}
+                  </div>
+                </div>
+              </div>
+
+              {/* Resumen rápido del dispositivo */}
+              <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                <p className="mb-3 text-sm font-semibold text-slate-900">Resumen rápido</p>
+                {device.deviceModel ? (
+                  <>
+                    <div className="mb-3 flex items-center gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-md bg-indigo-50 text-xs font-medium text-indigo-700">📱</span>
+                      <p className="truncate text-sm font-medium text-slate-800">{device.deviceModel}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="flex justify-between text-xs text-slate-500">
+                        <span>Desbloqueo:</span>
+                        <span className="font-medium text-slate-700">{device.unlockType === "pattern" ? "Patrón" : device.unlockType === "code" ? "PIN" : "Sin bloqueo"}</span>
+                      </p>
+                      <p className="flex justify-between text-xs text-slate-500">
+                        <span>Servicios:</span>
+                        <span className="font-medium text-slate-700">{device.selectedServices?.length || 0}</span>
+                      </p>
+                      {device.checklistData && Object.keys(device.checklistData).some(k => device.checklistData[k]) && (
+                        <div className="mt-2 flex items-center justify-between rounded-lg border border-emerald-100 bg-emerald-50 px-2 py-1.5">
+                          <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-700">
+                            <Check className="h-3 w-3" /> Checklists:
+                          </span>
+                          <span className="text-[11px] font-bold text-emerald-700">
+                            {Object.keys(device.checklistData).filter(k => device.checklistData[k]).length} completados
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-xs text-slate-500">Dispositivo no seleccionado</p>
+                )}
+              </div>
+
+              {/* Detalles de la Orden */}
+              <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <p className="mb-4 text-base font-semibold text-slate-900 flex items-center gap-2">
+                  <NotebookPen className="h-4 w-4 text-indigo-500" />
+                  Detalles de la Orden
+                </p>
+                
+                <div className="space-y-4">
+                  {/* Prioridad */}
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">Prioridad</label>
+                    <select
+                      value={priority}
+                      onChange={(e) => setPriority(e.target.value as any)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    >
+                      <option value="baja">Baja</option>
+                      <option value="media">Media (Normal)</option>
+                      <option value="urgente">Urgente</option>
+                    </select>
+                  </div>
+
+                  {/* Fecha de Compromiso */}
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">Fecha de entrega</label>
+                    <input
+                      type="datetime-local"
+                      value={commitmentDate}
+                      onChange={(e) => setCommitmentDate(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  {/* Garantía */}
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-slate-600">Garantía (días)</label>
+                    <select
+                      value={warrantyDays}
+                      onChange={(e) => setWarrantyDays(Number(e.target.value))}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                    >
+                      <option value={0}>Sin garantía</option>
+                      <option value={15}>15 días</option>
+                      <option value={30}>30 días</option>
+                      <option value={60}>60 días</option>
+                      <option value={90}>90 días</option>
+                      <option value={180}>6 meses</option>
+                    </select>
+                  </div>
+
+                  {/* Total Estimado */}
+                  <div className="mt-4 pt-4 border-t border-slate-100">
+                    <p className="text-xs text-slate-500">Total estimado (Todos los equipos)</p>
+                    <p className="text-lg font-bold text-indigo-700 mt-1">
+                      {formatCLP(
+                        devices.reduce((sum, d) => sum + d.replacementCost, 0) +
+                        devices.reduce((sum, d) => sum + getDeviceServiceTotal(d), 0)
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </aside>
+
+            {/* CONTENIDO PRINCIPAL (Columna Derecha) */}
+            <div className="flex w-full min-w-0 flex-col space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-slate-900 xl:hidden">Equipo {deviceIndex + 1}</h3>
+                <div className="hidden xl:block" />
+                {devices.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => removeDevice(device.id)}
+                    className="rounded-md border border-gray-300 px-3 py-1 text-sm text-gray-600 hover:bg-gray-50"
+                  >
+                    Eliminar equipo
+                  </button>
+                )}
+              </div>
 
             {/* Información del Dispositivo */}
             {!isDeviceFinalized(device.id) && orderStep === 2 && (
@@ -851,7 +1005,10 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
               <div className="mt-4 flex justify-end">
                 <button
                   type="button"
-                  onClick={() => setOrderStep(3)}
+                  onClick={() => {
+                    setActiveStageByDevice((prev) => ({ ...prev, [device.id]: "unlock" }));
+                    setOrderStep(3);
+                  }}
                   disabled={!device.deviceModel}
                   className="rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-2.5 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
                 >
@@ -861,197 +1018,11 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
             )}
 
             {!isDeviceFinalized(device.id) && orderStep >= 3 && (
-              <div
-                className={
-                  orderStep === 3
-                    ? "space-y-4"
-                    : "grid grid-cols-1 gap-4 xl:grid-cols-[250px_minmax(0,1fr)]"
-                }
-              >
-                {orderStep !== 3 && orderStep !== 4 && (
-                <aside className="space-y-3 rounded-2xl border border-slate-200 bg-slate-50/90 p-4">
-                  <div>
-                    <p className="text-base font-semibold text-slate-900">Tu progreso</p>
-                    <div className="mt-3 space-y-2">
-                      {[
-                        { label: "Checklist", state: getFlowStep(device.id) > 1 ? "done" : getFlowStep(device.id) === 1 ? "active" : "pending" },
-                        { label: "Desbloqueo", state: "active" },
-                        { label: "Servicios", state: getFlowStep(device.id) === 3 ? "active" : getFlowStep(device.id) > 3 ? "done" : "pending" },
-                        { label: "Resumen", state: "pending" },
-                        { label: "Confirmación", state: "pending" },
-                      ].map((step, stepIndex) => (
-                        <div
-                          key={`${device.id}-sidebar-step-${step.label}`}
-                          className={`flex items-center justify-between rounded-xl px-3 py-2 text-sm ${
-                            step.state === "active"
-                              ? "border border-violet-200 bg-violet-50 text-violet-900"
-                              : "text-slate-600"
-                          }`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-semibold ${
-                                step.state === "done"
-                                  ? "bg-violet-600 text-white"
-                                  : step.state === "active"
-                                    ? "border border-violet-300 bg-white text-violet-700"
-                                    : "bg-slate-200 text-slate-600"
-                              }`}
-                            >
-                              {step.state === "done" ? "✓" : stepIndex + 1}
-                            </span>
-                            {step.label}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="rounded-xl border border-slate-200 bg-white p-3">
-                    <p className="mb-2 text-sm font-semibold text-slate-900">Resumen rápido</p>
-                    <p className="text-sm text-slate-700">{device.deviceModel || "Dispositivo pendiente"}</p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      Desbloqueo:{" "}
-                      {device.unlockType === "pattern"
-                        ? "Patrón"
-                        : device.unlockType === "code"
-                          ? "PIN"
-                          : "Sin bloqueo"}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      Servicios: {device.selectedServices.length} seleccionados
-                    </p>
-                  </div>
-                </aside>
-                )}
-
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 gap-4">
-                <div className="relative">
-                  <label className="mb-2 block text-sm font-medium text-slate-700">
-                    Dispositivo seleccionado *
-                  </label>
-                  {(() => {
-                    const isManual = !!manualEntryByDevice[device.id];
-                    const typeId = getTypeIdForDevice(device);
-                    const brandId = Number(selectedBrandByDevice[device.id]) || null;
-                    const lineId = Number(selectedSeriesByDevice[device.id]) || null;
-                    const modelId = Number(selectedModelByDevice[device.id]) || 0;
-                    const variantId = selectedVariantByDevice[device.id]
-                      ? Number(selectedVariantByDevice[device.id])
-                      : null;
-                    const cardImage = modelId
-                      ? getCardImage({ typeId, brandId, lineId, modelId, variantId })
-                      : null;
-                    const fullName =
-                      `${catalog.brands.find((b) => b.id === brandId)?.name ?? ""} ${catalog.productLines.find((l) => l.id === lineId)?.name ?? ""} ${catalog.models.find((m) => m.id === modelId)?.name ?? ""}${variantId ? ` ${catalog.variants.find((v) => v.id === variantId)?.name ?? ""}` : ""}`.trim();
-
-                    if (isManual && (!device.deviceModel || manualEditOpenByDevice[device.id])) {
-                      const suggestions = deviceSuggestions[device.id] || [];
-                      return (
-                        <div className="space-y-2 rounded-md border border-slate-200 bg-white p-2">
-                          <input
-                            type="text"
-                            value={device.deviceModel}
-                            placeholder="Escribe el modelo manualmente..."
-                            onChange={(e) => {
-                              updateDevice(device.id, { deviceModel: e.target.value });
-                              setWizardStepByDevice((prev) => ({ ...prev, [device.id]: 6 }));
-                            }}
-                            className="w-full rounded-md border border-slate-300 px-2 py-2"
-                          />
-                          {suggestions.length > 0 && (
-                            <div className="max-h-40 overflow-auto rounded-md border border-slate-200 bg-white">
-                              {suggestions.map((item) => (
-                                <button
-                                  key={item}
-                                  type="button"
-                                  onClick={() => applySuggestedModel(device.id, item)}
-                                  className="w-full px-2 py-1 text-left hover:bg-slate-100"
-                                >
-                                  {item}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                          <div className="flex items-center justify-between gap-2">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setManualEntryByDevice((prev) => ({ ...prev, [device.id]: false }));
-                                setManualEditOpenByDevice((prev) => ({
-                                  ...prev,
-                                  [device.id]: false,
-                                }));
-                                setWizardStepByDevice((prev) => ({ ...prev, [device.id]: 1 }));
-                                updateDevice(device.id, { deviceModel: "" });
-                              }}
-                              className="rounded-md border border-slate-300 px-2 py-1 text-xs text-slate-700 hover:bg-slate-100"
-                            >
-                              Volver al asistente
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (device.deviceModel.trim()) {
-                                  setManualEditOpenByDevice((prev) => ({
-                                    ...prev,
-                                    [device.id]: false,
-                                  }));
-                                  setWizardStepByDevice((prev) => ({ ...prev, [device.id]: 6 }));
-                                }
-                              }}
-                              className="rounded-md bg-gray-600 px-2 py-1 text-xs text-white hover:bg-gray-700"
-                            >
-                              Usar valor manual
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    if (device.deviceModel) {
-                      return (
-                        <div className="flex items-center gap-3 rounded-xl border border-zinc-200 bg-zinc-50 p-4 shadow-sm">
-                          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-zinc-200 bg-white">
-                            <img
-                              src={
-                                cardImage || "https://dummyimage.com/100x100/e2e8f0/475569&text=?"
-                              }
-                              alt={fullName || device.deviceModel || "Dispositivo"}
-                              className="h-full w-full object-cover"
-                            />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-semibold text-slate-900">
-                              {fullName || device.deviceModel}
-                            </p>
-                            <p className="text-xs text-slate-600">{device.deviceModel}</p>
-                          </div>
-                          <button
-                            type="button"
-                            className="rounded-md border border-zinc-300 px-2 py-1 text-xs text-zinc-700 hover:bg-zinc-100"
-                            onClick={() => {
-                              setManualEditOpenByDevice((prev) => ({ ...prev, [device.id]: true }));
-                              setWizardStepByDevice((prev) => ({
-                                ...prev,
-                                [device.id]: isManual ? 6 : 2,
-                              }));
-                            }}
-                          >
-                            Cambiar
-                          </button>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <div className="rounded-md border border-stone-200 bg-stone-50 p-3 text-sm text-stone-800">
-                        Completa el asistente rÃƒÆ’Ã‚Â¡pido para seleccionar el dispositivo.
-                      </div>
-                    );
-                  })()}
-                </div>
-                <div className="overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-[0_24px_45px_-35px_rgba(79,70,229,0.5)]">
+              <div className="space-y-4">
+                {(activeStageByDevice[device.id] ?? "unlock") === "unlock" && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="overflow-hidden rounded-3xl border border-violet-100 bg-white shadow-[0_24px_45px_-35px_rgba(79,70,229,0.5)]">
                   <div className="border-b border-violet-100 bg-gradient-to-r from-violet-50 via-indigo-50 to-white px-5 py-4">
                     <div className="mb-3 flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -1268,9 +1239,24 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
                       </div>
                     </div>
                   )}
+
+                  <div className="mt-6 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveStageByDevice((prev) => ({ ...prev, [device.id]: "checklist" }));
+                        setOrderStep(4);
+                      }}
+                      className="rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-2.5 text-sm font-semibold text-white shadow-md transition hover:from-indigo-500 hover:to-violet-500"
+                    >
+                      Continuar a Checklist
+                    </button>
+                  </div>
                   </div>
                 </div>
               </div>
+              </div>
+            )}
 
             {showPatternDrawer?.deviceId === device.id && (
               <PatternDrawer
@@ -1393,58 +1379,98 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
               !isDeviceFinalized(device.id) &&
               (activeStageByDevice[device.id] ?? "unlock") !== "unlock" && (
               <div className="mt-4 rounded-2xl border border-indigo-100 bg-gradient-to-br from-white via-indigo-50/20 to-slate-50 p-4 shadow-[0_20px_40px_-30px_rgba(79,70,229,0.5)]">
-                <div className="mb-3 flex justify-start">
-                  <button
-                    type="button"
-                    onClick={() => setOrderStep(3)}
-                    className="rounded-xl border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                  >
-                    ← Volver a desbloqueo
-                  </button>
-                </div>
-                <div className="mb-4 flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 1 }))}
-                    className={`rounded-full px-3 py-1.5 text-xs font-semibold ${getFlowStep(device.id) === 1 ? "bg-indigo-600 text-white" : "border border-slate-200 bg-white text-slate-700"}`}
-                  >
-                    1. Checklist
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 2 }))}
-                    className={`rounded-full px-3 py-1.5 text-xs font-semibold ${getFlowStep(device.id) === 2 ? "bg-indigo-600 text-white" : "border border-slate-200 bg-white text-slate-700"}`}
-                  >
-                    2. Problema
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 3 }))}
-                    className={`rounded-full px-3 py-1.5 text-xs font-semibold ${getFlowStep(device.id) === 3 ? "bg-indigo-600 text-white" : "border border-slate-200 bg-white text-slate-700"}`}
-                  >
-                    3. Servicios
-                  </button>
+                <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveStageByDevice((prev) => ({ ...prev, [device.id]: "unlock" }));
+                        setOrderStep(3);
+                      }}
+                      className="rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors mr-2"
+                    >
+                      ← Volver
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 1 }))}
+                      className={`rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${getFlowStep(device.id) === 1 ? "bg-indigo-600 text-white shadow-md shadow-indigo-200" : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"}`}
+                    >
+                      1. Checklist
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 2 }))}
+                      className={`rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${getFlowStep(device.id) === 2 ? "bg-indigo-600 text-white shadow-md shadow-indigo-200" : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"}`}
+                    >
+                      2. Problema
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 3 }))}
+                      className={`rounded-full px-3 py-1.5 text-xs font-bold transition-colors ${getFlowStep(device.id) === 3 ? "bg-indigo-600 text-white shadow-md shadow-indigo-200" : "bg-white text-slate-600 hover:bg-slate-50 border border-slate-200"}`}
+                    >
+                      3. Servicios
+                    </button>
+                  </div>
+                  
+                  {getFlowStep(device.id) === 1 && device.deviceType && (
+                    <button
+                      type="button"
+                      onClick={() => setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 2 }))}
+                      className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-1.5 text-sm font-bold text-white shadow-md shadow-indigo-200 hover:-translate-y-0.5 transition-all"
+                    >
+                      Siguiente: Descripción →
+                    </button>
+                  )}
+                  {getFlowStep(device.id) === 2 && (
+                    <button
+                      type="button"
+                      onClick={() => setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 3 }))}
+                      className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-1.5 text-sm font-bold text-white shadow-md shadow-indigo-200 hover:-translate-y-0.5 transition-all"
+                    >
+                      Siguiente: Servicios →
+                    </button>
+                  )}
+                  {getFlowStep(device.id) === 3 && (
+                    <div className="flex gap-2">
+                        <button
+                          type="button"
+                          className="rounded-xl border border-slate-200 bg-white px-4 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors hidden sm:block"
+                        >
+                          Guardar borrador
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSavingDeviceId(device.id);
+                            setTimeout(() => {
+                              setSavingDeviceId(null);
+                              setFinalizedDeviceById((prev) => ({ ...prev, [device.id]: true }));
+                              setDetailsOpenByDevice((prev) => ({ ...prev, [device.id]: false }));
+                              setShowAddDevicePrompt(true);
+                            }, 1200);
+                          }}
+                          disabled={device.selectedServices.length === 0}
+                          className="rounded-xl bg-indigo-600 px-4 py-1.5 text-sm font-bold text-white shadow-md shadow-indigo-200 hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          Continuar al resumen →
+                        </button>
+                    </div>
+                  )}
                 </div>
 
                 {getFlowStep(device.id) === 1 && device.deviceType && (
-                  <>
-                    <DeviceChecklist
-                      deviceType={device.deviceType}
-                      checklistData={device.checklistData}
-                      onChecklistChange={(newChecklist) =>
-                        updateDevice(device.id, { checklistData: newChecklist })
-                      }
-                    />
-                    <div className="mt-4 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={() => setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 2 }))}
-                        className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 text-sm font-medium text-white hover:brightness-110"
-                      >
-                        Siguiente: Descripción
-                      </button>
-                    </div>
-                  </>
+                  <DeviceChecklist
+                    deviceType={device.deviceType}
+                    checklistData={device.checklistData}
+                    onChecklistChange={(newChecklist) =>
+                      updateDevice(device.id, { checklistData: newChecklist })
+                    }
+                    onAutoAdvance={() => {
+                      setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 2 }));
+                    }}
+                  />
                 )}
 
                 {getFlowStep(device.id) === 2 && (
@@ -1507,22 +1533,6 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
                           : `${device.problemDescription.length} / ${MAX_DESCRIPTION_LENGTH} caracteres`}
                       </span>
                     </div>
-                    <div className="mt-4 flex justify-between">
-                      <button
-                        type="button"
-                        onClick={() => setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 1 }))}
-                        className="rounded-xl border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
-                      >
-                        Volver a checklist
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 3 }))}
-                        className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 text-sm font-medium text-white hover:brightness-110"
-                      >
-                        Continuar: Servicios
-                      </button>
-                    </div>
                   </>
                 )}
 
@@ -1531,90 +1541,133 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
                     <label className="mb-2 block text-sm font-semibold text-slate-800">
                       Servicios *
                     </label>
-                    <ServiceSelector
-                      selectedServices={device.selectedServices}
-                      deviceType={device.deviceType}
-                      deviceModel={device.deviceModel}
-                      showSelectedServicesList={false}
-                      onServicesChange={(services) => {
-                        const uniqueServices: Service[] = [];
-                        const seenIds = new Set<string>();
-
-                        for (const service of services) {
-                          if (!seenIds.has(service.id)) {
-                            seenIds.add(service.id);
-                            uniqueServices.push(service);
-                          }
-                        }
-
-                        const currentPrices = device.servicePrices;
-                        const newPrices: Record<string, number> = {};
-                        uniqueServices.forEach((service) => {
-                          newPrices[service.id] = currentPrices[service.id] || 0;
-                        });
-                        updateDevice(device.id, {
-                          selectedServices: uniqueServices,
-                          servicePrices: newPrices,
-                        });
-                      }}
-                    />
-
-                    {/* Lista de servicios con precios individuales */}
-                    {device.selectedServices.length > 0 && (
-                      <div className="mt-3 space-y-2">
-                        {device.selectedServices.map((service) => (
-                          <div
-                            key={service.id}
-                            className="flex items-center gap-3 rounded-xl border border-indigo-100 bg-white p-3"
+                    
+                    {(device.selectedServices.length === 0 || isAddingServiceByDevice[device.id]) && (
+                      <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm relative">
+                        {device.selectedServices.length > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setIsAddingServiceByDevice(prev => ({ ...prev, [device.id]: false }))}
+                            className="absolute right-4 top-4 text-xs font-bold text-slate-400 hover:text-slate-600 z-10 bg-slate-50 p-2 rounded-lg"
                           >
-                            <span className="flex-1 font-medium text-slate-900">
-                              {service.name}
-                            </span>
-                            <div className="flex items-center gap-2">
-                              <label className="text-sm whitespace-nowrap text-slate-600">
-                                Precio (CLP):
-                              </label>
-                              <input
-                                type="text"
-                                className="w-32 rounded-xl border border-slate-300 px-3 py-2"
-                                value={formatCLPInput(device.servicePrices[service.id] || 0)}
-                                onChange={(e) => {
-                                  const newPrices = { ...device.servicePrices };
-                                  newPrices[service.id] = parseCLPInput(e.target.value);
-                                  updateDevice(device.id, { servicePrices: newPrices });
-                                }}
-                                required
-                              />
-                            </div>
-                          </div>
-                        ))}
+                            ✕ Cancelar
+                          </button>
+                        )}
+                        <ServiceSelector
+                          selectedServices={device.selectedServices}
+                          deviceType={device.deviceType}
+                          deviceModel={device.deviceModel}
+                          showSelectedServicesList={false}
+                          onServicesChange={(services) => {
+                            const uniqueServices: Service[] = [];
+                            const seenIds = new Set<string>();
+
+                            for (const service of services) {
+                              if (!seenIds.has(service.id)) {
+                                seenIds.add(service.id);
+                                uniqueServices.push(service);
+                              }
+                            }
+
+                            const currentPrices = device.servicePrices;
+                            const newPrices: Record<string, number> = {};
+                            uniqueServices.forEach((service) => {
+                              newPrices[service.id] = currentPrices[service.id] || 0;
+                            });
+                            updateDevice(device.id, {
+                              selectedServices: uniqueServices,
+                              servicePrices: newPrices,
+                            });
+                            
+                            setIsAddingServiceByDevice((prev) => ({ ...prev, [device.id]: false }));
+                          }}
+                        />
                       </div>
                     )}
 
-                    <div className="mt-4 flex justify-between">
+                    {device.selectedServices.length > 0 && !isAddingServiceByDevice[device.id] && (
                       <button
                         type="button"
-                        onClick={() => setFlowStepByDevice((prev) => ({ ...prev, [device.id]: 2 }))}
-                        className="rounded-xl border border-slate-300 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
+                        onClick={() => setIsAddingServiceByDevice(prev => ({ ...prev, [device.id]: true }))}
+                        className="mb-4 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-indigo-300 bg-indigo-50/50 py-4 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 transition-colors"
                       >
-                        Volver a descripción
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-100 text-indigo-600">
+                          +
+                        </span>
+                        Agregar otro servicio
                       </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setFinalizedDeviceById((prev) => ({ ...prev, [device.id]: true }));
-                          setDetailsOpenByDevice((prev) => ({ ...prev, [device.id]: false }));
-                        }}
-                        className="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 px-4 py-2 text-sm font-medium text-white hover:brightness-110"
-                      >
-                        Guardar dispositivo
-                      </button>
+                    )}
+
+                    <div className="mt-8">
+                      <p className="text-base font-bold text-slate-800 mb-4">
+                        Servicios seleccionados ({device.selectedServices.length})
+                      </p>
+                      
+                      {device.selectedServices.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-indigo-200 bg-indigo-50/50 py-12 text-center">
+                          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-100 text-indigo-500">
+                            <Inbox className="h-6 w-6" />
+                          </div>
+                          <p className="text-sm font-semibold text-slate-700">Aún no has seleccionado servicios</p>
+                          <p className="mt-1 text-xs text-slate-500">Selecciona uno o más servicios de las categorías anteriores</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3 rounded-2xl border-2 border-dashed border-indigo-200 bg-indigo-50/30 p-4">
+                          {device.selectedServices.map((service) => (
+                            <div
+                              key={service.id}
+                              className="flex items-center gap-4 rounded-xl border border-white bg-white p-4 shadow-sm"
+                            >
+                              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                                <Wrench className="h-5 w-5" />
+                              </div>
+                              <div className="flex-1">
+                                <p className="font-semibold text-slate-900">{service.name}</p>
+                                {service.category && (
+                                  <span className="text-xs text-slate-500">Categoría: {service.category}</span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-3">
+                                <div className="text-right">
+                                  <label className="mb-1 block text-[10px] font-semibold uppercase text-slate-500">
+                                    Precio (CLP)
+                                  </label>
+                                  <input
+                                    type="text"
+                                    className="w-28 rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-right text-sm font-semibold text-slate-900 focus:border-indigo-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                                    value={formatCLPInput(device.servicePrices[service.id] || 0)}
+                                    onChange={(e) => {
+                                      const newPrices = { ...device.servicePrices };
+                                      newPrices[service.id] = parseCLPInput(e.target.value);
+                                      updateDevice(device.id, { servicePrices: newPrices });
+                                    }}
+                                    required
+                                  />
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const newServices = device.selectedServices.filter(s => s.id !== service.id);
+                                    const newPrices = { ...device.servicePrices };
+                                    delete newPrices[service.id];
+                                    updateDevice(device.id, { selectedServices: newServices, servicePrices: newPrices });
+                                  }}
+                                  className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-red-500 transition-colors"
+                                  title="Eliminar servicio"
+                                >
+                                  ✕
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
+
                   </>
                 )}
               </div>
             )}
-                </div>
               </div>
             )}
 
@@ -1742,6 +1795,7 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
                 )}
               </div>
             )}
+            </div>
           </div>
         ))}
 
@@ -1836,124 +1890,190 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
           return null;
         })()}
 
-        {/* Prioridad y Fechas */}
-        {orderStep === 4 && <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Prioridad *</label>
-            <select
-              className="w-full rounded-md border border-slate-300 px-3 py-2"
-              value={priority}
-              onChange={(e) => setPriority(e.target.value as any)}
-              required
-            >
-              <option value="baja">Baja</option>
-              <option value="media">Media</option>
-              <option value="urgente">Urgente</option>
-            </select>
-          </div>
-          <div>
-            <label
-              htmlFor="commitment-date"
-              className="mb-2 block text-sm font-medium text-slate-700"
-            >
-              Fecha Compromiso
-            </label>
-            <div className="relative">
-              <input
-                id="commitment-date"
-                type="date"
-                className="w-full cursor-pointer rounded-md border border-slate-300 px-3 py-2"
-                value={commitmentDate}
-                onChange={(e) => setCommitmentDate(e.target.value)}
-                onFocus={(e) => {
-                  const target = e.target as HTMLInputElement;
-                  if (target.showPicker) {
-                    target.showPicker();
-                  }
-                }}
-                onClick={(e) => {
-                  const target = e.target as HTMLInputElement;
-                  if (target.showPicker) {
-                    target.showPicker();
-                  }
-                }}
-              />
+        {/* RESUMEN Y CONFIRMACIÓN (Paso 5) */}
+        {orderStep === 5 && (
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="mb-8">
+              <h2 className="text-3xl font-bold text-slate-900">Resumen y confirmación</h2>
+              <p className="mt-2 text-slate-500">Revisa la información de tu registro antes de confirmar. Estás a un paso de completar el proceso.</p>
             </div>
-          </div>
-          <div>
-            <label className="mb-2 block text-sm font-medium text-slate-700">Garantía (días)</label>
-            <input
-              type="number"
-              className="w-full rounded-md border border-slate-300 px-3 py-2"
-              value={warrantyDays}
-              onChange={(e) => setWarrantyDays(parseInt(e.target.value) || 30)}
-              min="0"
-            />
-          </div>
-        </div>}
 
-        {/* Total General - Suma de todos los equipos */}
-        {orderStep === 4 &&
-          (() => {
-          const totalReplacementCost = devices.reduce(
-            (sum, device) => sum + device.replacementCost,
-            0,
-          );
-          const totalServiceValue = devices.reduce(
-            (sum, device) => sum + getDeviceServiceTotal(device),
-            0,
-          );
-          const totalGeneral = totalReplacementCost + totalServiceValue;
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+              {/* Columna Izquierda (Detalles de los equipos) */}
+              <div className="lg:col-span-2 space-y-6">
+                {devices.map((device, index) => (
+                  <div key={device.id} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+                    {/* Dispositivo */}
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-bold text-slate-900">Dispositivo {devices.length > 1 ? index + 1 : ""}</h3>
+                      </div>
+                      <div className="flex items-center gap-6">
+                        <div className="flex h-24 w-24 items-center justify-center rounded-2xl bg-slate-50 border border-slate-100 p-2 overflow-hidden">
+                          <img
+                            src={(() => {
+                              const typeId = getTypeIdForDevice(device);
+                              const brandId = Number(selectedBrandByDevice[device.id]) || null;
+                              const lineId = Number(selectedSeriesByDevice[device.id]) || null;
+                              const modelId = Number(selectedModelByDevice[device.id]) || 0;
+                              const variantId = selectedVariantByDevice[device.id] ? Number(selectedVariantByDevice[device.id]) : null;
+                              return (modelId ? getCardImage({ typeId, brandId, lineId, modelId, variantId }) : null) || "https://dummyimage.com/100x100/e2e8f0/475569&text=?";
+                            })()}
+                            alt={device.deviceModel || "Dispositivo"}
+                            className="max-h-full max-w-full object-contain"
+                          />
+                        </div>
+                        <div className="flex-1 space-y-2">
+                          <p className="text-xl font-bold text-slate-900">{device.deviceModel || "Equipo sin modelo"}</p>
+                          <div className="flex items-center gap-4 text-sm text-slate-600">
+                            <span className="flex items-center gap-1.5"><Lock className="h-4 w-4 text-indigo-500" /> {device.unlockType === "pattern" ? "Patrón guardado" : device.unlockType === "code" ? "Código guardado" : "Sin bloqueo"}</span>
+                            {device.deviceSerial && (
+                              <span className="flex items-center gap-1.5"><span className="text-slate-400">SN:</span> {device.deviceSerial}</span>
+                            )}
+                          </div>
+                        </div>
+                        <button type="button" onClick={() => {
+                          setFinalizedDeviceById(prev => ({ ...prev, [device.id]: false }));
+                          setOrderStep(4);
+                        }} className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+                          Editar
+                        </button>
+                      </div>
+                    </div>
 
-          return (
-            <div className="space-y-2 rounded bg-slate-50 p-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Subtotal General:</span>
-                <span className="text-sm font-medium text-slate-700">
-                  {formatCLP(totalGeneral / 1.19)}
-                </span>
+                    <hr className="border-slate-100 my-6" />
+
+                    {/* Servicios Seleccionados */}
+                    <div className="mb-6">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-bold text-slate-900">Servicios seleccionados ({device.selectedServices.length})</h3>
+                      </div>
+                      <div className="space-y-3">
+                        {device.selectedServices.map(service => (
+                          <div key={service.id} className="flex items-center justify-between rounded-2xl border border-slate-100 p-4 hover:shadow-sm transition-shadow">
+                            <div className="flex items-center gap-4">
+                              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                                <Wrench className="h-6 w-6" />
+                              </div>
+                              <div>
+                                <p className="font-bold text-slate-900">{service.name}</p>
+                                <p className="text-sm text-slate-500">Servicio profesional</p>
+                              </div>
+                            </div>
+                            <p className="font-bold text-slate-900">{formatCLP(device.servicePrices[service.id] || 0)}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <hr className="border-slate-100 my-6" />
+
+                    {/* Detalles adicionales */}
+                    <div>
+                      <h3 className="text-lg font-bold text-slate-900 mb-4">Detalles adicionales</h3>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Fecha compromiso</label>
+                          <input type="date" className="w-full bg-transparent font-bold text-slate-900 focus:outline-none" value={commitmentDate} onChange={(e) => setCommitmentDate(e.target.value)} />
+                        </div>
+                        <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Garantía</label>
+                          <div className="flex items-center gap-1 font-bold text-slate-900">
+                            <input type="number" className="w-12 bg-transparent text-center focus:outline-none" value={warrantyDays} onChange={(e) => setWarrantyDays(parseInt(e.target.value) || 0)} />
+                            <span>días</span>
+                          </div>
+                        </div>
+                        <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Prioridad</label>
+                          <select className="w-full bg-transparent font-bold text-slate-900 focus:outline-none appearance-none" value={priority} onChange={(e) => setPriority(e.target.value as any)}>
+                            <option value="baja">Baja</option>
+                            <option value="media">Media</option>
+                            <option value="urgente">Urgente</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">IVA (19%):</span>
-                <span className="text-sm font-medium text-slate-700">
-                  {formatCLP(totalGeneral - totalGeneral / 1.19)}
-                </span>
-              </div>
-              <div className="mt-2 border-t border-slate-300 pt-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-medium text-slate-700">
-                    Total General ({devices.length} {devices.length === 1 ? "equipo" : "equipos"}):
-                  </span>
-                  <span className="text-brand text-2xl font-bold">{formatCLP(totalGeneral)}</span>
+
+              {/* Columna Derecha (Resumen y Total) */}
+              <div className="space-y-6">
+                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/40 sticky top-6">
+                  <div className="flex flex-col items-center text-center mb-8">
+                    <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-500">
+                      <Check className="h-10 w-10" />
+                    </div>
+                    <h3 className="text-2xl font-bold text-slate-900">¡Todo listo!</h3>
+                    <p className="mt-1 text-sm text-slate-500">Confirma para completar el registro.</p>
+                  </div>
+
+                  <div className="rounded-2xl bg-slate-50 p-5 mb-6">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">ID de registro</p>
+                    <p className="text-lg font-bold text-indigo-600">#REG-PENDIENTE</p>
+                  </div>
+
+                  <div className="space-y-4 mb-8">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-slate-500">Equipos</span>
+                      <span className="font-bold text-slate-900">{devices.length}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-slate-500">Servicios totales</span>
+                      <span className="font-bold text-slate-900">{devices.reduce((acc, d) => acc + d.selectedServices.length, 0)}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-slate-500">Tiempo estimado</span>
+                      <span className="font-bold text-indigo-600">24 - 48 horas</span>
+                    </div>
+                    
+                    <div className="border-t border-slate-200 pt-4 mt-4 flex justify-between items-end">
+                      <span className="text-slate-500">Total estimado</span>
+                      <span className="text-2xl font-black text-slate-900">
+                        {formatCLP(
+                          devices.reduce((sum, device) => sum + device.replacementCost, 0) +
+                          devices.reduce((sum, device) => sum + getDeviceServiceTotal(device), 0)
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-slate-400 text-center mb-6 px-4">
+                    Al confirmar, aceptas nuestros Términos y Condiciones y autorizas el procesamiento.
+                  </p>
+
+                  <div className="flex flex-col gap-3">
+                    <button
+                      type="submit"
+                      disabled={loading || isSubmitting || devices.some((device) => device.problemDescription.length > MAX_DESCRIPTION_LENGTH)}
+                      onClick={(e) => {
+                        const deviceMissingDesc = devices.find(d => !d.problemDescription || d.problemDescription.trim() === "");
+                        if (deviceMissingDesc) {
+                          e.preventDefault();
+                          alert(`⚠️ Faltan datos obligatorios.\n\nPor favor, ingresa la descripción del problema para el equipo: ${deviceMissingDesc.deviceModel || "Desconocido"}`);
+                          setFinalizedDeviceById(prev => ({ ...prev, [deviceMissingDesc.id]: false }));
+                          setFlowStepByDevice(prev => ({ ...prev, [deviceMissingDesc.id]: 2 }));
+                          setOrderStep(4);
+                        }
+                      }}
+                      className="w-full rounded-2xl bg-indigo-600 py-4 text-base font-bold text-white shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loading || isSubmitting ? "Procesando..." : "Confirmar y finalizar →"}
+                    </button>
+                    <div className="flex gap-3">
+                      <button type="button" onClick={() => setOrderStep(4)} className="flex-1 rounded-2xl border-2 border-slate-200 bg-white py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
+                        ← Volver
+                      </button>
+                      <button type="button" onClick={onSaved} className="flex-1 rounded-2xl border-2 border-slate-200 bg-white py-3 text-sm font-bold text-slate-700 hover:bg-slate-50 transition-colors">
+                        Guardar borrador
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
-          );
-          })()}
-
-        {/* Botones */}
-        {orderStep === 4 && <div className="flex justify-end gap-4">
-          <button
-            type="button"
-            onClick={onSaved}
-            className="rounded-md border border-slate-300 px-6 py-2 text-slate-700 hover:bg-slate-50"
-          >
-            Cancelar
-          </button>
-          <button
-            type="submit"
-            disabled={
-              loading ||
-              isSubmitting ||
-              devices.some((device) => device.problemDescription.length > MAX_DESCRIPTION_LENGTH)
-            }
-            className="rounded-md bg-gray-600 px-6 py-2 text-white hover:bg-gray-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {loading || isSubmitting
-              ? "Guardando..."
-              : `Crear Orden${devices.length > 1 ? ` (${devices.length} equipos)` : ""}`}
-          </button>
-        </div>}
+          </div>
+        )}
       </form>
 
       {/* PDFPreview fuera del formulario para evitar que los botones disparen el submit */}
@@ -1977,6 +2097,49 @@ export default function OrderWizardContent({ onSaved }: { onSaved: () => void })
             onSaved();
           }}
         />
+      )}
+
+      {/* Pantalla de carga simulada al guardar dispositivo */}
+      {savingDeviceId && (
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm">
+          <div className="flex h-16 w-16 animate-spin items-center justify-center rounded-full border-4 border-slate-200 border-t-indigo-600"></div>
+          <p className="mt-4 text-lg font-semibold text-slate-800 animate-pulse">Guardando servicios...</p>
+        </div>
+      )}
+
+      {/* Prompt modal para agregar otro dispositivo o finalizar */}
+      {showAddDevicePrompt && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md rounded-3xl bg-white p-8 text-center shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-emerald-100 text-emerald-500">
+              <Check className="h-8 w-8" />
+            </div>
+            <h3 className="mb-2 text-2xl font-bold text-slate-900">¡Dispositivo guardado!</h3>
+            <p className="mb-8 text-slate-500">¿Qué deseas hacer a continuación?</p>
+            <div className="flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddDevicePrompt(false);
+                  setOrderStep(5); // Pasar al resumen
+                }}
+                className="w-full rounded-xl bg-indigo-600 py-3.5 font-bold text-white shadow-md hover:bg-indigo-700 transition-colors"
+              >
+                Continuar al resumen general
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAddDevicePrompt(false);
+                  addNewDevice();
+                }}
+                className="w-full rounded-xl border-2 border-slate-200 bg-white py-3.5 font-bold text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                + Agregar otro dispositivo
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </Fragment>
   );

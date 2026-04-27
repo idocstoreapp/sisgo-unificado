@@ -14,6 +14,19 @@ export default async function OrdersPage() {
     redirect("/login");
   }
 
+  // Get user profile to check role
+  const { data } = await supabase
+    .from("users")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  const profile = data as any;
+
+  if (profile?.role === "technician") {
+    redirect("/orders/tech");
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <OrdersList />

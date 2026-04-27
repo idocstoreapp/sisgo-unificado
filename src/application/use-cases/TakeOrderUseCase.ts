@@ -1,18 +1,18 @@
 /**
- * UpdateOrderStatusUseCase - changes the status of a work order
+ * TakeOrderUseCase - allows a technician to assign themselves to an order and start repairing
  */
 
 import { Result, ValidationError, BusinessRuleError, NotFoundError, RepositoryError, UnexpectedError } from "@/shared/kernel";
 import type { IWorkOrderRepository } from "@/domain/repositories/IWorkOrderRepository";
-import type { OrderStatus } from "@/shared/kernel/types";
 import type { OrderOutputDTO } from "@/application/dtos/OrderDTOs";
+import type { WorkOrder } from "@/domain/entities/WorkOrder";
 
-type UpdateOrderStatusError = ValidationError | BusinessRuleError | NotFoundError | RepositoryError | UnexpectedError;
+type TakeOrderError = ValidationError | BusinessRuleError | NotFoundError | RepositoryError | UnexpectedError;
 
-export class UpdateOrderStatusUseCase {
+export class TakeOrderUseCase {
   constructor(private readonly orderRepository: IWorkOrderRepository) {}
 
-  async execute(orderId: string, newStatus: OrderStatus, userRole?: string): Promise<Result<OrderOutputDTO, UpdateOrderStatusError>> {
+  async execute(orderId: string, technicianId: string): Promise<Result<OrderOutputDTO, TakeOrderError>> {
     try {
       // Step 1: Fetch order
       const orderResult = await this.orderRepository.findById(orderId);
@@ -22,18 +22,24 @@ export class UpdateOrderStatusUseCase {
 
       const order = orderResult.getValue();
 
-      // Step 1.5: Validate permissions
-      if (userRole === "technician" && newStatus === "entregada") {
-        return Result.fail(new BusinessRuleError("Los técnicos no pueden marcar órdenes como entregadas", "UNAUTHORIZED_ROLE"));
+      // Step 2: Validate business rules
+      if (order.status !== "pendiente") {
+        return Result.fail(new BusinessRuleError("Solo se pueden tomar órdenes en estado pendiente", "INVALID_ORDER_STATE"));
       }
 
-      // Step 2: Validate and apply status change
-      const statusChangeResult = order.changeStatus(newStatus);
+      if (order.assignedTo && order.assignedTo !== technicianId) {
+        return Result.fail(new BusinessRuleError("La orden ya está asignada a otro técnico", "ALREADY_ASSIGNED"));
+      }
+
+      // Step 3: Assign and change status
+      order.assignTo(technicianId);
+      const statusChangeResult = order.changeStatus("en_reparacion");
+      
       if (statusChangeResult.isFailure) {
         return Result.fail(statusChangeResult.getError());
       }
 
-      // Step 3: Save updated order
+      // Step 4: Save updated order
       const updatedOrderResult = await this.orderRepository.update(order);
       if (updatedOrderResult.isFailure) {
         return Result.fail(updatedOrderResult.getError());
@@ -41,7 +47,7 @@ export class UpdateOrderStatusUseCase {
 
       const updatedOrder = updatedOrderResult.getValue();
 
-      // Step 4: Return DTO
+      // Step 5: Return DTO
       return Result.ok(this.toOutput(updatedOrder));
     } catch (error) {
       return Result.fail(UnexpectedError.from(error));
@@ -82,5 +88,3 @@ export class UpdateOrderStatusUseCase {
     };
   }
 }
-
-import type { WorkOrder } from "@/domain/entities/WorkOrder";

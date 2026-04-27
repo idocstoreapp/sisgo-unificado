@@ -3,6 +3,9 @@ import type { FormEvent } from "react";
 import { supabase } from "@/lib/supabase";
 import { useOrderWizard } from "./OrderWizardContext";
 
+import { generatePDFBlob } from "@/lib/generate-pdf-blob";
+import { uploadPDFToStorage } from "@/lib/upload-pdf";
+
 const MAX_DESCRIPTION_LENGTH = 500;
 
 export function useOrderSubmit(onSaved: () => void) {
@@ -38,7 +41,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     
     // Validar que todos los equipos tengan los campos obligatorios
     const invalidDevices: Array<{ equipo: string; campos: string[] }> = [];
-    devices.forEach((device, index) => {
+    devices.forEach((device: any, index: number) => {
       const equipoNum = index + 1;
       const camposFaltantes: string[] = [];
       
@@ -64,7 +67,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
       
       // Validar que cada servicio tenga un precio válido
       const serviciosSinPrecio: string[] = [];
-      device.selectedServices.forEach(service => {
+      device.selectedServices.forEach((service: any) => {
         const precio = device.servicePrices[service.id];
         if (!precio || precio <= 0 || isNaN(precio)) {
           serviciosSinPrecio.push(service.name);
@@ -113,7 +116,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
 
     // Validar checklist para cada equipo (ANTES de establecer estados de carga)
     const invalidChecklists: string[] = [];
-    devices.forEach((device, index) => {
+    devices.forEach((device: any, index: number) => {
       const checklistItemNames = Object.keys(device.checklistData);
       if (checklistItemNames.length > 0) {
         const missingItems: string[] = [];
@@ -168,7 +171,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
               
               if (!branchError && branch) {
                 branchData = branch;
-                companyId = branch.companies?.id || branch.company_id;
+                companyId = (branch as any).companies?.id || branch.company_id;
               }
             }
           } catch (e) {
@@ -209,7 +212,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
             
             if (!branchError && branch) {
               branchData = branch;
-              companyId = branch.companies?.id || branch.company_id;
+              companyId = (branch as any).companies?.id || branch.company_id;
             }
           } else {
             throw techError;
@@ -239,12 +242,12 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
       const firstDevice = devices[0];
       
       // Calcular totales combinados de todos los equipos
-      const totalReplacementCost = devices.reduce((sum, d) => sum + d.replacementCost, 0);
-      const totalLaborCost = devices.reduce((sum, d) => sum + getDeviceServiceTotal(d), 0);
+      const totalReplacementCost = devices.reduce((sum: number, d: any) => sum + d.replacementCost, 0);
+      const totalLaborCost = devices.reduce((sum: number, d: any) => sum + getDeviceServiceTotal(d), 0);
       const totalRepairCost = totalReplacementCost + totalLaborCost;
       
       // Preparar equipos adicionales (desde el segundo en adelante) para almacenar en JSONB
-      const additionalDevices = devices.slice(1).map(device => ({
+      const additionalDevices = devices.slice(1).map((device: any) => ({
         device_type: device.deviceType || "iphone",
         device_model: device.deviceModel,
         device_serial_number: device.deviceSerial || null,
@@ -256,7 +259,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         checklist_data: device.checklistData || {},
         replacement_cost: device.replacementCost,
         labor_cost: getDeviceServiceTotal(device),
-        selected_services: device.selectedServices.map(s => ({
+        selected_services: device.selectedServices.map((s: any) => ({
           id: s.id,
           name: s.name,
           description: s.description || null,
@@ -300,7 +303,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         priority,
         commitment_date: commitmentDate || null,
         warranty_days: warrantyDays,
-        status: "en_proceso",
+        status: "pendiente",
         // Almacenar equipos adicionales en JSONB (si hay más de un equipo)
         // Nota: Si el campo devices_data no existe en la BD, simplemente no se guardará
         // pero el código seguirá funcionando con all_devices en memoria
@@ -341,11 +344,12 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
       console.log("[OrderForm] orderNumber:", orderNumber, "type:", typeof orderNumber);
       console.log("[OrderForm] orderData.order_number:", orderData.order_number);
       
-      const { data: order, error: orderError } = await supabase
+      const { data: orderRow, error: orderError } = await supabase
         .from("work_orders")
         .insert(orderData)
         .select()
         .single();
+      const order = orderRow as any;
 
       if (orderError) {
         console.error("[OrderForm] Error al crear orden:", orderError);
@@ -364,7 +368,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
       console.log("[OrderForm] Guardando servicios del primer equipo:", {
         order_id: order.id,
         servicios_count: firstDevice.selectedServices.length,
-        servicios: firstDevice.selectedServices.map(s => ({ id: s.id, name: s.name, price: firstDevice.servicePrices[s.id] || 0 })),
+        servicios: firstDevice.selectedServices.map((s: any) => ({ id: s.id, name: s.name, price: firstDevice.servicePrices[s.id] || 0 })),
         servicePrices: firstDevice.servicePrices,
       });
       
@@ -389,7 +393,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
             unit_price: servicePrice,
             total_price: servicePrice,
             // NOTA: La tabla order_services NO tiene columna 'description'
-          }).select();
+          } as any).select();
           
           if (insertError) {
             console.error(`[OrderForm] Error guardando servicio ${service.name}:`, insertError);
@@ -411,7 +415,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
             unit_price: service.unit_price,
             total_price: service.total_price,
             // NOTA: La tabla order_services NO tiene columna 'description'
-          });
+          } as any);
         }
       }
 
@@ -423,7 +427,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
       // Preparar orden para vista previa con todos los equipos
       // DEBUG: Verificar servicios antes de construir all_devices
       console.log("[OrderForm] Construyendo all_devices. Total equipos:", devices.length);
-      devices.forEach((device, index) => {
+      devices.forEach((device: any, index: number) => {
         console.log(`[OrderForm] Equipo ${index + 1}:`, {
           id: device.id,
           model: device.deviceModel,
@@ -438,8 +442,8 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
         customer: selectedCustomer,
         sucursal: branchData,
         // Incluir información de todos los equipos para el PDF
-        all_devices: devices.map((device, index) => {
-          const deviceServices = device.selectedServices.map(s => ({
+        all_devices: devices.map((device: any, index: number) => {
+          const deviceServices = device.selectedServices.map((s: any) => ({
             id: s.id,
             name: s.name,
             description: s.description || null,
@@ -481,14 +485,14 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
       }> = [];
       
       // Agregar servicios de todos los equipos
-      devices.forEach(device => {
-        device.selectedServices.forEach(service => {
+      devices.forEach((device: any) => {
+        device.selectedServices.forEach((service: any) => {
           const servicePrice = device.servicePrices[service.id] || 0;
           orderServicesForPDF.push({
             quantity: 1,
             unit_price: servicePrice,
             total_price: servicePrice,
-            name: service.name,
+            service_name: service.name,
             description: service.description || null,
           });
         });
