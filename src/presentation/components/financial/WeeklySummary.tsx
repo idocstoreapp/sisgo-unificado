@@ -63,19 +63,19 @@ export default function WeeklySummary({ technicianId, refreshKey = 0 }: WeeklySu
       
       // Consulta 1: Por payout_week/payout_year
       let weekQuery1 = supabase
-        .from("orders")
+        .from("employee_payments")
         .select("*")
         .eq("technician_id", technicianId)
-        .eq("status", "paid")
+        .eq("payment_status", "paid")
         .eq("payout_week", currentPayout.week)
         .eq("payout_year", currentPayout.year);
       
       // Consulta 2: Por paid_at dentro del rango de la semana (para capturar semanas que cruzan el año)
       let weekQuery2 = supabase
-        .from("orders")
+        .from("employee_payments")
         .select("*")
         .eq("technician_id", technicianId)
-        .eq("status", "paid")
+        .eq("payment_status", "paid")
         .gte("paid_at", startUTC.toISOString())
         .lte("paid_at", endUTC.toISOString());
       
@@ -85,10 +85,8 @@ export default function WeeklySummary({ technicianId, refreshKey = 0 }: WeeklySu
         weekQuery2 = weekQuery2.gte("paid_at", lastSettlementDate.toISOString());
       }
 
-      let [result1, result2] = await Promise.all([
-        weekQuery1,
-        weekQuery2
-      ]);
+      const [result1Raw, result2] = await Promise.all([weekQuery1, weekQuery2]);
+      let result1 = result1Raw;
 
       // Fallback para esquemas donde payout_week/payout_year no existen
       if (result1.error) {
@@ -108,44 +106,44 @@ export default function WeeklySummary({ technicianId, refreshKey = 0 }: WeeklySu
       // Consulta para órdenes pagadas del mes actual
       // Usar paid_at para filtrar por mes (retrocompatibilidad: órdenes sin payout_week usan paid_at)
       let { data: month, error: monthError } = await supabase
-        .from("orders")
+        .from("employee_payments")
         .select("*")
         .eq("technician_id", technicianId)
-        .eq("status", "paid")
+        .eq("payment_status", "paid")
         .gte("paid_at", msUTC.toISOString())
         .lte("paid_at", meUTC.toISOString());
 
       if (monthError) {
         const fallbackMonth = await supabase
-          .from("orders")
+          .from("employee_payments")
           .select("*")
           .eq("technician_id", technicianId)
-          .eq("status", "paid");
+          .eq("payment_status", "paid");
         month = fallbackMonth.data;
         monthError = fallbackMonth.error;
       }
 
       // Consulta para total histórico de devoluciones/cancelaciones (sin límite de tiempo)
       const { data: totalReturns, error: totalReturnsError } = await supabase
-        .from("orders")
+        .from("work_orders")
         .select("*")
-        .eq("technician_id", technicianId)
-        .in("status", ["returned", "cancelled"]);
+        .eq("assigned_to", technicianId)
+        .eq("status", "rechazada");
 
       // Consulta para TODAS las órdenes pendientes (sin recibo) - sin límite de fecha
       // Esto muestra el total de dinero que falta por recibir por órdenes sin recibo
       let { data: allPendingOrders, error: pendingError } = await supabase
-        .from("orders")
+        .from("work_orders")
         .select("*")
-        .eq("technician_id", technicianId)
-        .eq("status", "pending");
+        .eq("assigned_to", technicianId)
+        .in("status", ["en_proceso", "por_entregar"]);
 
       if (pendingError) {
         const fallbackPending = await supabase
-          .from("orders")
+          .from("work_orders")
           .select("*")
-          .eq("technician_id", technicianId)
-          .in("status", ["pending", "in_progress"]);
+          .eq("assigned_to", technicianId)
+          .in("status", ["en_proceso"]);
         allPendingOrders = fallbackPending.data;
         pendingError = fallbackPending.error;
       }
@@ -204,8 +202,9 @@ export default function WeeklySummary({ technicianId, refreshKey = 0 }: WeeklySu
       const monthGain = monthOrders.reduce((s, r) => s + (r.commission_amount ?? 0), 0);
 
       // Contar devoluciones y cancelaciones (garantías) de la semana
-      const returnsAndCancellations = weekOrders.filter(
-        (r) => r.status === "returned" || r.status === "cancelled"
+      // Las devoluciones vienen de work_orders con status "rechazada"
+      const returnsAndCancellations = (totalReturns ?? []).filter(
+        (r) => r.status === "rechazada"
       ).length;
 
       // Contar total histórico de devoluciones y cancelaciones (sin límite de tiempo)

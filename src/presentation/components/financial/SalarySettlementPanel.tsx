@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { currentWeekRange, formatDate } from "@/lib/date";
 import { formatCLP, formatCLPInput, parseCLPInput } from "@/lib/currency";
 import type { SalaryAdjustment, SalaryAdjustmentApplication } from "@/types";
+import { Banknote, ClipboardList, ShieldCheck, TrendingUp } from "lucide-react";
 
 // Componente para gestionar préstamos
 function LoanManagementCard({ 
@@ -234,6 +235,7 @@ interface SalarySettlementPanelProps {
   technicianName?: string;
   baseAmount: number;
   adjustmentTotal: number;
+  weekEarnedAmount?: number;
   context: "technician" | "admin";
   onAfterSettlement?: () => void;
 }
@@ -243,6 +245,7 @@ export default function SalarySettlementPanel({
   technicianName,
   baseAmount,
   adjustmentTotal,
+  weekEarnedAmount,
   context,
   onAfterSettlement,
 }: SalarySettlementPanelProps) {
@@ -273,6 +276,7 @@ export default function SalarySettlementPanel({
     date: string;
     note: string;
   }>>({});
+  const [settlementStep, setSettlementStep] = useState<1 | 2 | 3>(1);
 
   const { start: weekStartDate, end: weekEndDate } = currentWeekRange();
   const weekStartISO = weekStartDate.toISOString().slice(0, 10);
@@ -529,10 +533,10 @@ export default function SalarySettlementPanel({
     // Solo las creadas después de la última liquidación (si existe)
     const { start, end } = currentWeekRange();
     let returnsQuery = supabase
-      .from("orders")
-      .select("id, commission_amount, status")
-      .eq("technician_id", technicianId)
-      .in("status", ["returned", "cancelled"])
+      .from("work_orders")
+      .select("id, replacement_cost, status")
+      .eq("assigned_to", technicianId)
+      .in("status", ["rechazada"])
       .gte("created_at", start.toISOString())
       .lte("created_at", end.toISOString());
     
@@ -569,6 +573,10 @@ export default function SalarySettlementPanel({
       window.removeEventListener('settlementCreated', handleSettlementCreated);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [technicianId]);
+
+  useEffect(() => {
+    setSettlementStep(1);
   }, [technicianId]);
 
   // Calcular total de ajustes seleccionados (solo los que están marcados como selected: true)
@@ -650,7 +658,9 @@ export default function SalarySettlementPanel({
   // grossAvailable debe ser: baseAmount - settledAmount
   // NO restar totalAppliedAdjustments aquí porque esos ajustes ya fueron aplicados en liquidaciones anteriores
   // Si los restamos aquí, estaríamos descontándolos dos veces (una vez en grossAvailable y otra vez en netRemaining)
-  const grossAvailable = baseAmount - settledAmount;
+  // `baseAmount` llega como saldo disponible real pendiente (no pagado).
+  // No restar liquidaciones nuevamente para evitar doble descuento visual.
+  const grossAvailable = baseAmount;
   
   // Log para debugging
   console.log("📊 [SalarySettlementPanel] Cálculo de grossAvailable:", {
@@ -729,6 +739,16 @@ export default function SalarySettlementPanel({
   // El "pendiente tras este pago" se informa por separado para evitar confusión
   // cuando el monto a pagar se autocompleta.
   const pendingToDisplay = netRemaining;
+  const draftPaymentAmount =
+    paymentMethod === "efectivo/transferencia"
+      ? Math.max(0, cashAmount + transferAmount)
+      : Math.max(0, customAmountInput);
+  const canGoToStep2 = true;
+  const canGoToStep3 =
+    !!paymentMethod &&
+    draftPaymentAmount > 0 &&
+    draftPaymentAmount <= Math.max(0, netRemaining);
+  const progressPercent = settlementStep === 1 ? 33 : settlementStep === 2 ? 66 : 100;
 
   function distributeDeduction(amountToDeduct: number) {
     let remaining = Math.max(0, Math.min(amountToDeduct, totalAdjustable));
@@ -1006,6 +1026,25 @@ export default function SalarySettlementPanel({
     }, {});
 
     const { data: userData } = await supabase.auth.getUser();
+    const { data: technicianRow, error: technicianRowError } = await supabase
+      .from("users")
+      .select("company_id")
+      .eq("id", technicianId)
+      .maybeSingle();
+
+    if (technicianRowError) {
+      console.error("Error obteniendo company_id del técnico:", technicianRowError);
+      setErrorMsg("No pudimos obtener la empresa del técnico. Intenta nuevamente.");
+      setSaving(false);
+      return;
+    }
+
+    const companyId = (technicianRow as any)?.company_id ?? null;
+    if (!companyId) {
+      setErrorMsg("No pudimos registrar el pago porque el técnico no tiene company_id asignado.");
+      setSaving(false);
+      return;
+    }
 
     // Preparar aplicaciones para la función transaccional
     const applicationsPayload = entriesToApply.map((entry) => ({
@@ -1116,14 +1155,21 @@ export default function SalarySettlementPanel({
         },
       }),
     };
+
+    // El enum payment_method en BD está en mayúsculas:
+    // EFECTIVO | TARJETA | TRANSFERENCIA
+    // Para pago mixto, guardamos un método base válido y el desglose en details.payment_breakdown.
+    const dbPaymentMethod: "EFECTIVO" | "TRANSFERENCIA" | "TARJETA" =
+      paymentMethod === "transferencia" ? "TRANSFERENCIA" : "EFECTIVO";
     
     const settlementData = {
+      company_id: companyId,
       technician_id: technicianId,
       week_start: weekStartISO,
       amount: targetAmount,
       note: null,
       context,
-      payment_method: paymentMethod as "efectivo" | "transferencia" | "efectivo/transferencia",
+      payment_method: dbPaymentMethod,
       details: detailsPayload,
       created_by: userData?.user?.id ?? null,
     };
@@ -1145,13 +1191,42 @@ export default function SalarySettlementPanel({
     // Intentar usar función transaccional primero
     let insertedData: any[] | null = null;
     let settlementError: any = null;
+
+    const performLegacySettlementInsert = async () => {
+      const { data, error } = await supabase
+        .from("salary_settlements")
+        .insert(settlementData)
+        .select();
+
+      insertedData = data;
+      settlementError = error;
+
+      // Si el settlement se guardó, guardar aplicaciones por separado
+      if (data && data.length > 0 && applicationsSupported && entriesToApply.length > 0) {
+        const payload = entriesToApply.map((entry) => ({
+          ...entry,
+          week_start: weekStartISO,
+          created_by: userData?.user?.id ?? null,
+        }));
+
+        const { error: appError } = await supabase
+          .from("salary_adjustment_applications")
+          .insert(payload);
+
+        if (appError) {
+          console.error("Error guardando aplicaciones:", appError);
+          setErrorMsg("⚠️ La liquidación se guardó pero hubo un error al registrar las aplicaciones. Verifica manualmente.");
+        }
+      }
+    };
     
     try {
       const { data, error } = await supabase.rpc('register_settlement_with_applications', {
         p_technician_id: technicianId,
+        p_company_id: companyId,
         p_week_start: weekStartISO,
         p_amount: targetAmount,
-        p_payment_method: paymentMethod,
+        p_payment_method: dbPaymentMethod,
         p_details: detailsPayload,
         p_applications: applicationsPayload.length > 0 ? applicationsPayload : null,
         p_created_by: userData?.user?.id ?? null,
@@ -1159,9 +1234,9 @@ export default function SalarySettlementPanel({
       
       if (error) {
         console.warn("Error usando función transaccional, intentando método antiguo:", error);
-        console.error("Detalles del error RPC:", JSON.stringify(error, null, 2));
+        console.warn("Detalles del error RPC:", JSON.stringify(error, null, 2));
         // Fallback al método antiguo si la función no existe
-        settlementError = error;
+        await performLegacySettlementInsert();
       } else if (data) {
         console.log("✅ Función transaccional ejecutada correctamente. Settlement ID:", data);
         // La función retorna el ID de la liquidación
@@ -1202,32 +1277,7 @@ export default function SalarySettlementPanel({
       }
     } catch (rpcError: any) {
       console.warn("Función transaccional no disponible, usando método antiguo:", rpcError);
-      // Fallback: usar método antiguo
-      const { data, error } = await supabase
-      .from("salary_settlements")
-      .insert(settlementData)
-        .select();
-      
-      insertedData = data;
-      settlementError = error;
-      
-      // Si el settlement se guardó, guardar aplicaciones por separado
-      if (data && data.length > 0 && applicationsSupported && entriesToApply.length > 0) {
-        const payload = entriesToApply.map((entry) => ({
-          ...entry,
-          week_start: weekStartISO,
-          created_by: userData?.user?.id ?? null,
-        }));
-        
-        const { error: appError } = await supabase
-          .from("salary_adjustment_applications")
-          .insert(payload);
-        
-        if (appError) {
-          console.error("Error guardando aplicaciones:", appError);
-          setErrorMsg("⚠️ La liquidación se guardó pero hubo un error al registrar las aplicaciones. Verifica manualmente.");
-        }
-      }
+      await performLegacySettlementInsert();
     }
 
     setSaving(false);
@@ -1236,13 +1286,21 @@ export default function SalarySettlementPanel({
       console.error("Error registrando pago:", settlementError);
       console.error("Detalles del error:", JSON.stringify(settlementError, null, 2));
       const msg = settlementError.message?.toLowerCase() ?? "";
-      if (msg.includes("salary_settlements") || msg.includes("does not exist")) {
+      if (
+        msg.includes("salary_settlements") ||
+        msg.includes("does not exist") ||
+        msg.includes("register_settlement_with_applications")
+      ) {
         setSetupWarning(
           "Para registrar pagos completos ejecuta el script `database/add_salary_settlements.sql` en Supabase."
         );
-        setErrorMsg(
-          "No pudimos registrar el pago porque falta la tabla de liquidaciones. Ejecuta el script indicado y vuelve a intentarlo."
-        );
+        if (msg.includes("null value in column \"company_id\"")) {
+          setErrorMsg("No pudimos registrar el pago porque falta company_id en la liquidación.");
+        } else {
+          setErrorMsg(
+            "No pudimos registrar el pago porque falta la función/tabla de liquidaciones. Ejecuta el script indicado y vuelve a intentarlo."
+          );
+        }
       } else if (msg.includes("row-level security") || msg.includes("policy")) {
         setErrorMsg(
           `Error de seguridad: ${settlementError.message}. Verifica que tengas permisos de administrador para registrar liquidaciones.`
@@ -1307,6 +1365,53 @@ export default function SalarySettlementPanel({
     // Limpiar abonos de préstamos después de guardar
     setLoanPayments({});
 
+    // Reconciliar comisiones pendientes tras registrar pago:
+    // 1) technician_commissions (legacy dashboard técnico)
+    // 2) employee_payments (flujo financiero unificado)
+    // Se aplica FIFO por created_at y puede pagar parcialmente el último registro.
+    const paidAtISO = new Date().toISOString();
+    const applySettlementToPending = async (
+      table: "technician_commissions" | "employee_payments",
+      statusField: "payment_status",
+      amountField: "commission_amount",
+      technicianField: "technician_id"
+    ) => {
+      let remaining = targetAmount;
+      const { data: pendingRows, error: pendingErr } = await supabase
+        .from(table)
+        .select(`id, ${amountField}`)
+        .eq(technicianField, technicianId)
+        .eq(statusField, "pending")
+        .order("created_at", { ascending: true });
+
+      if (pendingErr || !pendingRows || pendingRows.length === 0) return;
+
+      for (const row of pendingRows as any[]) {
+        if (remaining <= 0) break;
+        const rowAmount = Number(row[amountField] ?? 0);
+        if (rowAmount <= 0) continue;
+
+        if (rowAmount <= remaining) {
+          // Pagado completo
+          await supabase
+            .from(table)
+            .update({ [statusField]: "paid", paid_at: paidAtISO } as any)
+            .eq("id", row.id);
+          remaining -= rowAmount;
+        } else {
+          // Pago parcial: reducir saldo pendiente en ese registro
+          await supabase
+            .from(table)
+            .update({ [amountField]: rowAmount - remaining } as any)
+            .eq("id", row.id);
+          remaining = 0;
+        }
+      }
+    };
+
+    await applySettlementToPending("technician_commissions", "payment_status", "commission_amount", "technician_id");
+    await applySettlementToPending("employee_payments", "payment_status", "commission_amount", "technician_id");
+
     setSuccessMsg(`✅ Liquidación registrada correctamente. ID: ${savedSettlementId} | Monto: ${formatCLP(targetAmount)} | Técnico: ${technicianName || technicianId}`);
     setPaymentMethod(""); // Resetear a "Seleccionar" después de registrar
     setCashAmount(0);
@@ -1330,8 +1435,8 @@ export default function SalarySettlementPanel({
     <div className="space-y-2">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 text-sm">
         <div className="bg-white border border-slate-200 rounded-md p-3">
-          <p className="text-xs text-slate-500">Total ganado</p>
-          <p className="text-lg font-semibold text-emerald-600">${formatAmount(baseAmount)}</p>
+          <p className="text-xs text-slate-500">Saldo base pendiente</p>
+          <p className="text-lg font-semibold text-emerald-600">{formatCLP(baseAmount)}</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-md p-3">
           <p className="text-xs text-slate-500">
@@ -1354,14 +1459,23 @@ export default function SalarySettlementPanel({
           <p className="text-lg font-semibold text-sky-600">${formatAmount(returnsTotal)}</p>
         </div>
         <div className="bg-white border border-slate-200 rounded-md p-3">
-          <p className="text-xs text-slate-500">
-            {hasDraftPayment ? "Saldo pendiente tras este pago" : (selectedAdjustmentsTotal > 0 ? "Total a liquidar" : "Total pendiente")}
-          </p>
-          <p className="text-lg font-semibold text-brand">${formatAmount(pendingToDisplay)}</p>
-          {selectedAdjustmentsTotal === 0 && totalAdjustable > 0 && (
-            <p className="text-xs text-slate-500 mt-1">
-              Selecciona adelantos abajo para ver el total con descuentos
-            </p>
+          {typeof weekEarnedAmount === "number" ? (
+            <>
+              <p className="text-xs text-slate-500">Ganado semana (lun-sab)</p>
+              <p className="text-lg font-semibold text-brand">{formatCLP(weekEarnedAmount)}</p>
+            </>
+          ) : (
+            <>
+              <p className="text-xs text-slate-500">
+                {hasDraftPayment ? "Saldo pendiente tras este pago" : (selectedAdjustmentsTotal > 0 ? "Total a liquidar" : "Total pendiente")}
+              </p>
+              <p className="text-lg font-semibold text-brand">${formatAmount(pendingToDisplay)}</p>
+              {selectedAdjustmentsTotal === 0 && totalAdjustable > 0 && (
+                <p className="text-xs text-slate-500 mt-1">
+                  Selecciona adelantos abajo para ver el total con descuentos
+                </p>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -1396,6 +1510,53 @@ export default function SalarySettlementPanel({
           {setupWarning}
         </div>
       )}
+      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className="mb-3 flex items-center justify-between">
+          <h5 className="text-sm font-semibold text-slate-800">
+            Wizard de Liquidación
+            {technicianName ? ` · ${technicianName}` : ""}
+          </h5>
+          <span className="text-xs text-slate-500">Paso {settlementStep} de 3</span>
+        </div>
+        <div className="mb-4 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-300"
+            style={{ width: `${progressPercent}%` }}
+          />
+        </div>
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-3">
+          {[
+            { step: 1 as const, label: "Descuentos y abonos", icon: <ClipboardList className="size-4" /> },
+            { step: 2 as const, label: "Método y monto", icon: <Banknote className="size-4" /> },
+            { step: 3 as const, label: "Confirmar pago", icon: <ShieldCheck className="size-4" /> },
+          ].map((item) => (
+            <button
+              key={item.step}
+              type="button"
+              onClick={() => {
+                if (item.step === 1) setSettlementStep(1);
+                if (item.step === 2 && canGoToStep2) setSettlementStep(2);
+                if (item.step === 3 && canGoToStep3) setSettlementStep(3);
+              }}
+              className={`rounded-lg border px-3 py-3 text-left text-xs font-semibold transition ${
+                settlementStep === item.step
+                  ? "border-indigo-600 bg-indigo-600 text-white shadow-sm"
+                  : "border-slate-300 bg-slate-50 text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              <span className="mb-1 flex items-center gap-2">
+                {item.icon}
+                Paso {item.step}
+              </span>
+              <span className="block">{item.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="lg:grid lg:grid-cols-12 lg:gap-4">
+      <div className="space-y-4 lg:col-span-8">
+      {settlementStep === 2 && (
       <div>
         <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-3">
           <h5 className="text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
@@ -1636,11 +1797,13 @@ export default function SalarySettlementPanel({
           </div>
         </div>
       </div>
+      )}
 
-      {settlementInfo}
+      {settlementStep === 3 && settlementInfo}
 
       {/* Mostrar resumen del pago y saldo restante */}
-      {((paymentMethod === "efectivo" && customAmountInput > 0) ||
+      {settlementStep === 3 &&
+      ((paymentMethod === "efectivo" && customAmountInput > 0) ||
         (paymentMethod === "transferencia" && customAmountInput > 0) ||
         (paymentMethod === "efectivo/transferencia" && (cashAmount + transferAmount) > 0)) && (
         <div className="bg-blue-50 border border-blue-200 rounded-md p-4 space-y-2">
@@ -1672,6 +1835,7 @@ export default function SalarySettlementPanel({
       )}
 
       {/* Mostrar TODOS los ajustes, separando pendientes de saldados */}
+      {settlementStep === 1 && (
         <div className="space-y-3">
         {/* DEBUG: Mostrar información de ajustes cargados */}
         {process.env.NODE_ENV === 'development' && pendingAdjustments.length > 0 && (
@@ -2113,11 +2277,43 @@ export default function SalarySettlementPanel({
           )}
         </div>
       </div>
+      )}
+
+      </div>
+      <aside className="mt-4 lg:col-span-4 lg:mt-0">
+        <div className="lg:sticky lg:top-4">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="mb-3 flex items-center gap-2">
+              <TrendingUp className="size-4 text-indigo-600" />
+              <h6 className="text-sm font-semibold text-slate-800">Resumen rápido</h6>
+            </div>
+            <div className="space-y-2 text-xs">
+              <div className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2">
+                <span className="text-slate-500">Saldo disponible</span>
+                <span className="font-semibold text-emerald-600">{formatCLP(Math.max(grossAvailable, 0))}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2">
+                <span className="text-slate-500">Descuentos seleccionados</span>
+                <span className="font-semibold text-red-600">-{formatCLP(selectedAdjustmentsTotal)}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2">
+                <span className="text-slate-500">Abonos préstamos</span>
+                <span className="font-semibold text-purple-600">-{formatCLP(loanPaymentsTotal)}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-md bg-indigo-50 px-3 py-2">
+                <span className="text-slate-600">Saldo a liquidar</span>
+                <span className="font-bold text-indigo-700">{formatCLP(netRemaining)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+      </div>
 
       {errorMsg && <div className="text-xs text-red-600">{errorMsg}</div>}
       {successMsg && <div className="text-xs text-emerald-600">{successMsg}</div>}
 
-      <div className="flex justify-end gap-2">
+      <div className="flex flex-wrap justify-between gap-2">
         <button
           type="button"
           onClick={() => void loadPendingAdjustments()}
@@ -2126,14 +2322,38 @@ export default function SalarySettlementPanel({
         >
           Actualizar
         </button>
-        <button
-          type="button"
-          onClick={() => void handleLiquidation()}
-          disabled={saving || !paymentMethod || (paymentMethod as string) === "" || (paymentMethod === "efectivo/transferencia" ? (cashAmount + transferAmount) <= 0 : customAmountInput <= 0)}
-          className="px-4 py-2 text-xs font-semibold rounded-md text-white bg-brand-light hover:bg-white hover:text-brand border border-brand-light hover:border-white transition disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {saving ? "Guardando..." : "Registrar liquidación"}
-        </button>
+        <div className="flex gap-2">
+          {settlementStep > 1 && (
+            <button
+              type="button"
+              onClick={() => setSettlementStep((prev) => (prev === 3 ? 2 : 1))}
+              className="px-4 py-2 text-xs border border-slate-300 rounded-md hover:bg-slate-100 transition"
+              disabled={saving}
+            >
+              Anterior
+            </button>
+          )}
+          {settlementStep < 3 && (
+            <button
+              type="button"
+              onClick={() => setSettlementStep((prev) => (prev === 1 ? 2 : 3))}
+              disabled={saving || (settlementStep === 2 && !canGoToStep3)}
+              className="px-4 py-2 text-xs font-semibold rounded-md text-white bg-indigo-600 hover:bg-indigo-700 border border-indigo-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Siguiente
+            </button>
+          )}
+          {settlementStep === 3 && (
+            <button
+              type="button"
+              onClick={() => void handleLiquidation()}
+              disabled={saving || !paymentMethod || (paymentMethod as string) === "" || (paymentMethod === "efectivo/transferencia" ? (cashAmount + transferAmount) <= 0 : customAmountInput <= 0)}
+              className="px-4 py-2 text-xs font-semibold rounded-md text-white bg-emerald-600 hover:bg-emerald-700 border border-emerald-600 transition disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {saving ? "Guardando..." : "Confirmar y registrar"}
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

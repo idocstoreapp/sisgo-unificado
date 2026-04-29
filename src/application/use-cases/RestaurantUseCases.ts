@@ -199,7 +199,7 @@ export class UpdateIngredientStockUseCase {
         return Result.fail(fetchResult.getError());
       }
 
-      let ingredient = fetchResult.getValue();
+      const ingredient = fetchResult.getValue();
       const stockResult = ingredient.updateStock(quantity, direction);
 
       if (stockResult.isFailure) {

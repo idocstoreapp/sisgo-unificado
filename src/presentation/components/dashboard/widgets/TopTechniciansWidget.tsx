@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
 import { Trophy, Medal, Award, TrendingUp } from "lucide-react";
 import { currentWeekRange } from "@/lib/date";
 
 export default function TopTechniciansWidget() {
+  const router = useRouter();
   const [topTechs, setTopTechs] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -107,9 +109,11 @@ export default function TopTechniciansWidget() {
         ) : (
           <div className="space-y-4">
             {topTechs.map((tech, index) => (
-              <div 
+              <button
+                type="button"
                 key={tech.id} 
-                className="flex items-center gap-4 bg-white/5 p-3 rounded-xl border border-white/10 hover:bg-white/10 transition-colors"
+                onClick={() => router.push(`/finance/payments?tech=${tech.id}`)}
+                className="flex w-full items-center gap-4 rounded-xl border border-white/10 bg-white/5 p-3 text-left transition-colors hover:bg-white/10"
               >
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center shadow-inner ${getRankColor(index)}`}>
                   {getRankIcon(index)}
@@ -124,7 +128,7 @@ export default function TopTechniciansWidget() {
                   <div className="text-2xl font-bold text-white leading-none">{tech.count}</div>
                   <div className="text-[10px] uppercase tracking-wider text-indigo-300 font-semibold mt-1">Órdenes</div>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         )}

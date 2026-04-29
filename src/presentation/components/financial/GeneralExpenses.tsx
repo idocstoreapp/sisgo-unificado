@@ -71,7 +71,7 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
 
       // Cargar gastos generales
       let query = supabase
-        .from("general_expenses")
+        .from("expenses")
         .select(`
           *,
           branch:branches(*),
@@ -85,21 +85,21 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
       // Aplicar filtros de fecha
       if (!showAllHistory) {
         if (localDateFilter) {
-          query = query.gte("fecha", localDateFilter.start).lte("fecha", localDateFilter.end);
+          query = query.gte("expense_date", localDateFilter.start).lte("expense_date", localDateFilter.end);
         } else if (dateFilter) {
-          query = query.gte("fecha", dateFilter.start).lte("fecha", dateFilter.end);
+          query = query.gte("expense_date", dateFilter.start).lte("expense_date", dateFilter.end);
         }
       }
 
       let { data: expensesData, error: expensesError } = await query
-        .order("fecha", { ascending: false })
+        .order("expense_date", { ascending: false })
         .order("created_at", { ascending: false });
 
       // Fallback: algunos entornos no permiten joins por permisos/RLS
       if (expensesError) {
         console.warn("Fallo cargando gastos generales con joins, reintentando consulta simple:", expensesError);
         let fallbackQuery = supabase
-          .from("general_expenses")
+          .from("expenses")
           .select("*");
 
         if (sucursalId) {
@@ -108,14 +108,14 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
 
         if (!showAllHistory) {
           if (localDateFilter) {
-            fallbackQuery = fallbackQuery.gte("fecha", localDateFilter.start).lte("fecha", localDateFilter.end);
+            fallbackQuery = fallbackQuery.gte("expense_date", localDateFilter.start).lte("expense_date", localDateFilter.end);
           } else if (dateFilter) {
-            fallbackQuery = fallbackQuery.gte("fecha", dateFilter.start).lte("fecha", dateFilter.end);
+            fallbackQuery = fallbackQuery.gte("expense_date", dateFilter.start).lte("expense_date", dateFilter.end);
           }
         }
 
         const fallbackResult = await fallbackQuery
-          .order("fecha", { ascending: false })
+          .order("expense_date", { ascending: false })
           .order("created_at", { ascending: false });
 
         expensesData = fallbackResult.data;
@@ -128,8 +128,8 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
 
       // Cargar todos los tipos personalizados únicos (sin filtro de fecha para que siempre estén disponibles)
       let allExpensesQuery = supabase
-        .from("general_expenses")
-        .select("tipo");
+        .from("expenses")
+        .select("category");
       
       if (sucursalId) {
         allExpensesQuery = allExpensesQuery.eq("branch_id", sucursalId);
@@ -137,7 +137,7 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
 
       const { data: allExpensesData } = await allExpensesQuery;
 
-      const tiposUnicos = Array.from(new Set((allExpensesData || []).map(exp => exp.tipo))).filter(Boolean);
+      const tiposUnicos = Array.from(new Set((allExpensesData || []).map(exp => exp.category))).filter(Boolean);
       const tiposPredefinidos = ["arriendo", "internet", "luz", "agua", "facturas", "servicios"];
       const tiposPersonalizados = tiposUnicos.filter(tipo => !tiposPredefinidos.includes(tipo));
       setAllCustomTypes(tiposPersonalizados);
@@ -182,15 +182,23 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
         return;
       }
 
+      // Obtener company_id del usuario
+      const { data: userData } = await supabase
+        .from("users")
+        .select("company_id")
+        .eq("id", user.id)
+        .single();
+
       const { error: insertError } = await supabase
-        .from("general_expenses")
+        .from("expenses")
         .insert({
+          company_id: userData?.company_id,
           branch_id: formData.branch_id,
-          user_id: user.id,
-          tipo: tipoFinal,
-          monto: parseFloat(formData.monto),
-          fecha: formData.fecha,
-          descripcion: formData.descripcion.trim() || null,
+          created_by: user.id,
+          category: tipoFinal,
+          amount: parseFloat(formData.monto),
+          expense_date: formData.fecha,
+          description: formData.descripcion.trim() || null,
           payment_method: formData.payment_method,
         });
 
@@ -267,13 +275,13 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
       }
 
       const { error: updateError } = await supabase
-        .from("general_expenses")
+        .from("expenses")
         .update({
           branch_id: formData.branch_id,
-          tipo: tipoFinal,
-          monto: parseFloat(formData.monto),
-          fecha: formData.fecha,
-          descripcion: formData.descripcion.trim() || null,
+          category: tipoFinal,
+          amount: parseFloat(formData.monto),
+          expense_date: formData.fecha,
+          description: formData.descripcion.trim() || null,
           payment_method: formData.payment_method,
         })
         .eq("id", editingExpense.id);
@@ -309,7 +317,7 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
     setDeletingExpenseId(expenseId);
     try {
       const { error: deleteError } = await supabase
-        .from("general_expenses")
+        .from("expenses")
         .delete()
         .eq("id", expenseId);
 

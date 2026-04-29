@@ -3,11 +3,11 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import { currentWeekRange, formatDate, getWeekRangeFromStart } from "@/lib/date";
 import { formatCLP } from "@/lib/currency";
-import type { Profile, SalaryAdjustment, Order, SalarySettlement, Role } from "@/types";
+import type { Profile, SalaryAdjustment, SalarySettlement, Role } from "@/types";
 import SalarySettlementPanel from "./SalarySettlementPanel";
 import WeeklyReport from "./WeeklyReport";
 import WeeklySummary from "./WeeklySummary";
-import OrdersTable from "./OrdersTable";
+import { CalendarClock, CreditCard, FileText, Wallet } from "lucide-react";
 
 interface TechnicianPaymentsProps {
   refreshKey?: number;
@@ -21,7 +21,6 @@ export default function TechnicianPayments({ refreshKey = 0, branchId, technicia
   const [technicianOptions, setTechnicianOptions] = useState<Profile[]>([]);
   const [selectedTech, setSelectedTech] = useState<string | null>(null);
   const [adjustmentsByTech, setAdjustmentsByTech] = useState<Record<string, SalaryAdjustment[]>>({});
-  const [returnsByTech, setReturnsByTech] = useState<Record<string, Order[]>>({});
   const [weeklyTotals, setWeeklyTotals] = useState<Record<string, number>>({});
   const [weeklyAdjustmentTotals, setWeeklyAdjustmentTotals] = useState<Record<string, number>>({});
   const [weeklyReturnsTotals, setWeeklyReturnsTotals] = useState<Record<string, number>>({});
@@ -30,9 +29,7 @@ export default function TechnicianPayments({ refreshKey = 0, branchId, technicia
   const [deletingAdjustmentId, setDeletingAdjustmentId] = useState<string | null>(null);
   const [loadingDetailsByTech, setLoadingDetailsByTech] = useState<Record<string, boolean>>({});
   const [settlingAdjustmentsByTech, setSettlingAdjustmentsByTech] = useState<Record<string, boolean>>({});
-  const [settlingReturnsByTech, setSettlingReturnsByTech] = useState<Record<string, boolean>>({});
   const [actionErrorsByTech, setActionErrorsByTech] = useState<Record<string, string | null>>({});
-  const [deletingReturnId, setDeletingReturnId] = useState<string | null>(null);
   const [historyPanelOpen, setHistoryPanelOpen] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyResults, setHistoryResults] = useState<SalarySettlement[]>([]);
@@ -172,20 +169,21 @@ export default function TechnicianPayments({ refreshKey = 0, branchId, technicia
       await Promise.all(
         technicians.map(async (tech) => {
         // IMPORTANTE:
-        // El saldo no debe resetearse por cambio de semana.
-        // Se calcula con TODO lo ganado/ajustado/liquidado históricamente.
-        const ordersQuery = supabase
-          .from("orders")
+        // "Saldo disponible" debe coincidir con el dashboard técnico:
+        // comisiones pendientes (aún no liquidadas/pagadas).
+        // Por eso usamos SOLO "pending" y evitamos sumar "paid".
+        const employeePendingQuery = supabase
+          .from("employee_payments")
           .select("commission_amount")
           .eq("technician_id", tech.id)
-          .eq("status", "paid");
+          .eq("payment_status", "pending");
 
-        // Devoluciones/cancelaciones acumuladas (descuentan del saldo)
-        const returnsQuery = supabase
-          .from("orders")
+        // Registros anulados/cancelados (descuentan del histórico si se usan)
+        const cancelledPaymentsQuery = supabase
+          .from("employee_payments")
           .select("commission_amount")
           .eq("technician_id", tech.id)
-          .in("status", ["returned", "cancelled"]);
+          .eq("payment_status", "cancelled");
 
         // Consulta para ajustes - CORREGIDO: Cargar TODOS los ajustes y filtrar por remaining > 0
         // IMPORTANTE: Incluir aplicaciones para calcular el saldo restante correctamente
@@ -196,13 +194,13 @@ export default function TechnicianPayments({ refreshKey = 0, branchId, technicia
           .eq("technician_id", tech.id);
 
         const [
-          { data: paidOrders },
-          { data: returnedData },
+          { data: employeePendingPayments },
+          { data: cancelledPayments },
           { data: adjustmentsData, error: adjustmentsError },
           { data: weekSettlements },
         ] = await Promise.all([
-          ordersQuery,
-          returnsQuery,
+          employeePendingQuery,
+          cancelledPaymentsQuery,
           adjustmentsQuery.order("created_at", { ascending: false }),
           supabase
             .from("salary_settlements")
@@ -228,7 +226,27 @@ export default function TechnicianPayments({ refreshKey = 0, branchId, technicia
           }));
         }
 
-        totals[tech.id] = (paidOrders ?? []).reduce((s, o) => s + (o.commission_amount ?? 0), 0);
+        let totalCommissions = (employeePendingPayments ?? []).reduce(
+          (s, p: any) => s + (p.commission_amount ?? 0),
+          0
+        );
+
+        // Compatibilidad legacy: usar technician_commissions.pending SOLO
+        // cuando aún no existan registros en employee_payments.
+        if (!employeePendingPayments || employeePendingPayments.length === 0) {
+          const { data: legacyPendingCommissions } = await supabase
+            .from("technician_commissions")
+            .select("commission_amount")
+            .eq("technician_id", tech.id)
+            .eq("payment_status", "pending");
+
+          totalCommissions = legacyPendingCommissions.reduce(
+            (s: number, c: any) => s + (c.commission_amount ?? 0),
+            0
+          );
+        }
+
+        totals[tech.id] = totalCommissions;
         
         // CORREGIDO: Calcular total de ajustes disponibles RESTANDO las aplicaciones ya hechas
         // Filtrar solo por remaining > 0, NO por fecha de creación
@@ -262,7 +280,7 @@ export default function TechnicianPayments({ refreshKey = 0, branchId, technicia
 
         adjustmentTotals[tech.id] = adjustmentsForWeek;
         returnsTotals[tech.id] =
-          returnedData?.reduce((s, o) => s + (o.commission_amount ?? 0), 0) ?? 0;
+          cancelledPayments?.reduce((s: number, p: any) => s + (p.commission_amount ?? 0), 0) ?? 0;
         const weekSettled = (weekSettlements ?? []).reduce((sum: number, settlement: any) => {
           const adjustmentsTotal = settlement?.details?.selected_adjustments_total;
           const loanPaymentsTotal = settlement?.details?.loan_payments_total;
@@ -291,7 +309,7 @@ export default function TechnicianPayments({ refreshKey = 0, branchId, technicia
   const loadAdjustmentsForTech = useCallback(
     async (techId: string | null, force = false) => {
       if (!techId) return;
-      if (!force && adjustmentsByTech[techId] && returnsByTech[techId]) {
+      if (!force && adjustmentsByTech[techId]) {
         return;
       }
 
@@ -318,19 +336,8 @@ export default function TechnicianPayments({ refreshKey = 0, branchId, technicia
             .order("created_at", { ascending: false });
         }
 
-        const [{ data: returnedData, error: retError }] = await Promise.all([
-          supabase
-            .from("orders")
-            .select("*")
-            .eq("technician_id", techId)
-            .in("status", ["returned", "cancelled"])
-            // No filtrar por semana - cargar TODAS las devoluciones pendientes
-            // Las devoluciones persisten hasta que se liquiden manualmente
-            .order("created_at", { ascending: false }),
-        ]);
-
-        if (adjustmentsResponse.error || retError) {
-          throw adjustmentsResponse.error || retError;
+        if (adjustmentsResponse.error) {
+          throw adjustmentsResponse.error;
         }
 
         // Calcular saldo restante para cada ajuste restando las aplicaciones
@@ -354,10 +361,6 @@ export default function TechnicianPayments({ refreshKey = 0, branchId, technicia
           ...prev,
           [techId]: adjustmentsWithRemaining as SalaryAdjustment[],
         }));
-        setReturnsByTech((prev) => ({
-          ...prev,
-          [techId]: (returnedData as Order[]) ?? [],
-        }));
       } catch (error) {
         console.error("Error cargando ajustes/devoluciones:", error);
         setActionErrorsByTech((prev) => ({
@@ -368,7 +371,7 @@ export default function TechnicianPayments({ refreshKey = 0, branchId, technicia
         setLoadingDetailsByTech((prev) => ({ ...prev, [techId]: false }));
       }
     },
-    [adjustmentsByTech, returnsByTech]
+    [adjustmentsByTech]
   );
 
   const toggleSettlementPanel = useCallback(
@@ -713,90 +716,34 @@ export default function TechnicianPayments({ refreshKey = 0, branchId, technicia
     [adjustmentsByTech, loadWeeklyData]
   );
 
-  const handleDeleteReturn = useCallback(
-    async (techId: string, orderId: string) => {
-      const techReturns = returnsByTech[techId] ?? [];
-      const target = techReturns.find((order) => order.id === orderId);
-      if (!target) return;
-
-      const confirmed = window.confirm("¿Eliminar esta devolución/cancelación del historial?");
-      if (!confirmed) return;
-
-      setActionErrorsByTech((prev) => ({ ...prev, [techId]: null }));
-      setDeletingReturnId(orderId);
-      const { error } = await supabase
-        .from("orders")
-        .delete()
-        .eq("id", orderId)
-        .eq("technician_id", techId)
-        .in("status", ["returned", "cancelled"]);
-      setDeletingReturnId(null);
-
-      if (error) {
-        console.error("Error eliminando devolución:", error);
-        setActionErrorsByTech((prev) => ({
-          ...prev,
-          [techId]: "No pudimos eliminar la devolución. Intenta nuevamente.",
-        }));
-        return;
-      }
-
-      setReturnsByTech((prev) => ({
-        ...prev,
-        [techId]: techReturns.filter((order) => order.id !== orderId),
-      }));
-      setWeeklyReturnsTotals((prev) => {
-        const next = { ...prev };
-        next[techId] = Math.max((next[techId] ?? 0) - (target.commission_amount ?? 0), 0);
-        return next;
-      });
-      void loadWeeklyData();
-    },
-    [returnsByTech, loadWeeklyData]
+  const totalPendingAmount = useMemo(
+    () => Object.values(weeklyPendingTotals).reduce((sum, amount) => sum + amount, 0),
+    [weeklyPendingTotals],
   );
-
-  const handleSettleReturns = useCallback(
-    async (techId: string) => {
-      const techReturns = returnsByTech[techId] ?? [];
-      if (techReturns.length === 0) return;
-
-      const confirmed = window.confirm(
-        "¿Seguro que quieres eliminar todas las devoluciones/cancelaciones de esta semana?"
-      );
-      if (!confirmed) return;
-
-      setActionErrorsByTech((prev) => ({ ...prev, [techId]: null }));
-      setSettlingReturnsByTech((prev) => ({ ...prev, [techId]: true }));
-      const { start, end } = currentWeekRange();
-
-      const { error } = await supabase
-        .from("orders")
-        .delete()
-        .eq("technician_id", techId)
-        .in("status", ["returned", "cancelled"])
-        .gte("created_at", start.toISOString())
-        .lte("created_at", end.toISOString());
-
-      setSettlingReturnsByTech((prev) => ({ ...prev, [techId]: false }));
-
-      if (error) {
-        console.error("Error al eliminar devoluciones:", error);
-        setActionErrorsByTech((prev) => ({
-          ...prev,
-          [techId]: "No pudimos eliminar las devoluciones. Intenta nuevamente.",
-        }));
-        return;
-      }
-
-      setReturnsByTech((prev) => ({ ...prev, [techId]: [] }));
-      setWeeklyReturnsTotals((prev) => ({ ...prev, [techId]: 0 }));
-      void loadWeeklyData();
-    },
-    [returnsByTech, loadWeeklyData]
+  const totalAdjustmentsAmount = useMemo(
+    () => Object.values(weeklyAdjustmentTotals).reduce((sum, amount) => sum + amount, 0),
+    [weeklyAdjustmentTotals],
   );
 
   return (
-    <div className="p-6 bg-white">
+    <div className="space-y-4 bg-white p-6">
+      <div className="rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-sky-50 p-4">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+          <div className="rounded-xl border border-indigo-100 bg-white/90 p-3">
+            <p className="text-xs text-slate-500">Técnicos en vista</p>
+            <p className="text-xl font-bold text-slate-900">{technicians.length}</p>
+          </div>
+          <div className="rounded-xl border border-indigo-100 bg-white/90 p-3">
+            <p className="text-xs text-slate-500">Saldo pendiente total</p>
+            <p className="text-xl font-bold text-slate-900">{formatCLP(totalPendingAmount)}</p>
+          </div>
+          <div className="rounded-xl border border-indigo-100 bg-white/90 p-3">
+            <p className="text-xs text-slate-500">Descuentos pendientes</p>
+            <p className="text-xl font-bold text-slate-900">{formatCLP(totalAdjustmentsAmount)}</p>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6 space-y-3">
         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -929,7 +876,7 @@ export default function TechnicianPayments({ refreshKey = 0, branchId, technicia
                   const isMixedPayment = entry.payment_method === "efectivo/transferencia" && paymentBreakdown;
                   
                   return (
-                    <div key={entry.id} className="bg-white border border-slate-200 rounded-md p-3 text-sm">
+                    <div key={entry.id} className="rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm">
                       <div className="flex justify-between items-start gap-3">
                         <div>
                           <p className="font-semibold text-slate-800">
@@ -937,37 +884,43 @@ export default function TechnicianPayments({ refreshKey = 0, branchId, technicia
                           </p>
                           <div className="text-xs text-slate-500 space-y-1">
                             {entry.created_at && (
-                              <p className="font-medium text-slate-700">
-                                📅 Fecha del pago: {formatDate(entry.created_at)} • {new Date(entry.created_at).toLocaleTimeString("es-CL", {
+                              <p className="inline-flex items-center gap-1.5 font-medium text-slate-700">
+                                <CalendarClock className="size-3.5" />
+                                Fecha del pago: {formatDate(entry.created_at)} • {new Date(entry.created_at).toLocaleTimeString("es-CL", {
                                   hour: "2-digit",
                                   minute: "2-digit"
                                 })}
                               </p>
                             )}
                             {entry.week_start && (
-                              <p>
-                                📆 Período: {(() => {
+                              <p className="inline-flex items-center gap-1.5">
+                                <CreditCard className="size-3.5" />
+                                Período: {(() => {
                                   try {
                                     const weekRange = getWeekRangeFromStart(entry.week_start);
                                     return `${formatDate(weekRange.start)} al ${formatDate(weekRange.end)}`;
                                   } catch (e) {
                                     return `${formatDate(entry.week_start)}`;
                                   }
-                                })()} • 💳 Medio: {paymentMethodLabel}
+                                })()} • Medio: {paymentMethodLabel}
                               </p>
                             )}
                             {entry.note && (
-                              <p className="text-slate-600">ℹ️ {entry.note}</p>
+                              <p className="inline-flex items-center gap-1.5 text-slate-600">
+                                <FileText className="size-3.5" />
+                                {entry.note}
+                              </p>
                             )}
                             {/* Desglose de pago mixto */}
                             {isMixedPayment && (
-                              <p>
+                              <p className="inline-flex items-center gap-1.5">
+                                <Wallet className="size-3.5" />
                                 <span className="text-emerald-600">
-                                  💵 Efectivo: {formatCLP(paymentBreakdown.efectivo || 0)}
+                                  Efectivo: {formatCLP(paymentBreakdown.efectivo || 0)}
                                 </span>
                                 {" • "}
                                 <span className="text-sky-600">
-                                  🏦 Transferencia: {formatCLP(paymentBreakdown.transferencia || 0)}
+                                  Transferencia: {formatCLP(paymentBreakdown.transferencia || 0)}
                                 </span>
                               </p>
                             )}
@@ -1065,19 +1018,17 @@ export default function TechnicianPayments({ refreshKey = 0, branchId, technicia
           const isSelected = selectedTech === tech.id;
           const isSettlementOpen = openSettlementPanels[tech.id] ?? false;
           const cardAdjustments = adjustmentsByTech[tech.id] ?? [];
-          const cardReturns = returnsByTech[tech.id] ?? [];
           const cardLoading = loadingDetailsByTech[tech.id] ?? false;
           const cardActionError = actionErrorsByTech[tech.id];
           const isSettlingAdj = settlingAdjustmentsByTech[tech.id] ?? false;
-          const isSettlingRet = settlingReturnsByTech[tech.id] ?? false;
 
           return (
             <div
               key={tech.id}
-              className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+              className={`rounded-xl border p-4 shadow-sm cursor-pointer transition-colors ${
                 isSelected
-                  ? "border-brand bg-brand/5"
-                  : "border-slate-200 hover:border-slate-300"
+                  ? "border-indigo-400 bg-indigo-50/60"
+                  : "border-slate-200 bg-white hover:border-slate-300"
               }`}
               onClick={() => {
                 setTechModalOpen(tech.id);
@@ -1108,6 +1059,16 @@ export default function TechnicianPayments({ refreshKey = 0, branchId, technicia
                   </div>
                 </div>
                 <div className="text-2xl">▶</div>
+              </div>
+              <div className="mt-3 flex justify-end">
+                <a
+                  href={`/finance/payments?tech=${tech.id}`}
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  className="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700"
+                >
+                  Pagar saldo directo
+                </a>
               </div>
 
               {/* Sección expandible removida - usar el modal en su lugar (click en la tarjeta abre el modal) */}
@@ -1254,7 +1215,7 @@ export default function TechnicianPayments({ refreshKey = 0, branchId, technicia
                             const isMixedPayment = entry.payment_method === "efectivo/transferencia" && paymentBreakdown;
                             
                             return (
-                              <div key={entry.id} className="bg-white border border-slate-200 rounded-md p-3 text-sm">
+                              <div key={entry.id} className="rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm">
                                 <div className="flex justify-between items-start gap-3">
                                   <div>
                                     <p className="font-semibold text-slate-800 text-lg">
@@ -1262,36 +1223,42 @@ export default function TechnicianPayments({ refreshKey = 0, branchId, technicia
                                     </p>
                                     <div className="text-xs text-slate-500 space-y-1 mt-2">
                                       {entry.created_at && (
-                                        <p className="font-medium text-slate-700">
-                                          📅 Fecha del pago: {formatDate(entry.created_at)} • {new Date(entry.created_at).toLocaleTimeString("es-CL", {
+                                        <p className="inline-flex items-center gap-1.5 font-medium text-slate-700">
+                                          <CalendarClock className="size-3.5" />
+                                          Fecha del pago: {formatDate(entry.created_at)} • {new Date(entry.created_at).toLocaleTimeString("es-CL", {
                                             hour: "2-digit",
                                             minute: "2-digit"
                                           })}
                                         </p>
                                       )}
                                       {entry.week_start && (
-                                        <p className="font-medium text-slate-700">
-                                          📆 Período pagado: {(() => {
+                                        <p className="inline-flex items-center gap-1.5 font-medium text-slate-700">
+                                          <CreditCard className="size-3.5" />
+                                          Período pagado: {(() => {
                                             try {
                                               const weekRange = getWeekRangeFromStart(entry.week_start);
                                               return `${formatDate(weekRange.start)} al ${formatDate(weekRange.end)}`;
                                             } catch (e) {
                                               return `${formatDate(entry.week_start)}`;
                                             }
-                                          })()} • 💳 {paymentMethodLabel}
+                                          })()} • {paymentMethodLabel}
                                         </p>
                                       )}
                                       <p className="text-emerald-600 font-semibold">
-                                        💵 Monto pagado: {formatCLP(entry.amount)}
+                                        Monto pagado: {formatCLP(entry.amount)}
                                       </p>
                                       {isMixedPayment && (
-                                        <p className="text-purple-600">
-                                          💵 Efectivo: {formatCLP(paymentBreakdown.efectivo)} • 
-                                          💸 Transferencia: {formatCLP(paymentBreakdown.transferencia)}
+                                        <p className="inline-flex items-center gap-1.5 text-purple-600">
+                                          <Wallet className="size-3.5" />
+                                          Efectivo: {formatCLP(paymentBreakdown.efectivo)} • 
+                                          Transferencia: {formatCLP(paymentBreakdown.transferencia)}
                                         </p>
                                       )}
                                       {entry.note && (
-                                        <p className="text-slate-600">📝 {entry.note}</p>
+                                        <p className="inline-flex items-center gap-1.5 text-slate-600">
+                                          <FileText className="size-3.5" />
+                                          {entry.note}
+                                        </p>
                                       )}
                                     </div>
                                   </div>
@@ -1372,11 +1339,9 @@ export default function TechnicianPayments({ refreshKey = 0, branchId, technicia
                 {/* Listado de Órdenes */}
                 <div>
                   <h3 className="text-lg font-semibold text-slate-900 mb-4">Órdenes de Reparación</h3>
-                  <OrdersTable 
-                    technicianId={tech.id} 
-                    refreshKey={refreshKey}
-                    isAdmin={isAdmin}
-                  />
+                  <div className="text-sm text-slate-500">
+                    Este listado está en migración a `work_orders`/`employee_payments` (modelo unificado).
+                  </div>
                 </div>
               </div>
             </div>

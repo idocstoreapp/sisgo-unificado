@@ -125,7 +125,7 @@ export class UpdateStockUseCase {
         return Result.fail(fetchResult.getError());
       }
 
-      let product = fetchResult.getValue();
+      const product = fetchResult.getValue();
 
       // Adjust stock
       const adjustmentResult = product.adjustStock(
@@ -290,7 +290,7 @@ export class CreatePurchaseUseCase {
           // Update product stock
           const productFetchResult = await this.productRepository.findById(item.productId);
           if (productFetchResult.isSuccess) {
-            let product = productFetchResult.getValue();
+            const product = productFetchResult.getValue();
             await product.adjustStock(item.quantity, "Purchase stock update");
             await this.productRepository.update(product);
 

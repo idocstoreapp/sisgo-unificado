@@ -36,7 +36,7 @@ export function getWeeksInRange(startDate: Date, endDate: Date): Array<{
   }
 
   // Encontrar el primer sábado dentro o antes del rango
-  let currentDate = new Date(startDate);
+  const currentDate = new Date(startDate);
   const dayOfWeek = currentDate.getDay(); // 0 = domingo, 6 = sábado
   
   // Calcular días hasta el sábado anterior (o el mismo si es sábado)

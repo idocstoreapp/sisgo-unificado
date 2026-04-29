@@ -242,7 +242,7 @@ function TechnicianPaymentsForBranch({ branchId, refreshKey }: { branchId: strin
           </p>
           <p className="text-amber-600 text-xs">
             Verifica que:
-            <br />• Los técnicos tengan una sucursal asignada en "Gestión de Usuarios"
+            <br />• Los técnicos tengan una sucursal asignada en &quot;Gestión de Usuarios&quot;
             <br />• La sucursal del encargado coincida con la de los técnicos
             <br />• Abre la consola del navegador (F12) para ver más detalles
           </p>

@@ -91,7 +91,7 @@ export function getPayoutWeekRange(week: number, year: number): { start: Date; e
   const yearStart = startOfYear(new Date(year, 0, 1));
   
   // Encontrar el primer sábado del año (o antes si el 1 de enero no es sábado)
-  let firstSaturday = new Date(yearStart);
+  const firstSaturday = new Date(yearStart);
   const firstDayOfYear = firstSaturday.getDay();
   
   // Si el 1 de enero es domingo (0), el sábado anterior es el 31 de diciembre del año anterior

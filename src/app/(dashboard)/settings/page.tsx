@@ -100,6 +100,9 @@ function UsersTab({ companyId }: { companyId: string }) {
 function WarrantyTab({ company, onSaved }: { company: CompanyConfig; onSaved: () => void }) {
   const [days, setDays] = useState(company.warranty_days ?? 30);
   const [commPct, setCommPct] = useState(company.commission_percentage ?? 40);
+  const [requireReceiptForPayment, setRequireReceiptForPayment] = useState<boolean>(
+    Boolean((company.config as any)?.require_receipt_for_payment)
+  );
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -109,7 +112,7 @@ function WarrantyTab({ company, onSaved }: { company: CompanyConfig; onSaved: ()
     setSaving(true);
     await supabase.from("companies").update({
       commission_percentage: commPct,
-      config: { ...(company.config || {}), warranty_days: days },
+      config: { ...(company.config || {}), warranty_days: days, require_receipt_for_payment: requireReceiptForPayment },
       updated_at: new Date().toISOString()
     }).eq("id", company.id);
     setSaving(false); setSaved(true);
@@ -139,6 +142,30 @@ function WarrantyTab({ company, onSaved }: { company: CompanyConfig; onSaved: ()
         <p className="text-sm text-slate-500">Porcentaje de comisión aplicado cuando el técnico no tiene uno personalizado.</p>
         <input type="number" min="0" max="100" value={commPct} onChange={e => setCommPct(Number(e.target.value))}
           className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none" />
+      </div>
+
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-3">
+        <h3 className="font-bold text-slate-900 flex items-center gap-2">
+          <Settings className="w-5 h-5 text-indigo-500" />
+          Política de Pagos
+        </h3>
+        <p className="text-sm text-slate-500">
+          Define si tu empresa exige un Nº de boleta/recibo para marcar una orden como pagada.
+        </p>
+        <label className="flex items-center gap-3 text-sm">
+          <input
+            type="checkbox"
+            className="h-4 w-4"
+            checked={requireReceiptForPayment}
+            onChange={(e) => setRequireReceiptForPayment(e.target.checked)}
+          />
+          <span className="font-semibold text-slate-800">
+            Exigir recibo para marcar como pagada
+          </span>
+        </label>
+        <p className="text-xs text-slate-500">
+          Si está desactivado, podrás acreditar pagos/comisiones aunque el cliente pague sin boleta (según tu operación).
+        </p>
       </div>
 
       <button onClick={save} disabled={saving} className="flex items-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl transition-all disabled:opacity-50">

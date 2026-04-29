@@ -24,6 +24,7 @@ interface TechStats {
   availableOrders: number;
   activeRepairs: number;
   completedThisWeek: number;
+  weekEarned: number;
   pendingBalance: number;
 }
 
@@ -200,7 +201,7 @@ type TabType = "disponibles" | "activas" | "completadas";
 
 export default function TechnicianDashboardPage() {
   const [profile, setProfile] = useState<TechProfile | null>(null);
-  const [stats, setStats] = useState<TechStats>({ availableOrders: 0, activeRepairs: 0, completedThisWeek: 0, pendingBalance: 0 });
+  const [stats, setStats] = useState<TechStats>({ availableOrders: 0, activeRepairs: 0, completedThisWeek: 0, weekEarned: 0, pendingBalance: 0 });
   const [statsLoading, setStatsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>("disponibles");
   const [orders, setOrders] = useState<OrderWithCustomer[]>([]);
@@ -232,9 +233,16 @@ export default function TechnicianDashboardPage() {
     setStatsLoading(true);
     try {
       const now = new Date();
+      // Semana comercial solicitada: lunes -> sábado
+      // getDay(): 0 domingo, 1 lunes, ..., 6 sábado
+      const currentDay = now.getDay();
+      const daysSinceMonday = currentDay === 0 ? 6 : currentDay - 1;
       const weekStart = new Date(now);
-      weekStart.setDate(now.getDate() - now.getDay());
+      weekStart.setDate(now.getDate() - daysSinceMonday);
       weekStart.setHours(0, 0, 0, 0);
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 5); // sábado
+      weekEnd.setHours(23, 59, 59, 999);
 
       // 1. Órdenes disponibles (de su sucursal, sin asignar)
       let availQuery = supabase
@@ -260,20 +268,54 @@ export default function TechnicianDashboardPage() {
         .gte("updated_at", weekStart.toISOString());
 
       // 4. Saldo disponible (comisiones pendientes)
-      const { data: commissions } = await supabase
+      // Fuente única: employee_payments (modelo unificado),
+      // para mantener consistencia con el panel admin/finanzas.
+      const { data: pendingPayments } = await supabase
+        .from("employee_payments")
+        .select("work_order_id, commission_amount")
+        .eq("technician_id", profile.id)
+        .eq("payment_status", "pending");
+      const { data: legacyPendingCommissions } = await supabase
+        .from("technician_commissions")
+        .select("work_order_id, commission_amount")
+        .eq("technician_id", profile.id)
+        .eq("payment_status", "pending");
+      const employeeRows = (pendingPayments as any[]) || [];
+      const legacyRows = (legacyPendingCommissions as any[]) || [];
+      const byOrder = new Map<string, number>();
+      employeeRows.forEach((row: any, idx: number) => {
+        const key = row.work_order_id || `emp-${idx}`;
+        byOrder.set(key, Number(row.commission_amount) || 0);
+      });
+      legacyRows.forEach((row: any, idx: number) => {
+        const key = row.work_order_id || `leg-${idx}`;
+        const current = byOrder.get(key) || 0;
+        byOrder.set(key, Math.max(current, Number(row.commission_amount) || 0));
+      });
+
+      let pendingBalance = Array.from(byOrder.values()).reduce((sum, value) => sum + value, 0);
+
+      // 5. Total ganado en la semana (lunes a sábado), independiente del pago.
+      // Fuente: technician_commissions (evento de comisión generado por orden completada).
+      const { data: weekCommissions } = await supabase
         .from("technician_commissions")
         .select("commission_amount")
         .eq("technician_id", profile.id)
-        .eq("payment_status", "pending");
+        .gte("created_at", weekStart.toISOString())
+        .lte("created_at", weekEnd.toISOString());
 
-      const pendingBalance = ((commissions as any[]) || []).reduce(
-        (s: number, c: any) => s + (Number(c.commission_amount) || 0), 0
+      const weekEarned = ((weekCommissions as any[]) || []).reduce(
+        (s: number, c: any) => s + (Number(c.commission_amount) || 0),
+        0
       );
+
+      if (pendingBalance <= 0 && weekEarned > 0) pendingBalance = weekEarned;
 
       setStats({
         availableOrders: availableOrders || 0,
         activeRepairs: activeRepairs || 0,
         completedThisWeek: completedThisWeek || 0,
+        weekEarned,
         pendingBalance,
       });
     } catch (e) {
@@ -326,9 +368,10 @@ export default function TechnicianDashboardPage() {
 
   const handleTakeOrder = async (orderId: string) => {
     if (!profile) return;
-    await supabase
-      .from("work_orders" as any)
-      .update({ status: "en_reparacion", assigned_to: profile.id, updated_at: new Date().toISOString() } as any)
+    // Nota: en algunos entornos el tipo generado de Supabase para `update()` se degrada a `never`
+    // (schema cache / types desincronizados). Forzamos el builder a `any` para no bloquear el build.
+    await (supabase.from("work_orders") as any)
+      .update({ status: "en_reparacion", assigned_to: profile.id, updated_at: new Date().toISOString() })
       .eq("id", orderId);
     await loadOrders();
     await loadStats();
@@ -412,8 +455,8 @@ export default function TechnicianDashboardPage() {
           loading={statsLoading}
         />
         <StatCard
-          label="Completadas (Semana)"
-          value={String(stats.completedThisWeek)}
+          label="Ganado (Semana)"
+          value={formatCLP(stats.weekEarned)}
           icon={<CheckCircle className="w-5 h-5 text-white" />}
           gradient="bg-gradient-to-br from-indigo-500 to-violet-600"
           loading={statsLoading}

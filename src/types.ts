@@ -212,3 +212,59 @@ export interface OrderNote {
   user?: User;
 }
 
+export interface GeneralExpense {
+  id: string;
+  company_id: string;
+  branch_id?: string | null;
+  created_by?: string | null;
+  category: string;
+  amount: number;
+  expense_date: string;
+  description?: string | null;
+  payment_method?: string | null;
+  receipt_url?: string | null;
+  invoice_number?: string | null;
+  created_at: string;
+  branch?: Branch;
+  user?: Profile;
+  // Legacy fields (for compatibility)
+  tipo?: string;
+  monto?: number;
+  fecha?: string;
+  descripcion?: string;
+  user_id?: string;
+  [key: string]: any;
+}
+
+export interface SmallExpense {
+  id: string;
+  company_id: string;
+  branch_id: string;
+  created_by?: string | null;
+  category: string;
+  amount: number;
+  expense_date: string;
+  description?: string | null;
+  payment_method?: string | null;
+  created_at: string;
+  branch?: Branch;
+  user?: Profile;
+  // Legacy fields (for compatibility)
+  tipo?: string;
+  monto?: number;
+  fecha?: string;
+  descripcion?: string;
+  user_id?: string;
+  [key: string]: any;
+}
+
+export interface BranchExpensesSummary {
+  total_small_expenses: number;
+  small_expenses_by_type?: Record<string, number>;
+  total_general_expenses: number;
+  general_expenses_by_type?: Record<string, number>;
+  total_repuestos: number;
+  total_pagos_tecnicos: number;
+  total_pagos_encargados: number;
+}
+

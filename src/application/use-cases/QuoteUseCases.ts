@@ -162,7 +162,7 @@ export class UpdateQuoteUseCase {
         return Result.fail(fetchResult.getError());
       }
 
-      let quote = fetchResult.getValue();
+      const quote = fetchResult.getValue();
 
       // Step 2: Update basic fields if provided
       if (input.customerId) {
@@ -250,7 +250,7 @@ export class ChangeQuoteStatusUseCase {
         return Result.fail(fetchResult.getError());
       }
 
-      let quote = fetchResult.getValue();
+      const quote = fetchResult.getValue();
 
       // Step 2: Change status
       const statusResult = quote.changeStatus(newStatus);

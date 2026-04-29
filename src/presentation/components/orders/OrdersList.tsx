@@ -14,6 +14,8 @@ import {
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, PRIORITY_LABELS, PRIORITY_COLORS } from "@/shared/constants";
 import type { OrderStatus, Priority } from "@/shared/kernel/types";
 import Link from "next/link";
+import { CalendarClock, ClipboardList, Sparkles, X } from "lucide-react";
+import OrderDetailPanel from "./OrderDetailPanel";
 
 interface WorkOrder {
   id: string;
@@ -47,6 +49,8 @@ export function OrdersList() {
   const [branchFilter, setBranchFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
 
   const loadCustomers = useCallback(async () => {
     const { data } = await supabase.from("customers").select("id, name");
@@ -159,6 +163,18 @@ export function OrdersList() {
     return matchesSearch;
   });
 
+  async function quickUpdateOrderStatus(orderId: string, status: string) {
+    setUpdatingOrderId(orderId);
+    const { error } = await supabase
+      .from("work_orders")
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq("id", orderId);
+    setUpdatingOrderId(null);
+    if (!error) {
+      setOrders((prev) => prev.map((order) => (order.id === orderId ? { ...order, status } : order)));
+    }
+  }
+
   return (
     <div className="p-4 lg:p-8 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -219,71 +235,98 @@ export function OrdersList() {
         </Select>
       </div>
 
-      <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="rounded-2xl border border-indigo-100 bg-gradient-to-r from-indigo-50 via-white to-sky-50 p-4">
+        <div className="mb-3 flex items-center gap-2">
+          <Sparkles className="size-4 text-indigo-600" />
+          <p className="text-sm font-semibold text-slate-800">Historial de órdenes</p>
+        </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-indigo-100 bg-white/90 p-3">
+            <p className="text-xs text-slate-500">Órdenes visibles</p>
+            <p className="text-xl font-bold text-slate-900">{filteredOrders.length}</p>
+          </div>
+          <div className="rounded-xl border border-indigo-100 bg-white/90 p-3">
+            <p className="text-xs text-slate-500">Vencidas</p>
+            <p className="text-xl font-bold text-rose-600">
+              {filteredOrders.filter((order) => isOverdue(order)).length}
+            </p>
+          </div>
+          <div className="rounded-xl border border-indigo-100 bg-white/90 p-3">
+            <p className="text-xs text-slate-500">Pagadas</p>
+            <p className="text-xl font-bold text-emerald-600">
+              {filteredOrders.filter((order) => Boolean(order.paid_at)).length}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-card border border-border rounded-xl p-3">
         {loading ? (
           <div className="text-center py-12 text-muted-foreground">Cargando...</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-muted">
-                <tr>
-                  <th className="text-left p-3 text-sm font-medium">N° Orden</th>
-                  <th className="text-left p-3 text-sm font-medium">Cliente</th>
-                  <th className="text-left p-3 text-sm font-medium hidden md:table-cell">Estado</th>
-                  <th className="text-left p-3 text-sm font-medium hidden lg:table-cell">Prioridad</th>
-                  <th className="text-left p-3 text-sm font-medium hidden sm:table-cell">Fecha Límite</th>
-                  <th className="text-right p-3 text-sm font-medium">Total</th>
-                  <th className="text-right p-3 text-sm font-medium">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filteredOrders.map((order) => (
-                  <tr key={order.id} className="hover:bg-accent/50 transition-colors">
-                    <td className="p-3">
-                      <span className="font-mono text-sm font-medium">{order.order_number}</span>
-                    </td>
-                    <td className="p-3">
-                      <div className="text-sm font-medium">
-                        {customers[order.customer_id] || "Cliente #" + order.customer_id?.slice(0, 8)}
-                      </div>
-                    </td>
-                    <td className="p-3 hidden md:table-cell">
+          <div className="space-y-2">
+            {filteredOrders.map((order) => (
+              <div
+                key={order.id}
+                className="rounded-xl border border-border bg-background p-3 transition hover:border-indigo-200 hover:bg-accent/30"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="font-mono text-sm font-semibold text-foreground">{order.order_number}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {customers[order.customer_id] || "Cliente #" + order.customer_id?.slice(0, 8)}
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
                       <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${ORDER_STATUS_COLORS[order.status as OrderStatus] || "bg-gray-100"}`}>
                         {ORDER_STATUS_LABELS[order.status as OrderStatus] || order.status}
                       </span>
-                    </td>
-                    <td className="p-3 hidden lg:table-cell">
                       <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${PRIORITY_COLORS[order.priority as Priority] || "bg-gray-100"}`}>
                         {PRIORITY_LABELS[order.priority as Priority] || order.priority}
                       </span>
-                    </td>
-                    <td className="p-3 text-sm hidden sm:table-cell">
-                      <span className={isOverdue(order) ? "text-red-600 font-medium" : ""}>
-                        {formatDate(order.commitment_date)}
-                      </span>
-                      {isOverdue(order) && (
-                        <span className="ml-1 text-xs">⚠️</span>
-                      )}
-                    </td>
-                    <td className="p-3 text-right font-medium">
-                      {formatCLP(order.total_price)}
-                      {order.paid_at && (
-                        <div className="text-xs text-green-600">Pagado</div>
-                      )}
-                    </td>
-                    <td className="p-3 text-right">
-                      <Button variant="ghost" size="sm" asChild>
-                        <Link href={`/orders/${order.id}`}>Ver</Link>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-foreground">{formatCLP(order.total_price)}</p>
+                    {order.paid_at && <p className="text-xs text-emerald-600">Pagado</p>}
+                    <div className="mt-2 flex items-center justify-end gap-2">
+                      <Button variant="ghost" size="sm" onClick={() => setSelectedOrderId(order.id)}>
+                        Ver detalle
                       </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      {["en_proceso", "en_reparacion"].includes(order.status) && (
+                        <Button
+                          size="sm"
+                          className="bg-emerald-600 hover:bg-emerald-700"
+                          disabled={updatingOrderId === order.id}
+                          onClick={() => quickUpdateOrderStatus(order.id, "por_entregar")}
+                        >
+                          {updatingOrderId === order.id ? "..." : "Por entregar"}
+                        </Button>
+                      )}
+                      {order.status === "por_entregar" && (
+                        <Button
+                          size="sm"
+                          disabled={updatingOrderId === order.id}
+                          onClick={() => quickUpdateOrderStatus(order.id, "entregada")}
+                        >
+                          {updatingOrderId === order.id ? "..." : "Completar"}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+                  <CalendarClock className="size-3.5" />
+                  <span className={isOverdue(order) ? "font-semibold text-rose-600" : ""}>
+                    Fecha límite: {formatDate(order.commitment_date)}
+                  </span>
+                </div>
+              </div>
+            ))}
           </div>
         )}
         {filteredOrders.length === 0 && !loading && (
           <div className="text-center py-12 text-muted-foreground">
+            <ClipboardList className="mx-auto mb-2 size-5" />
             No hay órdenes que coincidan con los filtros
           </div>
         )}
@@ -308,6 +351,27 @@ export function OrdersList() {
           </div>
         ))}
       </div>
+
+      {selectedOrderId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 sm:p-4">
+          <div className="relative max-h-[95vh] w-full max-w-5xl overflow-y-auto rounded-xl border border-border bg-background">
+            <button
+              type="button"
+              onClick={() => setSelectedOrderId(null)}
+              className="hover:bg-accent absolute right-3 top-3 z-10 rounded-md p-1"
+              aria-label="Cerrar detalle"
+            >
+              <X className="size-4" />
+            </button>
+            <OrderDetailPanel
+              orderId={selectedOrderId}
+              embedded
+              onClose={() => setSelectedOrderId(null)}
+              onSaved={loadOrders}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

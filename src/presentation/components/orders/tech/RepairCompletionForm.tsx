@@ -75,6 +75,8 @@ export default function RepairCompletionForm({
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("");
   const [receiptNumber, setReceiptNumber] = useState("");
+  const [markAsPaid, setMarkAsPaid] = useState(false);
+  const [requireReceiptForPayment, setRequireReceiptForPayment] = useState(false);
   const [notes, setNotes] = useState("");
   const [laborCostStr, setLaborCostStr] = useState(formatCLPInput(order.labor_cost || 0));
   const [loading, setLoading] = useState(false);
@@ -107,13 +109,29 @@ export default function RepairCompletionForm({
     async function loadCompanyCommission() {
       const { data } = await supabase
         .from("companies")
-        .select("commission_percentage")
+        .select("commission_percentage, config")
         .eq("id", companyId)
         .single();
       if (data?.commission_percentage) setCommissionPct(Number(data.commission_percentage));
+      const requireReceipt = Boolean((data as any)?.config?.require_receipt_for_payment);
+      setRequireReceiptForPayment(requireReceipt);
     }
     loadCompanyCommission();
   }, [companyId, commissionPercentage]);
+
+  // También cargar la política de recibo aunque el técnico tenga comisión personalizada
+  useEffect(() => {
+    async function loadCompanyPaymentPolicy() {
+      const { data } = await supabase
+        .from("companies")
+        .select("config")
+        .eq("id", companyId)
+        .single();
+      const requireReceipt = Boolean((data as any)?.config?.require_receipt_for_payment);
+      setRequireReceiptForPayment(requireReceipt);
+    }
+    void loadCompanyPaymentPolicy();
+  }, [companyId]);
 
   const handleAddPart = () => {
     setParts([...parts, { id: Date.now().toString(), description: "", quantity: 1, unitPrice: 0, supplierId: "" }]);
@@ -132,6 +150,12 @@ export default function RepairCompletionForm({
     // Validaciones
     if (!paymentMethod) {
       setError("Debes seleccionar un método de pago del cliente.");
+      return;
+    }
+    const hasReceipt = Boolean(receiptNumber.trim());
+    const isPaidNow = markAsPaid || hasReceipt;
+    if (requireReceiptForPayment && isPaidNow && !hasReceipt) {
+      setError("Esta empresa exige Nº de recibo para marcar la orden como pagada.");
       return;
     }
     for (const part of parts) {
@@ -173,6 +197,8 @@ export default function RepairCompletionForm({
       }
 
       // 3. Actualizar la orden
+      const isPaidNow = markAsPaid || Boolean(receiptNumber.trim());
+      const paidAtISO = isPaidNow ? new Date().toISOString() : null;
       const { error: orderError } = await supabase
         .from("work_orders")
         .update({
@@ -182,6 +208,7 @@ export default function RepairCompletionForm({
           total_cost: totalCost,
           payment_method: paymentMethod,
           ...(receiptNumber.trim() ? { receipt_number: receiptNumber.trim() } : {}),
+          ...(isPaidNow ? { paid_at: paidAtISO } : {}),
           repair_completed_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         } as any)
@@ -196,9 +223,62 @@ export default function RepairCompletionForm({
             work_order_id: order.id,
             technician_id: technicianId,
             commission_amount: commissionAmount,
+            // La orden puede quedar pagada por el cliente, pero la comisión del técnico
+            // se liquida luego desde Finanzas/Admin.
             payment_status: "pending",
           } as any);
         if (commErr) console.error("[RepairCompletion] Commission insert error:", commErr);
+
+        // 5. Registrar el pago/comisión en el modelo unificado (employee_payments),
+        // que es lo que usa el dashboard financiero para calcular el saldo del técnico.
+        try {
+          // Evitar duplicados: si ya existe un registro para esta orden+técnico, actualizarlo.
+          const { data: existingPayment, error: lookupErr } = await supabase
+            .from("employee_payments")
+            .select("id")
+            .eq("work_order_id", order.id)
+            .eq("technician_id", technicianId)
+            .maybeSingle();
+
+          if (lookupErr) {
+            console.warn("[RepairCompletion] employee_payments lookup error:", lookupErr);
+          }
+
+          const paymentPayload = {
+            company_id: companyId,
+            technician_id: technicianId,
+            work_order_id: order.id,
+            week_start: null,
+            month: new Date().getMonth() + 1,
+            year: new Date().getFullYear(),
+            repair_cost: laborCost,
+            replacement_cost: replacementCost,
+            total_charged: (order as any).total_price ?? totalCost,
+            commission_percentage: commissionPct,
+            commission_amount: commissionAmount,
+            // Mantener pendiente hasta que admin registre la liquidación.
+            payment_status: "pending",
+            paid_at: null,
+            payout_week: null,
+            payout_year: null,
+            updated_at: new Date().toISOString(),
+          } as any;
+
+          if (existingPayment?.id) {
+            const { error: updErr } = await supabase
+              .from("employee_payments")
+              .update(paymentPayload)
+              .eq("id", existingPayment.id);
+            if (updErr) console.warn("[RepairCompletion] employee_payments update error:", updErr);
+          } else {
+            const { error: insErr } = await supabase
+              .from("employee_payments")
+              .insert(paymentPayload);
+            if (insErr) console.warn("[RepairCompletion] employee_payments insert error:", insErr);
+          }
+        } catch (e) {
+          console.warn("[RepairCompletion] employee_payments sync error:", e);
+        }
       }
 
       onSuccess();
@@ -284,6 +364,27 @@ export default function RepairCompletionForm({
                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all"
                 placeholder="Ej: 00123456"
               />
+            </div>
+            <div className="flex items-start gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <input
+                id="markAsPaid"
+                type="checkbox"
+                className="mt-1 h-4 w-4"
+                checked={markAsPaid}
+                onChange={(e) => setMarkAsPaid(e.target.checked)}
+                disabled={requireReceiptForPayment && !receiptNumber.trim()}
+              />
+              <label htmlFor="markAsPaid" className="text-xs text-slate-600">
+                <span className="font-semibold text-slate-800">Marcar como pagada</span>
+                <span className="block text-slate-500">
+                  Si tu empresa permite pagos sin recibo, activa esto para acreditar la comisión aunque no tengas Nº de boleta.
+                  {requireReceiptForPayment && (
+                    <span className="block text-amber-700 font-medium">
+                      Esta empresa exige recibo para marcar como pagada.
+                    </span>
+                  )}
+                </span>
+              </label>
             </div>
           </div>
 

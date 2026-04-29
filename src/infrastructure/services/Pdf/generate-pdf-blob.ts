@@ -1095,8 +1095,8 @@ export async function generatePDFBlob(
   if (isSingleDevice && totalHeightNeeded < maxUsableHeight) {
     // Cuando hay un solo equipo, AUMENTAR el tamaño de fuente para ocupar TODO el espacio disponible
     // Usar búsqueda para encontrar el tamaño máximo que quepa
-    let minFontSize = fontSize;
-    let maxFontSize = Math.min(12, fontSize * 3); // Máximo 12pt o el triple del tamaño actual
+    const minFontSize = fontSize;
+    const maxFontSize = Math.min(12, fontSize * 3); // Máximo 12pt o el triple del tamaño actual
     let bestFontSize = fontSize;
     
     // Probar diferentes tamaños desde el máximo hacia abajo hasta encontrar el que quepa
@@ -1233,7 +1233,7 @@ export async function generatePDFBlob(
   let rightY = yPosition;
   
   // Usar el espaciado óptimo calculado (ya ajustado para ocupar todo el espacio)
-  let lineSpacing = optimalLineSpacing;
+  const lineSpacing = optimalLineSpacing;
   
   // Distribuir políticas entre las dos columnas
   // IMPORTANTE: Calcular el Y máximo permitido (justo antes de la firma)
@@ -1243,7 +1243,7 @@ export async function generatePDFBlob(
   warrantyText.forEach((text, index) => {
     const isLeftColumn = index % 2 === 0;
     const currentX = isLeftColumn ? leftColumnX : rightColumnX;
-    let currentY = isLeftColumn ? leftY : rightY;
+    const currentY = isLeftColumn ? leftY : rightY;
     
     // Agregar punto al inicio de cada política
     const textWithBullet = `• ${text}`;

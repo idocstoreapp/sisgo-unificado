@@ -153,32 +153,31 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
       // Gastos hormiga (todas las sucursales) - filtrado por fecha
       const { data: smallExpenses } = await supabase
         .from("small_expenses")
-        .select("monto")
-        .gte("fecha", start)
-        .lte("fecha", end);
+        .select("amount")
+        .gte("expense_date", start)
+        .lte("expense_date", end);
 
       const total_small_expenses = (smallExpenses || []).reduce(
-        (sum, exp) => sum + (exp.monto || 0),
+        (sum, exp) => sum + (exp.amount || 0),
         0
       );
 
       // Gastos generales (todas las sucursales) - filtrado por fecha
       const { data: generalExpenses } = await supabase
-        .from("general_expenses")
-        .select("monto")
-        .gte("fecha", start)
-        .lte("fecha", end);
+        .from("expenses")
+        .select("amount")
+        .gte("expense_date", start)
+        .lte("expense_date", end);
 
       const total_general_expenses = (generalExpenses || []).reduce(
-        (sum, exp) => sum + (exp.monto || 0),
+        (sum, exp) => sum + (exp.amount || 0),
         0
       );
 
       // Repuestos (de órdenes pagadas, todas las sucursales) - filtrado por paid_at del mes
       const { data: orders } = await supabase
-        .from("orders")
+        .from("work_orders")
         .select("replacement_cost, paid_at")
-        .eq("status", "paid")
         .not("paid_at", "is", null)
         .gte("paid_at", start + "T00:00:00")
         .lte("paid_at", end + "T23:59:59");
@@ -203,46 +202,45 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
       const technicianIds = (allTechnicians || []).map((u) => u.id);
       let total_pagos_tecnicos = 0;
       if (technicianIds.length > 0) {
-        // Calcular desde órdenes pendientes/pagadas en el rango de fechas
-        // Usar funciones helper para evitar problemas de zona horaria
+        // Calcular desde pagos de empleados en el rango de fechas
+        // IMPORTANTE: Simplificar la consulta - solo buscar en el rango de paid_at
         const startUTC = dateStringToUTCStart(start);
         const endUTC = dateStringToUTCEnd(end);
         
-        // Buscar órdenes pagadas con recibo en el rango (igual que el historial)
+        // Buscar pagos registrados en el rango
         let { data: paidOrders, error: ordersError } = await supabase
-          .from("orders")
-          .select("commission_amount, technician_id, paid_at, created_at")
-          .in("status", ["pending", "paid"])
+          .from("employee_payments")
+          .select("commission_amount")
           .in("technician_id", technicianIds)
-          .or(`and(paid_at.gte.${startUTC.toISOString()},paid_at.lte.${endUTC.toISOString()}),and(paid_at.is.null,created_at.gte.${startUTC.toISOString()},created_at.lte.${endUTC.toISOString()})`);
+          .eq("payment_status", "paid")
+          .gte("paid_at", startUTC.toISOString())
+          .lte("paid_at", endUTC.toISOString());
 
         if (ordersError) {
-          console.error("Error cargando órdenes con receipt_number para pagos técnicos globales, reintentando sin ese filtro:", ordersError);
+          console.error("Error cargando pagos técnicos globales, intentando consulta simple:", ordersError);
+          // Fallback: intentar sin filtro de rango
           const fallbackResult = await supabase
-            .from("orders")
-            .select("commission_amount, technician_id, paid_at, created_at")
-            .eq("status", "paid")
+            .from("employee_payments")
+            .select("commission_amount")
             .in("technician_id", technicianIds)
-            .or(`and(paid_at.gte.${startUTC.toISOString()},paid_at.lte.${endUTC.toISOString()}),and(paid_at.is.null,created_at.gte.${startUTC.toISOString()},created_at.lte.${endUTC.toISOString()})`);
+            .eq("payment_status", "paid");
           paidOrders = fallbackResult.data;
           ordersError = fallbackResult.error;
         }
 
         if (ordersError) {
-          console.error("Error cargando órdenes pagadas para calcular pagos técnicos:", ordersError);
+          console.error("Error cargando pagos técnicos globales (fallback):", ordersError);
         }
 
-        // Sumar comisiones de órdenes pendientes + pagadas (total por pagar/pagado a técnicos)
+        // Sumar comisiones de pagos (total por pagar/pagado a técnicos)
         total_pagos_tecnicos = (paidOrders || []).reduce(
           (sum, order) => sum + (order.commission_amount || 0),
           0
         );
 
-        console.log(`[BranchExpensesPage] Pagos técnicos global (calculado desde órdenes):`, {
+        console.log(`[BranchExpensesPage] Pagos técnicos global (calculado desde employee_payments):`, {
           start,
           end,
-          startUTC: startUTC.toISOString(),
-          endUTC: endUTC.toISOString(),
           technicianIds: technicianIds.length,
           paidOrdersCount: paidOrders?.length || 0,
           total: total_pagos_tecnicos
@@ -298,36 +296,35 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
       // Gastos hormiga de la sucursal - filtrado por fecha
       const { data: smallExpenses } = await supabase
         .from("small_expenses")
-        .select("monto, tipo")
+        .select("amount, category")
         .eq("branch_id", branchId)
-        .gte("fecha", start)
-        .lte("fecha", end);
+        .gte("expense_date", start)
+        .lte("expense_date", end);
 
       const smallExpensesByType: Record<string, number> = {};
       (smallExpenses || []).forEach((exp) => {
-        const tipo = exp.tipo || "otros";
-        smallExpensesByType[tipo] = (smallExpensesByType[tipo] || 0) + (exp.monto || 0);
+        const tipo = exp.category || "otros";
+        smallExpensesByType[tipo] = (smallExpensesByType[tipo] || 0) + (exp.amount || 0);
       });
 
       // Gastos generales de la sucursal - filtrado por fecha
       const { data: generalExpenses } = await supabase
-        .from("general_expenses")
-        .select("monto, tipo")
+        .from("expenses")
+        .select("amount, category")
         .eq("branch_id", branchId)
-        .gte("fecha", start)
-        .lte("fecha", end);
+        .gte("expense_date", start)
+        .lte("expense_date", end);
 
       const generalExpensesByType: Record<string, number> = {};
       (generalExpenses || []).forEach((exp) => {
-        const tipo = exp.tipo || "otros";
-        generalExpensesByType[tipo] = (generalExpensesByType[tipo] || 0) + (exp.monto || 0);
+        const tipo = exp.category || "otros";
+        generalExpensesByType[tipo] = (generalExpensesByType[tipo] || 0) + (exp.amount || 0);
       });
 
       // Repuestos de la sucursal (de órdenes pagadas) - filtrado por paid_at del mes
       const { data: orders } = await supabase
-        .from("orders")
+        .from("work_orders")
         .select("replacement_cost, paid_at")
-        .eq("status", "paid")
         .eq("branch_id", branchId)
         .not("paid_at", "is", null)
         .gte("paid_at", start + "T00:00:00")
@@ -352,46 +349,45 @@ export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0,
       const technicianIds = (branchTechnicians || []).map((u) => u.id);
       let total_pagos_tecnicos = 0;
       if (technicianIds.length > 0) {
-        // Calcular desde órdenes pendientes/pagadas en el rango de fechas
-        // Usar funciones helper para evitar problemas de zona horaria
+        // Calcular desde pagos de empleados en el rango de fechas
+        // IMPORTANTE: Simplificar - solo buscar en el rango de paid_at
         const startUTC = dateStringToUTCStart(start);
         const endUTC = dateStringToUTCEnd(end);
         
-        // Buscar órdenes pagadas con recibo de técnicos de esta sucursal
+        // Buscar pagos registrados en el rango de técnicos de esta sucursal
         let { data: paidOrders, error: ordersError } = await supabase
-          .from("orders")
-          .select("commission_amount, technician_id, paid_at, created_at")
-          .in("status", ["pending", "paid"])
+          .from("employee_payments")
+          .select("commission_amount")
           .in("technician_id", technicianIds)
-          .or(`and(paid_at.gte.${startUTC.toISOString()},paid_at.lte.${endUTC.toISOString()}),and(paid_at.is.null,created_at.gte.${startUTC.toISOString()},created_at.lte.${endUTC.toISOString()})`);
+          .eq("payment_status", "paid")
+          .gte("paid_at", startUTC.toISOString())
+          .lte("paid_at", endUTC.toISOString());
 
         if (ordersError) {
-          console.error("Error cargando órdenes con receipt_number para pagos técnicos de sucursal, reintentando sin ese filtro:", ordersError);
+          console.error("Error cargando pagos técnicos de sucursal, intentando consulta simple:", ordersError);
+          // Fallback: intentar sin filtro de rango
           const fallbackResult = await supabase
-            .from("orders")
-            .select("commission_amount, technician_id, paid_at, created_at")
-            .eq("status", "paid")
+            .from("employee_payments")
+            .select("commission_amount")
             .in("technician_id", technicianIds)
-            .or(`and(paid_at.gte.${startUTC.toISOString()},paid_at.lte.${endUTC.toISOString()}),and(paid_at.is.null,created_at.gte.${startUTC.toISOString()},created_at.lte.${endUTC.toISOString()})`);
+            .eq("payment_status", "paid");
           paidOrders = fallbackResult.data;
           ordersError = fallbackResult.error;
         }
 
         if (ordersError) {
-          console.error("Error cargando órdenes pagadas para calcular pagos técnicos de sucursal:", ordersError);
+          console.error("Error cargando pagos técnicos de sucursal (fallback):", ordersError);
         }
 
-        // Sumar comisiones de órdenes pendientes + pagadas
+        // Sumar comisiones de pagos
         total_pagos_tecnicos = (paidOrders || []).reduce(
           (sum, order) => sum + (order.commission_amount || 0),
           0
         );
 
-        console.log(`[BranchExpensesPage] Pagos técnicos sucursal ${branchId} (calculado desde órdenes):`, {
+        console.log(`[BranchExpensesPage] Pagos técnicos sucursal ${branchId} (calculado desde employee_payments):`, {
           start,
           end,
-          startUTC: startUTC.toISOString(),
-          endUTC: endUTC.toISOString(),
           technicianIdsCount: technicianIds.length,
           paidOrdersCount: paidOrders?.length || 0,
           total: total_pagos_tecnicos

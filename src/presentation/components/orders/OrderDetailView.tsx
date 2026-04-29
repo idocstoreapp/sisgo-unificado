@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { generatePDFBlob } from "@/lib/generate-pdf-blob";
 import { Button } from "@/presentation/components/ui/button";
 import { Input } from "@/presentation/components/ui/input";
 import {
@@ -31,6 +32,24 @@ interface OrderDetail {
   created_at: string;
   customer_id: string;
   customers?: { name?: string | null; phone?: string | null } | null;
+}
+
+async function resolveReceiptUrlFallback(orderNumber: string): Promise<string | null> {
+  if (!orderNumber) return null;
+  const searchPrefix = `orden-${orderNumber}-`;
+  const { data: files, error } = await supabase.storage
+    .from("order-pdfs")
+    .list("orders", {
+      limit: 100,
+      sortBy: { column: "created_at", order: "desc" },
+    });
+  if (error || !files) return null;
+  const match = files.find((file) => file.name.startsWith(searchPrefix));
+  if (!match) return null;
+  const { data: publicUrlData } = supabase.storage
+    .from("order-pdfs")
+    .getPublicUrl(`orders/${match.name}`);
+  return publicUrlData?.publicUrl || null;
 }
 
 function formatOrderLoadError(error: unknown) {
@@ -68,6 +87,7 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
   const [priority, setPriority] = useState<string>("media");
   const [commitmentDate, setCommitmentDate] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
+  const [generatingPdf, setGeneratingPdf] = useState(false);
 
   const loadOrder = useCallback(async () => {
     setLoading(true);
@@ -96,6 +116,16 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
     }
 
     const loaded = data as unknown as OrderDetail;
+    if (!loaded.receipt_url && loaded.order_number) {
+      const fallbackUrl = await resolveReceiptUrlFallback(loaded.order_number);
+      if (fallbackUrl) {
+        loaded.receipt_url = fallbackUrl;
+        await supabase
+          .from("work_orders")
+          .update({ receipt_url: fallbackUrl })
+          .eq("id", loaded.id);
+      }
+    }
     setOrder(loaded);
     setStatus(loaded.status || "en_proceso");
     setPriority(loaded.priority || "media");
@@ -144,6 +174,62 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
     loadOrder();
   }
 
+  async function handleGeneratePdfNow() {
+    if (!order) return;
+    setGeneratingPdf(true);
+    try {
+      const [{ data: fullOrder }, { data: customer }, { data: branch }, { data: orderItems }] =
+        await Promise.all([
+          supabase.from("work_orders").select("*").eq("id", order.id).single(),
+          supabase.from("customers").select("*").eq("id", order.customer_id).maybeSingle(),
+          supabase.from("branches").select("*").eq("id", (order as any).branch_id).maybeSingle(),
+          supabase.from("order_items").select("*").eq("order_id", order.id),
+        ]);
+
+      const normalizedOrder: any = {
+        ...(fullOrder || order),
+        customer: customer || undefined,
+        sucursal: branch || undefined,
+        device_type: (fullOrder as any)?.device_type || (fullOrder as any)?.metadata?.device_type || "iphone",
+        device_model:
+          (fullOrder as any)?.device_model || (fullOrder as any)?.metadata?.device_model || "Equipo",
+        problem_description:
+          (fullOrder as any)?.problem_description ||
+          (fullOrder as any)?.metadata?.problem_description ||
+          "Diagnóstico técnico",
+      };
+
+      const services = ((orderItems as any[]) || []).map((item, index) => ({
+        id: item.id || `item-${index}`,
+        name: item.name || item.service_name || "Servicio",
+        description: item.description || null,
+        default_price: Number(item.unit_price || item.total_price || 0),
+        created_at: item.created_at || new Date().toISOString(),
+      }));
+
+      const serviceValue = services.reduce((sum, service) => sum + (service.default_price || 0), 0);
+      const replacementCost = Number((fullOrder as any)?.replacement_cost || 0);
+      const warrantyDays = Number((fullOrder as any)?.warranty_days || 90);
+      const checklistData = (fullOrder as any)?.metadata?.checklist_data || null;
+
+      const blob = await generatePDFBlob(
+        normalizedOrder,
+        services as any,
+        serviceValue,
+        replacementCost,
+        warrantyDays,
+        checklistData,
+        [],
+      );
+      const url = URL.createObjectURL(blob);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      alert("No se pudo generar el PDF en este momento.");
+    } finally {
+      setGeneratingPdf(false);
+    }
+  }
+
   if (loading) {
     return <div className="mx-auto max-w-5xl p-8 text-muted-foreground">Cargando orden...</div>;
   }
@@ -178,7 +264,9 @@ export default function OrderDetailView({ orderId }: OrderDetailViewProps) {
               </a>
             </Button>
           ) : (
-            <Button disabled>PDF no disponible</Button>
+            <Button onClick={handleGeneratePdfNow} disabled={generatingPdf}>
+              {generatingPdf ? "Generando PDF..." : "Generar PDF ahora"}
+            </Button>
           )}
         </div>
       </div>

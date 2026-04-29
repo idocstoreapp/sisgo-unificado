@@ -64,14 +64,14 @@ export default function SmallExpenses({ sucursalId, refreshKey = 0, dateFilter, 
       // Aplicar filtros de fecha
       if (!showAllHistory) {
         if (localDateFilter) {
-          query = query.gte("fecha", localDateFilter.start).lte("fecha", localDateFilter.end);
+          query = query.gte("expense_date", localDateFilter.start).lte("expense_date", localDateFilter.end);
         } else if (dateFilter) {
-          query = query.gte("fecha", dateFilter.start).lte("fecha", dateFilter.end);
+          query = query.gte("expense_date", dateFilter.start).lte("expense_date", dateFilter.end);
         }
       }
 
       let { data: expensesData, error: expensesError } = await query
-        .order("fecha", { ascending: false })
+        .order("expense_date", { ascending: false })
         .order("created_at", { ascending: false });
 
       // Fallback: algunos entornos no permiten joins por permisos/RLS
@@ -84,14 +84,14 @@ export default function SmallExpenses({ sucursalId, refreshKey = 0, dateFilter, 
 
         if (!showAllHistory) {
           if (localDateFilter) {
-            fallbackQuery = fallbackQuery.gte("fecha", localDateFilter.start).lte("fecha", localDateFilter.end);
+            fallbackQuery = fallbackQuery.gte("expense_date", localDateFilter.start).lte("expense_date", localDateFilter.end);
           } else if (dateFilter) {
-            fallbackQuery = fallbackQuery.gte("fecha", dateFilter.start).lte("fecha", dateFilter.end);
+            fallbackQuery = fallbackQuery.gte("expense_date", dateFilter.start).lte("expense_date", dateFilter.end);
           }
         }
 
         const fallbackResult = await fallbackQuery
-          .order("fecha", { ascending: false })
+          .order("expense_date", { ascending: false })
           .order("created_at", { ascending: false });
 
         expensesData = fallbackResult.data;
@@ -111,10 +111,10 @@ export default function SmallExpenses({ sucursalId, refreshKey = 0, dateFilter, 
       // Cargar todos los tipos personalizados únicos (sin filtro de fecha para que siempre estén disponibles)
       const { data: allExpensesData } = await supabase
         .from("small_expenses")
-        .select("tipo")
+        .select("category")
         .eq("branch_id", sucursalId);
 
-      const tiposUnicos = Array.from(new Set((allExpensesData || []).map(exp => exp.tipo))).filter(Boolean);
+      const tiposUnicos = Array.from(new Set((allExpensesData || []).map(exp => exp.category))).filter(Boolean);
       const tiposPredefinidos = ["aseo", "mercaderia", "compras_pequenas"];
       const tiposPersonalizados = tiposUnicos.filter(tipo => !tiposPredefinidos.includes(tipo));
       setAllCustomTypes(tiposPersonalizados);
@@ -147,6 +147,13 @@ export default function SmallExpenses({ sucursalId, refreshKey = 0, dateFilter, 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuario no autenticado");
 
+      // Obtener company_id del usuario
+      const { data: userData } = await supabase
+        .from("users")
+        .select("company_id")
+        .eq("id", user.id)
+        .single();
+
       const tipoFinal = formData.usarTipoPersonalizado 
         ? formData.tipoPersonalizado.trim() 
         : formData.tipo;
@@ -159,12 +166,13 @@ export default function SmallExpenses({ sucursalId, refreshKey = 0, dateFilter, 
       const { error: insertError } = await supabase
         .from("small_expenses")
         .insert({
+          company_id: userData?.company_id,
           branch_id: sucursalId,
-          user_id: user.id,
-          tipo: tipoFinal,
-          monto: parseFloat(formData.monto),
-          fecha: formData.fecha,
-          descripcion: formData.descripcion.trim() || null,
+          created_by: user.id,
+          category: tipoFinal,
+          amount: parseFloat(formData.monto),
+          expense_date: formData.fecha,
+          description: formData.descripcion.trim() || null,
           payment_method: formData.payment_method,
         });
 
@@ -221,10 +229,10 @@ export default function SmallExpenses({ sucursalId, refreshKey = 0, dateFilter, 
       const { error: updateError } = await supabase
         .from("small_expenses")
         .update({
-          tipo: tipoFinal,
-          monto: parseFloat(formData.monto),
-          fecha: formData.fecha,
-          descripcion: formData.descripcion.trim() || null,
+          category: tipoFinal,
+          amount: parseFloat(formData.monto),
+          expense_date: formData.fecha,
+          description: formData.descripcion.trim() || null,
           payment_method: formData.payment_method,
         })
         .eq("id", editingExpense.id);
@@ -252,14 +260,14 @@ export default function SmallExpenses({ sucursalId, refreshKey = 0, dateFilter, 
 
   async function handleEdit(expense: SmallExpense) {
     setEditingExpense(expense);
-    const tipoEsPersonalizado = !["aseo", "mercaderia", "compras_pequenas"].includes(expense.tipo);
+    const tipoEsPersonalizado = !["aseo", "mercaderia", "compras_pequenas"].includes(expense.category);
     setFormData({
-      tipo: tipoEsPersonalizado ? "aseo" : expense.tipo,
-      tipoPersonalizado: tipoEsPersonalizado ? expense.tipo : "",
+      tipo: tipoEsPersonalizado ? "aseo" : expense.category,
+      tipoPersonalizado: tipoEsPersonalizado ? expense.category : "",
       usarTipoPersonalizado: tipoEsPersonalizado,
-      monto: expense.monto.toString(),
-      fecha: expense.fecha,
-      descripcion: expense.descripcion || "",
+      monto: expense.amount.toString(),
+      fecha: expense.expense_date,
+      descripcion: expense.description || "",
       payment_method: expense.payment_method || "EFECTIVO",
     });
     setShowForm(true);
@@ -289,14 +297,14 @@ export default function SmallExpenses({ sucursalId, refreshKey = 0, dateFilter, 
   }
 
   const totalByType = expenses.reduce((acc, exp) => {
-    acc[exp.tipo] = (acc[exp.tipo] || 0) + exp.monto;
+    acc[exp.category] = (acc[exp.category] || 0) + exp.amount;
     return acc;
   }, {} as Record<string, number>);
 
   // Usar los tipos personalizados cargados (sin filtro de fecha)
   const tiposPersonalizados = allCustomTypes;
 
-  const total = expenses.reduce((sum, exp) => sum + exp.monto, 0);
+  const total = expenses.reduce((sum, exp) => sum + exp.amount, 0);
 
   if (loading) {
     return (
@@ -543,15 +551,15 @@ export default function SmallExpenses({ sucursalId, refreshKey = 0, dateFilter, 
               <div className="flex items-start justify-between mb-2">
                 <div className="flex-1">
                   <div className="text-xs text-slate-500 mb-0.5">Fecha</div>
-                  <div className="text-sm font-medium text-slate-900">{formatDate(exp.fecha)}</div>
+                  <div className="text-sm font-medium text-slate-900">{formatDate(exp.expense_date)}</div>
                 </div>
                 <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs font-medium">
-                  {exp.tipo === "aseo" ? "Aseo" : exp.tipo === "mercaderia" ? "Mercadería" : exp.tipo}
+                  {exp.category === "aseo" ? "Aseo" : exp.category === "mercaderia" ? "Mercadería" : exp.category}
                 </span>
               </div>
               <div className="mb-2">
                 <div className="text-xs text-slate-500 mb-0.5">Descripción</div>
-                <div className="text-sm text-slate-900">{exp.descripcion || "-"}</div>
+                <div className="text-sm text-slate-900">{exp.description || "-"}</div>
               </div>
               <div className="mb-2">
                 <div className="text-xs text-slate-500 mb-0.5">Medio de Pago</div>
@@ -566,7 +574,7 @@ export default function SmallExpenses({ sucursalId, refreshKey = 0, dateFilter, 
                 <div className="text-xs text-slate-500">
                   Registrado por: <span className="text-slate-900">{(exp.user as Profile)?.name || "N/A"}</span>
                 </div>
-                <div className="text-base font-bold text-brand">{formatCLP(exp.monto)}</div>
+                <div className="text-base font-bold text-brand">{formatCLP(exp.amount)}</div>
               </div>
               {isAdmin && (
                 <div className="flex gap-2 pt-2 border-t border-slate-100 mt-2">
@@ -614,13 +622,13 @@ export default function SmallExpenses({ sucursalId, refreshKey = 0, dateFilter, 
             ) : (
               expenses.map((exp) => (
                 <tr key={exp.id} className="border-b border-slate-100 hover:bg-slate-50">
-                  <td className="py-2 px-2">{formatDate(exp.fecha)}</td>
+                  <td className="py-2 px-2">{formatDate(exp.expense_date)}</td>
                   <td className="py-2 px-2">
                     <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
-                      {exp.tipo === "aseo" ? "Aseo" : exp.tipo === "mercaderia" ? "Mercadería" : exp.tipo}
+                      {exp.category === "aseo" ? "Aseo" : exp.category === "mercaderia" ? "Mercadería" : exp.category}
                     </span>
                   </td>
-                  <td className="py-2 px-2">{exp.descripcion || "-"}</td>
+                  <td className="py-2 px-2">{exp.description || "-"}</td>
                   <td className="py-2 px-2">
                     <span className="text-xs font-medium">
                       {exp.payment_method === "EFECTIVO" ? "💵 Efectivo" :
@@ -629,7 +637,7 @@ export default function SmallExpenses({ sucursalId, refreshKey = 0, dateFilter, 
                        exp.payment_method === "CREDITO" ? "💳 Crédito" : exp.payment_method || "-"}
                     </span>
                   </td>
-                  <td className="py-2 px-2 text-right font-medium">{formatCLP(exp.monto)}</td>
+                  <td className="py-2 px-2 text-right font-medium">{formatCLP(exp.amount)}</td>
                   <td className="py-2 px-2 text-xs text-slate-600">
                     {(exp.user as Profile)?.name || "N/A"}
                   </td>

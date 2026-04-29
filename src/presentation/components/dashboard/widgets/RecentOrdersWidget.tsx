@@ -2,7 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { Clock, CheckCircle, AlertTriangle, Package } from "lucide-react";
+import { Clock, CheckCircle, AlertTriangle, Package, X } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/presentation/components/ui/select";
+import { ORDER_STATUS_LABELS } from "@/shared/constants";
+import OrderDetailPanel from "@/presentation/components/orders/OrderDetailPanel";
 
 type OrderTab = "recientes" | "en_reparacion" | "por_entregar" | "garantia";
 
@@ -10,6 +19,21 @@ export default function RecentOrdersWidget() {
   const [activeTab, setActiveTab] = useState<OrderTab>("recientes");
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [userRole, setUserRole] = useState<string>("");
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadRole() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from("users").select("role").eq("id", user.id).single();
+      if (data?.role) setUserRole(String(data.role));
+    }
+    loadRole();
+  }, []);
 
   useEffect(() => {
     async function loadOrders() {
@@ -75,34 +99,36 @@ export default function RecentOrdersWidget() {
     { id: "garantia", label: "En Garantía", icon: Package, color: "text-purple-500" },
   ] as const;
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "pendiente":
-        return <span className="px-2 py-1 bg-slate-100 text-slate-700 rounded-full text-xs font-medium">Pendiente</span>;
-      case "en_proceso":
-        return <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">En Proceso</span>;
-      case "en_reparacion":
-        return <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">En Reparación</span>;
-      case "por_entregar":
-        return <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-full text-xs font-medium">Por Entregar</span>;
-      case "entregada":
-        return <span className="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Entregada</span>;
-      case "garantia":
-        return <span className="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">Garantía</span>;
-      case "rechazada":
-      case "sin_solucion":
-        return <span className="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">{status}</span>;
-      default:
-        return <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">{status}</span>;
-    }
-  };
-
   const formatCLP = (amount: number) =>
     new Intl.NumberFormat("es-CL", {
       style: "currency",
       currency: "CLP",
       minimumFractionDigits: 0,
     }).format(amount);
+
+  const canQuickUpdate = ["admin", "superadmin", "super_admin", "encargado", "technician"].includes(
+    userRole,
+  );
+
+  async function handleQuickStatusChange(order: any, nextStatus: string) {
+    if (!canQuickUpdate) return;
+    setUpdatingOrderId(order.id);
+    const { error } = await supabase
+      .from("work_orders")
+      .update({ status: nextStatus, updated_at: new Date().toISOString() })
+      .eq("id", order.id);
+    setUpdatingOrderId(null);
+    if (!error) {
+      setOrders((prev) =>
+        prev.map((item) => (item.id === order.id ? { ...item, status: nextStatus } : item)),
+      );
+    }
+  }
+
+  async function handleInlineStatusChange(order: any, nextStatus: string) {
+    if (!canQuickUpdate || order.status === nextStatus) return;
+    await handleQuickStatusChange(order, nextStatus);
+  }
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col h-full">
@@ -141,10 +167,8 @@ export default function RecentOrdersWidget() {
         ) : (
           <div className="divide-y divide-slate-100">
             {orders.map((order) => (
-              <div
-                key={order.id}
-                className="p-4 hover:bg-slate-50 transition-colors flex items-center justify-between group"
-              >
+              <div key={order.id} className="p-4 transition-colors hover:bg-slate-50 group">
+                <div className="flex items-center justify-between">
                 <div className="flex items-start gap-3">
                   <div className="bg-slate-100 p-2 rounded-lg text-slate-600 flex-shrink-0">
                     <Package className="w-5 h-5" />
@@ -152,7 +176,28 @@ export default function RecentOrdersWidget() {
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-bold text-slate-800">{order.order_number}</span>
-                      {getStatusBadge(order.status)}
+                      {canQuickUpdate ? (
+                        <Select
+                          value={order.status}
+                          onValueChange={(value) => handleInlineStatusChange(order, value)}
+                          disabled={updatingOrderId === order.id}
+                        >
+                          <SelectTrigger className="h-7 min-w-[140px] rounded-full border px-2 py-0 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(ORDER_STATUS_LABELS).map(([value, label]) => (
+                              <SelectItem key={value} value={value}>
+                                {label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-700">
+                          {ORDER_STATUS_LABELS[order.status as keyof typeof ORDER_STATUS_LABELS] || order.status}
+                        </span>
+                      )}
                     </div>
                     <div className="text-sm text-slate-500 mt-1 flex items-center gap-2">
                       <span className="font-medium text-slate-700">
@@ -189,10 +234,78 @@ export default function RecentOrdersWidget() {
                   </div>
                 </div>
               </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2 pl-11">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedOrderId(order.id)}
+                    className="rounded-md border border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-100"
+                  >
+                    Ver detalle
+                  </button>
+                  {canQuickUpdate && ["en_proceso", "en_reparacion"].includes(order.status) && (
+                    <button
+                      type="button"
+                      disabled={updatingOrderId === order.id}
+                      onClick={() => handleQuickStatusChange(order, "por_entregar")}
+                      className="rounded-md bg-emerald-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                    >
+                      {updatingOrderId === order.id ? "Guardando..." : "Marcar por entregar"}
+                    </button>
+                  )}
+                  {canQuickUpdate && order.status === "por_entregar" && (
+                    <button
+                      type="button"
+                      disabled={updatingOrderId === order.id}
+                      onClick={() => handleQuickStatusChange(order, "entregada")}
+                      className="rounded-md bg-indigo-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+                    >
+                      {updatingOrderId === order.id ? "Guardando..." : "Completar entrega"}
+                    </button>
+                  )}
+                </div>
+              </div>
             ))}
           </div>
         )}
       </div>
+
+      {selectedOrderId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 sm:p-4">
+          <div className="relative max-h-[95vh] w-full max-w-5xl overflow-y-auto rounded-xl border border-border bg-background">
+            <button
+              type="button"
+              onClick={() => setSelectedOrderId(null)}
+              className="hover:bg-accent absolute right-3 top-3 z-10 rounded-md p-1"
+              aria-label="Cerrar detalle"
+            >
+              <X className="size-4" />
+            </button>
+            <OrderDetailPanel
+              orderId={selectedOrderId}
+              embedded
+              onClose={() => setSelectedOrderId(null)}
+              onSaved={async () => {
+                const { data } = await supabase
+                  .from("work_orders")
+                  .select(`
+                    id,
+                    order_number,
+                    status,
+                    total_cost,
+                    created_at,
+                    metadata,
+                    branch_id,
+                    customer_id,
+                    branches:branch_id ( name ),
+                    customers:customer_id ( name )
+                  `)
+                  .in("id", orders.map((o) => o.id));
+                if (data) setOrders(data);
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
