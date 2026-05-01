@@ -24,7 +24,7 @@ export class UpdateOrderStatusUseCase {
 
       // Step 1.5: Validate permissions
       if (userRole === "technician" && newStatus === "entregada") {
-        return Result.fail(new BusinessRuleError("Los técnicos no pueden marcar órdenes como entregadas", "UNAUTHORIZED_ROLE"));
+        return Result.fail(new BusinessRuleError("Los técnicos no pueden marcar órdenes como entregadas", { code: "UNAUTHORIZED_ROLE" }));
       }
 
       // Step 2: Validate and apply status change

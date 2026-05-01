@@ -2,7 +2,7 @@
  * Use Cases for Inventory module
  */
 
-import { Result, ValidationError, RepositoryError, UnexpectedError } from "@/shared/kernel";
+import { Result, ValidationError, NotFoundError, RepositoryError, UnexpectedError } from "@/shared/kernel";
 import { Product } from "@/domain/entities/Product";
 import { StockMovement, Supplier, Purchase, PurchaseItem } from "@/domain/entities/Inventory";
 import type { IProductRepository } from "@/domain/repositories/IProductRepository";
@@ -18,7 +18,7 @@ import type {
   PurchaseOutputDTO,
 } from "@/application/dtos/InventoryDTOs";
 
-type UseCaseError = ValidationError | RepositoryError | UnexpectedError;
+type UseCaseError = ValidationError | NotFoundError | RepositoryError | UnexpectedError;
 
 // ==================== CREATE PRODUCT USE CASE ====================
 

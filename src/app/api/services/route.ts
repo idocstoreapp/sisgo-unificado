@@ -9,7 +9,7 @@ import { getSupabaseAdmin } from "@/infrastructure/database/supabase/admin-clien
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = getSupabaseAdmin();
+    const supabase = await getSupabaseAdmin();
     const { searchParams } = new URL(request.url);
     const category = searchParams.get("category");
     const isActive = searchParams.get("isActive");
@@ -38,22 +38,22 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = getSupabaseAdmin();
-    const body = await request.json();
+    const supabase = await getSupabaseAdmin();
+    const body = await request.json() as { name?: string; description?: string; category?: string; categoryImageUrl?: string; imageUrl?: string; defaultPrice?: number; estimatedHours?: number; isRecommended?: boolean };
 
     const { data, error } = await supabase
       .from("services")
       .insert({
-        name: body.name,
-        description: body.description || null,
-        category: body.category || null,
-        category_image_url: body.categoryImageUrl || null,
-        image_url: body.imageUrl || null,
-        default_price: body.defaultPrice || 0,
-        estimated_hours: body.estimatedHours || null,
+        name: body.name ?? "Servicio",
+        description: body.description ?? null,
+        category: body.category ?? null,
+        category_image_url: body.categoryImageUrl ?? null,
+        image_url: body.imageUrl ?? null,
+        default_price: body.defaultPrice ?? 0,
+        estimated_hours: body.estimatedHours ?? null,
         is_active: true,
-        is_recommended: body.isRecommended || false,
-      })
+        is_recommended: body.isRecommended ?? false,
+      } as never)
       .select()
       .single();
 
