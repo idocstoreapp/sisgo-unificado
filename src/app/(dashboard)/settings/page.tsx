@@ -37,7 +37,13 @@ function UsersTab({ companyId }: { companyId: string }) {
   const saveUser = async (user: UserRow) => {
     setSaving(user.id);
     const patch = edits[user.id] || {};
-    await supabase.from("users").update({ commission_percentage: patch.commission_percentage ?? user.commission_percentage, sueldo_base: patch.sueldo_base ?? user.sueldo_base, sueldo_frecuencia: patch.sueldo_frecuencia ?? user.sueldo_frecuencia, updated_at: new Date().toISOString() }).eq("id", user.id);
+    const updates = {
+      commission_percentage: patch.commission_percentage ?? user.commission_percentage,
+      sueldo_base: patch.sueldo_base ?? user.sueldo_base,
+      sueldo_frecuencia: patch.sueldo_frecuencia ?? user.sueldo_frecuencia,
+      updated_at: new Date().toISOString(),
+    };
+    await (supabase.from("users") as any).update(updates).eq("id", user.id);
     setUsers(prev => prev.map(u => u.id === user.id ? { ...u, ...patch } : u));
     setEdits(prev => { const n = { ...prev }; delete n[user.id]; return n; });
     setSaving(null);
@@ -110,11 +116,12 @@ function WarrantyTab({ company, onSaved }: { company: CompanyConfig; onSaved: ()
 
   const save = async () => {
     setSaving(true);
-    await supabase.from("companies").update({
+    const updates = {
       commission_percentage: commPct,
       config: { ...(company.config || {}), warranty_days: days, require_receipt_for_payment: requireReceiptForPayment },
       updated_at: new Date().toISOString()
-    }).eq("id", company.id);
+    };
+    await (supabase.from("companies") as any).update(updates).eq("id", company.id);
     setSaving(false); setSaved(true);
     setTimeout(() => setSaved(false), 2000);
     onSaved();
@@ -193,12 +200,19 @@ function CatalogTab({ companyId }: { companyId: string }) {
   const addService = async () => {
     if (!newName.trim()) return;
     setAdding(true);
-    await supabase.from("catalog_services").insert({ company_id: companyId, name: newName.trim(), category: newCat.trim() || "General", default_price: Number(newPrice) || 0, is_active: true });
+    const payload = {
+      company_id: companyId,
+      name: newName.trim(),
+      category: newCat.trim() || "General",
+      default_price: Number(newPrice) || 0,
+      is_active: true,
+    };
+    await (supabase.from("catalog_services") as any).insert(payload);
     setNewName(""); setNewPrice(""); setNewCat(""); setAdding(false); load();
   };
 
   const toggleActive = async (id: string, current: boolean) => {
-    await supabase.from("catalog_services").update({ is_active: !current }).eq("id", id);
+    await (supabase.from("catalog_services") as any).update({ is_active: !current }).eq("id", id);
     setServices(prev => prev.map(s => s.id === id ? { ...s, is_active: !current } : s));
   };
 
@@ -252,14 +266,21 @@ function SuppliersTab({ companyId }: { companyId: string }) {
   const add = async () => {
     if (!form.name.trim()) return;
     setAdding(true);
-    await supabase.from("suppliers").insert({ company_id: companyId, name: form.name.trim(), phone: form.phone || null, email: form.email || null, notes: form.notes || null });
+    const payload = {
+      company_id: companyId,
+      name: form.name.trim(),
+      phone: form.phone || null,
+      email: form.email || null,
+      notes: form.notes || null,
+    };
+    await (supabase.from("suppliers") as any).insert(payload);
     setForm({ name: "", phone: "", email: "", notes: "" }); setAdding(false); load();
   };
 
   const remove = async (id: string) => {
     if (!confirm("¿Eliminar este proveedor?")) return;
     setDeleting(id);
-    await supabase.from("suppliers").delete().eq("id", id);
+    await (supabase.from("suppliers") as any).delete().eq("id", id);
     setDeleting(null); load();
   };
 
@@ -313,10 +334,11 @@ export default function SettingsPage() {
     async function init() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const { data } = await supabase.from("users").select("company_id").eq("id", user.id).single();
-      if (data?.company_id) {
-        setCompanyId(data.company_id);
-        const { data: co } = await supabase.from("companies").select("id,commission_percentage,config").eq("id", data.company_id).single();
+      const { data } = await (supabase.from("users") as any).select("company_id").eq("id", user.id).single();
+      const profileData = data as { company_id?: string | null } | null;
+      if (profileData?.company_id) {
+        setCompanyId(profileData.company_id);
+        const { data: co } = await (supabase.from("companies") as any).select("id,commission_percentage,config").eq("id", profileData.company_id).single();
         if (co) {
           const coParsed = co as any;
           setCompany({
