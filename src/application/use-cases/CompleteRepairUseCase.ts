@@ -38,11 +38,11 @@ export class CompleteRepairUseCase {
 
       // Step 2: Validate business rules
       if (order.status !== "en_reparacion") {
-        return Result.fail(new BusinessRuleError("La orden debe estar en reparación para poder completarla", "INVALID_ORDER_STATE"));
+        return Result.fail(new BusinessRuleError("La orden debe estar en reparación para poder completarla", { code: "INVALID_ORDER_STATE" }));
       }
 
       if (order.assignedTo !== input.technicianId) {
-        return Result.fail(new BusinessRuleError("No puedes completar una reparación que no te fue asignada", "INVALID_TECHNICIAN"));
+        return Result.fail(new BusinessRuleError("No puedes completar una reparación que no te fue asignada", { code: "INVALID_TECHNICIAN" }));
       }
 
       // Step 3: Calculate total replacement costs
@@ -60,7 +60,6 @@ export class CompleteRepairUseCase {
       order.calculateCosts(newLaborCost, totalReplacementCost);
 
       // Add to metadata
-      const existingMetadata = order.metadata || {};
       order.setMetadata("repair_parts", input.parts);
       order.setMetadata("repair_completed_at", new Date().toISOString());
 

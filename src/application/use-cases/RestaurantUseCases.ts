@@ -2,12 +2,12 @@
  * Restaurant DTOs and Use Cases
  */
 
-import { Result, ValidationError, RepositoryError, UnexpectedError } from "@/shared/kernel";
+import { Result, ValidationError, NotFoundError, RepositoryError, UnexpectedError } from "@/shared/kernel";
 import type { ITableRepository, IMenuCategoryRepository, IMenuItemRepository, IRestaurantOrderRepository, IIngredientRepository, IRecipeRepository } from "@/domain/repositories/IRestaurantRepository";
 import type { TableStatus, OrderStatus, PaymentMethod, MenuItemType, IngredientUnit } from "@/domain/entities/Restaurant";
 import { TableEntity, MenuCategory, MenuItem, RestaurantOrder, OrderItem, Ingredient, Recipe } from "@/domain/entities/Restaurant";
 
-type UseCaseError = ValidationError | RepositoryError | UnexpectedError;
+type UseCaseError = ValidationError | NotFoundError | RepositoryError | UnexpectedError;
 
 // ==================== DTOs ====================
 

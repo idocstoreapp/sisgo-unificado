@@ -9,7 +9,7 @@ import { getSupabaseAdmin } from "@/infrastructure/database/supabase/admin-clien
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = getSupabaseAdmin();
+    const supabase = await getSupabaseAdmin();
     const { searchParams } = new URL(request.url);
     const deviceType = searchParams.get("deviceType");
 
@@ -33,17 +33,17 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = getSupabaseAdmin();
-    const body = await request.json();
+    const supabase = await getSupabaseAdmin();
+    const body = await request.json() as { deviceType?: string; itemName?: string; itemOrder?: number; statusOptions?: string[] };
 
     const { data, error } = await supabase
       .from("device_checklist_items")
       .insert({
-        device_type: body.deviceType,
-        item_name: body.itemName,
-        item_order: body.itemOrder || 0,
-        status_options: body.statusOptions || ["Funcionando", "Dañado", "Reparado", "No probado"],
-      })
+        device_type: body.deviceType ?? "general",
+        item_name: body.itemName ?? "Ítem",
+        item_order: body.itemOrder ?? 0,
+        status_options: body.statusOptions ?? ["Funcionando", "Dañado", "Reparado", "No probado"],
+      } as never)
       .select()
       .single();
 

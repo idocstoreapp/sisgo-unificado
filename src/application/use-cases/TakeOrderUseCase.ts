@@ -24,11 +24,11 @@ export class TakeOrderUseCase {
 
       // Step 2: Validate business rules
       if (order.status !== "pendiente") {
-        return Result.fail(new BusinessRuleError("Solo se pueden tomar órdenes en estado pendiente", "INVALID_ORDER_STATE"));
+        return Result.fail(new BusinessRuleError("Solo se pueden tomar órdenes en estado pendiente", { code: "INVALID_ORDER_STATE" }));
       }
 
       if (order.assignedTo && order.assignedTo !== technicianId) {
-        return Result.fail(new BusinessRuleError("La orden ya está asignada a otro técnico", "ALREADY_ASSIGNED"));
+        return Result.fail(new BusinessRuleError("La orden ya está asignada a otro técnico", { code: "ALREADY_ASSIGNED" }));
       }
 
       // Step 3: Assign and change status

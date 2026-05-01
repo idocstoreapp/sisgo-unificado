@@ -9,7 +9,7 @@ import { getSupabaseAdmin } from "@/infrastructure/database/supabase/admin-clien
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = getSupabaseAdmin();
+    const supabase = await getSupabaseAdmin();
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search");
     const email = searchParams.get("email");
@@ -55,7 +55,9 @@ export async function GET(request: NextRequest) {
         supabase.from("customers").select("*").ilike("phone", searchPattern).limit(10),
       ]);
 
-      const allResults = [
+      type CustomerRow = { id: string; [key: string]: unknown };
+
+      const allResults: CustomerRow[] = [
         ...(nameRes.data || []),
         ...(emailRes.data || []),
         ...(phoneRes.data || []),
@@ -77,7 +79,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = getSupabaseAdmin();
+    const supabase = await getSupabaseAdmin();
     const body = await request.json();
 
     const { data, error } = await supabase
@@ -91,7 +93,7 @@ export async function POST(request: NextRequest) {
         address: body.address || null,
         city: body.city || null,
         notes: body.notes || null,
-      })
+      } as never)
       .select()
       .single();
 
