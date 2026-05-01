@@ -1,7 +1,7 @@
 /**
  * API Route: GET /api/checklist-items?deviceType=xxx
- * Returns checklist items for a specific device type
- * POST /api/checklist-items - Create a new checklist item
+ * Returns checklist items for a specific device type.
+ * POST /api/checklist-items - Creates a checklist item.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -34,7 +34,12 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await getSupabaseAdmin();
-    const body = await request.json() as { deviceType?: string; itemName?: string; itemOrder?: number; statusOptions?: string[] };
+    const body = (await request.json()) as {
+      deviceType?: string;
+      itemName?: string;
+      itemOrder?: number;
+      statusOptions?: string[];
+    };
 
     const { data, error } = await supabase
       .from("device_checklist_items")
@@ -52,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true, item: data });
-  } catch (error) {
+  } catch {
     return NextResponse.json({
       success: false,
       error: "Internal server error",

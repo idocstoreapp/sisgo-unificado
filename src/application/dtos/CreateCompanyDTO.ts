@@ -4,12 +4,22 @@
 
 import type { BusinessType, UserRole } from "@/shared/kernel/types";
 
+export type CompanySize = "solo" | "single_location" | "multi_branch";
+export type CompanyUsageMode = "owner_only" | "team";
+export type CompanyMode = "solo_owner" | "team" | "multi_branch";
+
 /**
  * DTO for creating a company
  */
 export interface CreateCompanyDTO {
   name: string;
   businessType: BusinessType;
+  logoUrl?: string;
+  companySize?: CompanySize;
+  usageMode?: CompanyUsageMode;
+  companyMode?: CompanyMode;
+  needsTechniciansModule?: boolean;
+  needsTechnicianPayments?: boolean;
   rut?: string;
   razonSocial?: string;
   email?: string;
@@ -82,6 +92,7 @@ export interface CompanyOutputDTO {
   phone: string | null;
   address: string | null;
   logoUrl: string | null;
+  config: Record<string, unknown>;
   ivaPercentage: number;
   commissionPercentage: number;
   createdAt: Date;

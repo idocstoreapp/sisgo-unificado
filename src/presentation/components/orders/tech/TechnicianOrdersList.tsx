@@ -10,9 +10,10 @@ import RepairCompletionForm from "./RepairCompletionForm";
 interface TechnicianOrdersListProps {
   technicianId: string;
   branchId: string | null;
+  companyId?: string | null;
 }
 
-export default function TechnicianOrdersList({ technicianId, branchId }: TechnicianOrdersListProps) {
+export default function TechnicianOrdersList({ technicianId, branchId, companyId }: TechnicianOrdersListProps) {
   const [activeTab, setActiveTab] = useState<"pendientes" | "en_reparacion">("pendientes");
   const [orders, setOrders] = useState<WorkOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -111,6 +112,8 @@ export default function TechnicianOrdersList({ technicianId, branchId }: Technic
       const isAvailable =
         order.status === "pendiente" || order.status === "en_proceso";
       if (!isAvailable) return false;
+      const assignedId = (order as any).assigned_to || order.technician_id;
+      if (assignedId) return false;
     }
 
     if (activeTab === "en_reparacion") {
@@ -216,10 +219,11 @@ export default function TechnicianOrdersList({ technicianId, branchId }: Technic
       )}
 
       {/* Modal Cierre Reparación */}
-      {selectedOrder && (
+      {selectedOrder && companyId && (
         <RepairCompletionForm 
           order={selectedOrder} 
           technicianId={technicianId}
+          companyId={companyId}
           onClose={() => setSelectedOrder(null)} 
           onSuccess={onRepairCompleted} 
         />

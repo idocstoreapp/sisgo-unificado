@@ -10,7 +10,12 @@ import type { ICompanyRepository } from "@/domain/repositories/ICompanyRepositor
 import type { IUserRepository } from "@/domain/repositories/IUserRepository";
 import type { IBranchRepository } from "@/domain/repositories/IBranchRepository";
 import type { CreateCompanyDTO } from "@/application/dtos/CreateCompanyDTO";
-import type { UserOutputDTO, CompanyOutputDTO, BranchOutputDTO } from "@/application/dtos/CreateCompanyDTO";
+import type {
+  UserOutputDTO,
+  CompanyOutputDTO,
+  BranchOutputDTO,
+} from "@/application/dtos/CreateCompanyDTO";
+import { createTrialConfig } from "@/lib/trial-gating";
 
 type RegisterCompanyError = ValidationError | RepositoryError | UnexpectedError;
 
@@ -24,7 +29,7 @@ export class RegisterCompanyUseCase {
   constructor(
     private readonly companyRepository: ICompanyRepository,
     private readonly userRepository: IUserRepository,
-    private readonly branchRepository: IBranchRepository
+    private readonly branchRepository: IBranchRepository,
   ) {}
 
   /**
@@ -36,10 +41,11 @@ export class RegisterCompanyUseCase {
   async execute(
     userId: string,
     userEmail: string,
-    input: CreateCompanyDTO
+    input: CreateCompanyDTO,
   ): Promise<Result<RegisterCompanyResult, RegisterCompanyError>> {
     try {
       // Step 1: Create company with validation
+      const companyMode = input.companyMode ?? "team";
       const companyResult = Company.create({
         id: crypto.randomUUID(),
         name: input.name,
@@ -49,6 +55,23 @@ export class RegisterCompanyUseCase {
         email: input.email,
         phone: input.phone,
         address: input.address,
+        logoUrl: input.logoUrl,
+        config: {
+          onboarding: {
+            companySize: input.companySize ?? "single_location",
+            usageMode: input.usageMode ?? "team",
+            needsTechniciansModule: input.needsTechniciansModule ?? true,
+            needsTechnicianPayments: input.needsTechnicianPayments ?? false,
+          },
+          companyMode,
+          features: {
+            technicians: input.needsTechniciansModule ?? true,
+            technicianPayments: input.needsTechnicianPayments ?? false,
+            multiBranch: companyMode === "multi_branch",
+            team: companyMode !== "solo_owner",
+          },
+          trial: createTrialConfig(companyMode),
+        },
         ivaPercentage: input.ivaPercentage ?? 19,
         commissionPercentage: input.commissionPercentage ?? 40,
       });
@@ -126,7 +149,9 @@ export class RegisterCompanyUseCase {
       return Result.ok({
         company: this.toCompanyOutput(savedCompany),
         user: this.toUserOutput(savedUser),
-        mainBranch: savedBranch ? this.toBranchOutput(savedBranch) : this.createDefaultBranchOutput(savedCompany.id),
+        mainBranch: savedBranch
+          ? this.toBranchOutput(savedBranch)
+          : this.createDefaultBranchOutput(savedCompany.id),
       });
     } catch (error) {
       return Result.fail(UnexpectedError.from(error));
@@ -144,6 +169,7 @@ export class RegisterCompanyUseCase {
       phone: company.phone ?? null,
       address: company.address ?? null,
       logoUrl: company.logoUrl ?? null,
+      config: company.config,
       ivaPercentage: company.ivaPercentage,
       commissionPercentage: company.commissionPercentage,
       createdAt: company.createdAt,

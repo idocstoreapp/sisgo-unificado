@@ -1,11 +1,12 @@
 /**
- * Register form - creates user, company and main branch in 3 steps
+ * Adaptive registration wizard for company onboarding.
  */
 
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { Building2, Check, CreditCard, Users, Wrench } from "lucide-react";
 import { signUp } from "@/infrastructure/auth/authService";
 import { useCompany } from "@/presentation/hooks/useCompany";
 import { Button } from "@/presentation/components/ui/button";
@@ -20,6 +21,41 @@ import {
 } from "@/presentation/components/ui/select";
 import { BUSINESS_TYPE_LABELS } from "@/shared/constants";
 import type { BusinessType } from "@/shared/kernel/types";
+import type {
+  CompanyMode,
+  CompanySize,
+  CompanyUsageMode,
+} from "@/application/dtos/CreateCompanyDTO";
+
+const steps = ["Cuenta", "Empresa", "Operación", "Sucursal"];
+
+const sizeOptions: Array<{
+  value: CompanySize;
+  title: string;
+  description: string;
+}> = [
+  {
+    value: "solo",
+    title: "Trabajo solo",
+    description: "Un dueño o técnico registra y gestiona todo.",
+  },
+  {
+    value: "single_location",
+    title: "Local único",
+    description: "Un equipo pequeño opera desde una sucursal.",
+  },
+  {
+    value: "multi_branch",
+    title: "Multi sucursal",
+    description: "Necesitas separar operación, usuarios y reportes por local.",
+  },
+];
+
+function getCompanyMode(companySize: CompanySize, usageMode: CompanyUsageMode): CompanyMode {
+  if (companySize === "multi_branch") return "multi_branch";
+  if (companySize === "solo" && usageMode === "owner_only") return "solo_owner";
+  return "team";
+}
 
 export function RegisterForm() {
   const router = useRouter();
@@ -29,141 +65,152 @@ export function RegisterForm() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Step 1: User account
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
-  // Step 2: Company details
   const [companyName, setCompanyName] = useState("");
-  const [businessType, setBusinessType] = useState("");
+  const [businessType, setBusinessType] = useState<BusinessType>("servicio_tecnico");
+  const [logoUrl, setLogoUrl] = useState("");
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [rut, setRut] = useState("");
-  const [razonSocial, setRazonSocial] = useState("");
   const [companyPhone, setCompanyPhone] = useState("");
   const [companyAddress, setCompanyAddress] = useState("");
-  const [ivaPercentage, setIvaPercentage] = useState("19");
-  const [commissionPercentage, setCommissionPercentage] = useState("40");
 
-  // Step 3: Main branch
+  const [companySize, setCompanySize] = useState<CompanySize>("solo");
+  const [usageMode, setUsageMode] = useState<CompanyUsageMode>("owner_only");
+  const [needsTechniciansModule, setNeedsTechniciansModule] = useState(true);
+  const [needsTechnicianPayments, setNeedsTechnicianPayments] = useState(false);
+
   const [branchName, setBranchName] = useState("Casa Matriz");
   const [branchCode, setBranchCode] = useState("MAT");
-  const [branchPhone, setBranchPhone] = useState("");
   const [branchAddress, setBranchAddress] = useState("");
-  const [branchEmail, setBranchEmail] = useState("");
+  const [branchPhone, setBranchPhone] = useState("");
+
+  const companyMode = useMemo(
+    () => getCompanyMode(companySize, usageMode),
+    [companySize, usageMode],
+  );
+  const shouldShowBranchStep = companySize !== "solo";
+  const totalSteps = shouldShowBranchStep ? 4 : 3;
+  const isSubmitting = isLoading || isCompanyLoading;
+
+  function setStepError(message: string) {
+    setError(message);
+    return false;
+  }
 
   function validateStep1(): boolean {
     setError(null);
-
-    if (!name.trim()) {
-      setError("El nombre es requerido");
-      return false;
-    }
-    if (!email.includes("@")) {
-      setError("Email inválido");
-      return false;
-    }
-    if (password.length < 6) {
-      setError("La contraseña debe tener al menos 6 caracteres");
-      return false;
-    }
-    if (password !== confirmPassword) {
-      setError("Las contraseñas no coinciden");
-      return false;
-    }
-
+    if (!name.trim()) return setStepError("Ingresa tu nombre.");
+    if (!email.includes("@")) return setStepError("Ingresa un email válido.");
+    if (password.length < 6) return setStepError("La contraseña debe tener al menos 6 caracteres.");
+    if (password !== confirmPassword) return setStepError("Las contraseñas no coinciden.");
     return true;
   }
 
   function validateStep2(): boolean {
     setError(null);
-
-    if (!companyName.trim()) {
-      setError("El nombre de la empresa es requerido");
-      return false;
-    }
-    if (!businessType) {
-      setError("Selecciona un tipo de negocio");
-      return false;
-    }
-
+    if (!companyName.trim()) return setStepError("Ingresa el nombre comercial del taller.");
+    if (!businessType) return setStepError("Selecciona el tipo de negocio.");
     return true;
   }
 
   function validateStep3(): boolean {
     setError(null);
-
-    if (!branchName.trim()) {
-      setError("El nombre de la sucursal es requerido");
-      return false;
+    if (companySize === "solo" && usageMode !== "owner_only") {
+      return setStepError("Para trabajo solo usa el modo dueño solo.");
     }
-    if (!branchCode.trim()) {
-      setError("El código de la sucursal es requerido");
-      return false;
-    }
-
     return true;
   }
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
+  function validateStep4(): boolean {
+    setError(null);
+    if (!shouldShowBranchStep) return true;
+    if (!branchName.trim()) return setStepError("Ingresa el nombre de la sucursal principal.");
+    if (!branchCode.trim()) return setStepError("Ingresa un código corto para la sucursal.");
+    return true;
+  }
 
-    if (!validateStep3()) return;
+  function goNext() {
+    const valid =
+      step === 1
+        ? validateStep1()
+        : step === 2
+          ? validateStep2()
+          : step === 3
+            ? validateStep3()
+            : validateStep4();
+
+    if (!valid) return;
+    if (step === 3 && !shouldShowBranchStep) {
+      void submitRegistration();
+      return;
+    }
+    setStep((current) => Math.min(current + 1, totalSteps));
+  }
+
+  function handleLogoFile(file: File | null) {
+    setError(null);
+    setLogoPreview(null);
+
+    if (!file) return;
+    if (file.type !== "image/png") {
+      setError("El logo debe ser PNG para mantener buena calidad en documentos.");
+      return;
+    }
+    if (file.size > 1024 * 1024) {
+      setError("Usa un PNG de hasta 1 MB.");
+      return;
+    }
+
+    setLogoPreview(URL.createObjectURL(file));
+  }
+
+  async function submitRegistration() {
+    if (!validateStep1() || !validateStep2() || !validateStep3() || !validateStep4()) return;
 
     setIsLoading(true);
     setError(null);
 
     try {
-      // Step 1: Create user auth account
-      const userResult = await signUp({
-        email,
-        password,
-        name,
-      });
+      const userResult = await signUp({ email, password, name });
 
-      if (userResult.isFailure) {
+      if (userResult.isFailure || !userResult.value) {
         setError(userResult.error?.message ?? "Error al crear usuario");
-        setIsLoading(false);
         return;
       }
 
-      if (!userResult.value) {
-        setError("Error al crear usuario: datos no disponibles");
-        setIsLoading(false);
-        return;
-      }
-
-      // Step 2: Create company, branch and link user as admin
-      const companyResult = await registerCompany(
-        userResult.value.userId,
-        userResult.value.email,
-        {
-          name: companyName,
-          businessType: businessType as BusinessType,
-          rut: rut || undefined,
-          razonSocial: razonSocial || undefined,
-          email: email,
-          phone: companyPhone || undefined,
-          address: companyAddress || undefined,
-          ivaPercentage: parseFloat(ivaPercentage) || 19,
-          commissionPercentage: parseFloat(commissionPercentage) || 40,
-          mainBranch: {
-            name: branchName,
-            code: branchCode || undefined,
-            phone: branchPhone || undefined,
-            address: branchAddress || undefined,
-            email: branchEmail || undefined,
-          },
-        }
-      );
+      const companyResult = await registerCompany(userResult.value.userId, userResult.value.email, {
+        name: companyName,
+        businessType,
+        logoUrl: logoUrl || undefined,
+        companySize,
+        usageMode,
+        companyMode,
+        needsTechniciansModule,
+        needsTechnicianPayments,
+        rut: rut || undefined,
+        email,
+        phone: companyPhone || undefined,
+        address: companyAddress || undefined,
+        ivaPercentage: 19,
+        commissionPercentage: needsTechnicianPayments ? 40 : 0,
+        mainBranch: {
+          name: shouldShowBranchStep ? branchName : "Casa Matriz",
+          code: shouldShowBranchStep ? branchCode : "MAT",
+          phone: branchPhone || companyPhone || undefined,
+          address: branchAddress || companyAddress || undefined,
+          email,
+        },
+      });
 
       if (!companyResult.success) {
         setError(companyResult.error ?? "Error al registrar empresa");
-        setIsLoading(false);
         return;
       }
 
-      // Success - redirect to dashboard
       router.push("/dashboard");
       router.refresh();
     } catch {
@@ -173,118 +220,129 @@ export function RegisterForm() {
     }
   }
 
+  function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (step === totalSteps) {
+      void submitRegistration();
+      return;
+    }
+    goNext();
+  }
+
   return (
-    <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
-      {/* Progress indicator - 3 steps */}
-      <div className="flex items-center gap-2 mb-6">
-        <div className={`flex-1 h-2 rounded-full ${step >= 1 ? "bg-primary" : "bg-muted"}`} />
-        <div className={`flex-1 h-2 rounded-full ${step >= 2 ? "bg-primary" : "bg-muted"}`} />
-        <div className={`flex-1 h-2 rounded-full ${step >= 3 ? "bg-primary" : "bg-muted"}`} />
+    <div className="border-border bg-card rounded-xl border p-5 shadow-sm md:p-6">
+      <div className="mb-6">
+        <div className="text-muted-foreground mb-3 flex items-center justify-between text-xs font-medium">
+          <span>
+            Paso {step} de {totalSteps}
+          </span>
+          <span className="text-primary">{steps[step - 1]}</span>
+        </div>
+        <div
+          className="grid gap-2"
+          style={{ gridTemplateColumns: `repeat(${totalSteps}, minmax(0, 1fr))` }}
+        >
+          {steps.slice(0, totalSteps).map((label, index) => {
+            const isDone = step > index + 1;
+            const isActive = step === index + 1;
+            return (
+              <div
+                key={label}
+                className={`h-2 rounded-full ${isDone || isActive ? "bg-primary" : "bg-muted"}`}
+                aria-label={label}
+              />
+            );
+          })}
+        </div>
       </div>
 
-      {/* Step indicators */}
-      <div className="flex justify-between mb-6 text-sm">
-        <span className={step >= 1 ? "text-primary font-medium" : "text-muted-foreground"}>1. Cuenta</span>
-        <span className={step >= 2 ? "text-primary font-medium" : "text-muted-foreground"}>2. Empresa</span>
-        <span className={step >= 3 ? "text-primary font-medium" : "text-muted-foreground"}>3. Sucursal</span>
+      <div className="mb-6">
+        <h2 className="text-card-foreground text-xl font-semibold">
+          {step === 1 && "Crea tu acceso"}
+          {step === 2 && "Configura tu taller"}
+          {step === 3 && "Ajusta SISGO a tu operación"}
+          {step === 4 && "Sucursal principal"}
+        </h2>
+        <p className="text-muted-foreground mt-1 text-sm">
+          {companyMode === "solo_owner"
+            ? "Modo simple: menos campos, foco en crear órdenes y cobrar."
+            : companyMode === "multi_branch"
+              ? "Modo multi sucursal: usuarios, locales y reportes separados desde el inicio."
+              : "Modo equipo: órdenes, técnicos y pagos listos para crecer."}
+        </p>
       </div>
-
-      <h2 className="text-xl font-semibold mb-6 text-card-foreground">
-        {step === 1 ? "Crear Cuenta de Admin" : step === 2 ? "Datos de la Empresa" : "Sucursal Principal"}
-      </h2>
 
       {error && (
-        <div className="bg-destructive/10 border border-destructive/20 text-destructive text-sm rounded-lg p-3 mb-6">
+        <div className="border-destructive/20 bg-destructive/10 text-destructive mb-6 rounded-lg border p-3 text-sm">
           {error}
         </div>
       )}
 
-      <form onSubmit={step === 3 ? handleSubmit : undefined} className="space-y-4">
-        {/* STEP 1: Account */}
+      <form onSubmit={handleSubmit} className="space-y-5">
         {step === 1 && (
-          <>
+          <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nombre Completo</Label>
+              <Label htmlFor="name">Nombre completo</Label>
               <Input
                 id="name"
-                type="text"
-                placeholder="Juan Pérez"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                required
+                placeholder="Juan Pérez"
               />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="email-register">Email</Label>
               <Input
                 id="email-register"
                 type="email"
-                placeholder="tu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required
+                placeholder="tu@email.com"
               />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password-register">Contraseña</Label>
-              <Input
-                id="password-register"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-              <p className="text-xs text-muted-foreground">
-                Mínimo 6 caracteres
-              </p>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="password-register">Contraseña</Label>
+                <Input
+                  id="password-register"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Mínimo 6 caracteres"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-password">Confirmar contraseña</Label>
+                <Input
+                  id="confirm-password"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Repite tu contraseña"
+                />
+              </div>
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirm-password">Confirmar Contraseña</Label>
-              <Input
-                id="confirm-password"
-                type="password"
-                placeholder="••••••••"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-              />
-            </div>
-
-            <Button
-              type="button"
-              className="w-full"
-              onClick={() => {
-                if (validateStep1()) setStep(2);
-              }}
-            >
-              Siguiente: Datos de Empresa
-            </Button>
-          </>
+          </div>
         )}
 
-        {/* STEP 2: Company */}
         {step === 2 && (
-          <>
+          <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="company-name">Nombre de la Empresa *</Label>
+              <Label htmlFor="company-name">Nombre empresa</Label>
               <Input
                 id="company-name"
-                type="text"
-                placeholder="Mi Empresa SpA"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
-                required
+                placeholder="Servicio Técnico Central"
               />
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor="business-type">Tipo de Negocio *</Label>
-              <Select value={businessType} onValueChange={setBusinessType} required>
-                <SelectTrigger>
+              <Label htmlFor="business-type">Tipo de negocio</Label>
+              <Select
+                value={businessType}
+                onValueChange={(value) => setBusinessType(value as BusinessType)}
+              >
+                <SelectTrigger id="business-type">
                   <SelectValue placeholder="Selecciona un tipo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -296,188 +354,236 @@ export function RegisterForm() {
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
+            <div className="border-border rounded-lg border border-dashed p-4">
+              <div className="flex items-start gap-3">
+                <div className="bg-muted flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg">
+                  {logoPreview ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={logoPreview}
+                      alt="Vista previa del logo"
+                      className="h-full w-full object-contain"
+                    />
+                  ) : (
+                    <Building2 className="text-muted-foreground size-5" />
+                  )}
+                </div>
+                <div className="min-w-0 flex-1 space-y-3">
+                  <div>
+                    <Label htmlFor="logo-file">Logo PNG</Label>
+                    <p className="text-muted-foreground mt-1 text-xs">
+                      Recomendado: PNG transparente, cuadrado, hasta 1 MB. Podrás cambiarlo luego.
+                    </p>
+                  </div>
+                  <Input
+                    id="logo-file"
+                    type="file"
+                    accept="image/png"
+                    onChange={(e) => handleLogoFile(e.target.files?.[0] ?? null)}
+                  />
+                  <Input
+                    value={logoUrl}
+                    onChange={(e) => setLogoUrl(e.target.value)}
+                    placeholder="URL del logo si ya está publicado"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
-                <Label htmlFor="rut">RUT / NIT</Label>
+                <Label htmlFor="rut">RUT</Label>
                 <Input
                   id="rut"
-                  type="text"
-                  placeholder="12.345.678-9"
                   value={rut}
                   onChange={(e) => setRut(e.target.value)}
+                  placeholder="12.345.678-9"
                 />
               </div>
-
               <div className="space-y-2">
-                <Label htmlFor="razon-social">Razón Social</Label>
+                <Label htmlFor="company-phone">Teléfono</Label>
                 <Input
-                  id="razon-social"
-                  type="text"
-                  placeholder="Mi Empresa SpA"
-                  value={razonSocial}
-                  onChange={(e) => setRazonSocial(e.target.value)}
+                  id="company-phone"
+                  value={companyPhone}
+                  onChange={(e) => setCompanyPhone(e.target.value)}
+                  placeholder="+56 9 1234 5678"
                 />
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="company-phone">Teléfono de Contacto</Label>
-              <Input
-                id="company-phone"
-                type="tel"
-                placeholder="+56 9 1234 5678"
-                value={companyPhone}
-                onChange={(e) => setCompanyPhone(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="company-address">Dirección Fiscal</Label>
-              <Input
-                id="company-address"
-                type="text"
-                placeholder="Calle 123, Ciudad"
-                value={companyAddress}
-                onChange={(e) => setCompanyAddress(e.target.value)}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="iva-percentage">% IVA</Label>
+                <Label htmlFor="company-address">Dirección</Label>
                 <Input
-                  id="iva-percentage"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={ivaPercentage}
-                  onChange={(e) => setIvaPercentage(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="commission-percentage">% Comisión Técnico</Label>
-                <Input
-                  id="commission-percentage"
-                  type="number"
-                  min="0"
-                  max="100"
-                  value={commissionPercentage}
-                  onChange={(e) => setCommissionPercentage(e.target.value)}
+                  id="company-address"
+                  value={companyAddress}
+                  onChange={(e) => setCompanyAddress(e.target.value)}
+                  placeholder="Calle 123"
                 />
               </div>
             </div>
-
-            <div className="flex gap-3">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1"
-                onClick={() => setStep(1)}
-                disabled={isLoading}
-              >
-                Atrás
-              </Button>
-              <Button
-                type="button"
-                className="flex-1"
-                onClick={() => {
-                  if (validateStep2()) setStep(3);
-                }}
-              >
-                Siguiente: Sucursal
-              </Button>
-            </div>
-          </>
+          </div>
         )}
 
-        {/* STEP 3: Main Branch */}
         {step === 3 && (
-          <>
-            <div className="bg-muted/50 rounded-lg p-4 mb-4">
-              <p className="text-sm text-muted-foreground">
-                La sucursal principal es donde comenzarás a operar. Podrás agregar más sucursales después.
-              </p>
+          <div className="space-y-5">
+            <div className="grid gap-3">
+              {sizeOptions.map((option) => {
+                const selected = companySize === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`rounded-lg border p-4 text-left transition ${selected ? "border-primary bg-primary/10" : "border-border hover:bg-accent"}`}
+                    onClick={() => {
+                      setCompanySize(option.value);
+                      if (option.value === "solo") setUsageMode("owner_only");
+                      if (option.value === "multi_branch") setUsageMode("team");
+                    }}
+                  >
+                    <span className="flex items-center justify-between gap-3">
+                      <span className="font-medium">{option.title}</span>
+                      {selected && <Check className="text-primary size-4" />}
+                    </span>
+                    <span className="text-muted-foreground mt-1 block text-sm">
+                      {option.description}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="branch-name">Nombre de Sucursal *</Label>
-              <Input
-                id="branch-name"
-                type="text"
-                placeholder="Casa Matriz"
-                value={branchName}
-                onChange={(e) => setBranchName(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="branch-code">Código Corto *</Label>
-              <Input
-                id="branch-code"
-                type="text"
-                placeholder="MAT"
-                maxLength={5}
-                value={branchCode}
-                onChange={(e) => setBranchCode(e.target.value.toUpperCase())}
-                required
-              />
-              <p className="text-xs text-muted-foreground">
-                Código breve para identificar la sucursal (ej: MAT, SCL, VAP)
-              </p>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="branch-phone">Teléfono</Label>
-              <Input
-                id="branch-phone"
-                type="tel"
-                placeholder="+56 9 1234 5678"
-                value={branchPhone}
-                onChange={(e) => setBranchPhone(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="branch-address">Dirección</Label>
-              <Input
-                id="branch-address"
-                type="text"
-                placeholder="Calle 123, Ciudad"
-                value={branchAddress}
-                onChange={(e) => setBranchAddress(e.target.value)}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="branch-email">Email</Label>
-              <Input
-                id="branch-email"
-                type="email"
-                placeholder="sucursal@empresa.com"
-                value={branchEmail}
-                onChange={(e) => setBranchEmail(e.target.value)}
-              />
-            </div>
-
-            <div className="flex gap-3">
-              <Button
+            <div className="grid gap-3 md:grid-cols-2">
+              <button
                 type="button"
-                variant="outline"
-                className="flex-1"
-                onClick={() => setStep(2)}
-                disabled={isLoading}
+                className={`rounded-lg border p-4 text-left ${usageMode === "owner_only" ? "border-primary bg-primary/10" : "border-border hover:bg-accent"}`}
+                onClick={() => setUsageMode("owner_only")}
+                disabled={companySize === "multi_branch"}
               >
-                Atrás
-              </Button>
-              <Button type="submit" className="flex-1" disabled={isLoading || isCompanyLoading}>
-                {isLoading || isCompanyLoading ? "Registrando..." : "Completar Registro"}
-              </Button>
+                <Users className="text-primary mb-2 size-5" />
+                <span className="font-medium">Dueño solo</span>
+                <span className="text-muted-foreground mt-1 block text-sm">
+                  Menú corto y creación rápida de órdenes.
+                </span>
+              </button>
+              <button
+                type="button"
+                className={`rounded-lg border p-4 text-left ${usageMode === "team" ? "border-primary bg-primary/10" : "border-border hover:bg-accent"}`}
+                onClick={() => setUsageMode("team")}
+              >
+                <Users className="text-primary mb-2 size-5" />
+                <span className="font-medium">Equipo</span>
+                <span className="text-muted-foreground mt-1 block text-sm">
+                  Usuarios, responsables y permisos desde el inicio.
+                </span>
+              </button>
             </div>
-          </>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="border-border flex cursor-pointer items-start gap-3 rounded-lg border p-4">
+                <input
+                  type="checkbox"
+                  className="mt-1"
+                  checked={needsTechniciansModule}
+                  onChange={(e) => setNeedsTechniciansModule(e.target.checked)}
+                />
+                <span>
+                  <span className="flex items-center gap-2 font-medium">
+                    <Wrench className="size-4" /> Técnicos y reparaciones
+                  </span>
+                  <span className="text-muted-foreground mt-1 block text-sm">
+                    Tomar órdenes, completar reparaciones y controlar estados.
+                  </span>
+                </span>
+              </label>
+              <label className="border-border flex cursor-pointer items-start gap-3 rounded-lg border p-4">
+                <input
+                  type="checkbox"
+                  className="mt-1"
+                  checked={needsTechnicianPayments}
+                  onChange={(e) => setNeedsTechnicianPayments(e.target.checked)}
+                />
+                <span>
+                  <span className="flex items-center gap-2 font-medium">
+                    <CreditCard className="size-4" /> Pagos a técnicos
+                  </span>
+                  <span className="text-muted-foreground mt-1 block text-sm">
+                    Comisiones, comprobantes y liquidaciones semanales.
+                  </span>
+                </span>
+              </label>
+            </div>
+          </div>
         )}
+
+        {step === 4 && (
+          <div className="space-y-4">
+            <div className="bg-muted/50 text-muted-foreground rounded-lg p-4 text-sm">
+              Esta será la primera sucursal. En modo multi sucursal podrás agregar más locales desde
+              Configuración.
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="branch-name">Nombre sucursal</Label>
+                <Input
+                  id="branch-name"
+                  value={branchName}
+                  onChange={(e) => setBranchName(e.target.value)}
+                  placeholder="Casa Matriz"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="branch-code">Código corto</Label>
+                <Input
+                  id="branch-code"
+                  value={branchCode}
+                  maxLength={5}
+                  onChange={(e) => setBranchCode(e.target.value.toUpperCase())}
+                  placeholder="MAT"
+                />
+              </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="branch-phone">Teléfono</Label>
+                <Input
+                  id="branch-phone"
+                  value={branchPhone}
+                  onChange={(e) => setBranchPhone(e.target.value)}
+                  placeholder="+56 9 1234 5678"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="branch-address">Dirección</Label>
+                <Input
+                  id="branch-address"
+                  value={branchAddress}
+                  onChange={(e) => setBranchAddress(e.target.value)}
+                  placeholder="Dirección del local"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="flex gap-3 pt-2">
+          {step > 1 && (
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1"
+              onClick={() => setStep((current) => Math.max(current - 1, 1))}
+              disabled={isSubmitting}
+            >
+              Atrás
+            </Button>
+          )}
+          <Button type="submit" className="flex-1" disabled={isSubmitting}>
+            {isSubmitting
+              ? "Registrando..."
+              : step === totalSteps
+                ? "Activar prueba"
+                : step === 3 && !shouldShowBranchStep
+                  ? "Activar prueba"
+                  : "Siguiente"}
+          </Button>
+        </div>
       </form>
     </div>
   );

@@ -1,11 +1,13 @@
 /**
  * API Route: GET /api/customers?search=xxx
- * Search customers by name, email, or phone
- * POST /api/customers - Create a new customer
+ * Search customers by name, email, or phone.
+ * POST /api/customers - Creates a customer.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/infrastructure/database/supabase/admin-client";
+
+type CustomerRow = { id: string; [key: string]: unknown };
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,7 +17,6 @@ export async function GET(request: NextRequest) {
     const email = searchParams.get("email");
     const phone = searchParams.get("phone");
 
-    // If searching by email or phone specifically
     if (email) {
       const { data, error } = await supabase
         .from("customers")
@@ -44,18 +45,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, customers: data || [] });
     }
 
-    // General search
     if (search && search.length >= 2) {
       const searchPattern = `%${search}%`;
-
-      // Search by name, email, and phone separately then combine
       const [nameRes, emailRes, phoneRes] = await Promise.all([
         supabase.from("customers").select("*").ilike("name", searchPattern).limit(10),
         supabase.from("customers").select("*").ilike("email", searchPattern).limit(10),
         supabase.from("customers").select("*").ilike("phone", searchPattern).limit(10),
       ]);
-
-      type CustomerRow = { id: string; [key: string]: unknown };
 
       const allResults: CustomerRow[] = [
         ...(nameRes.data || []),
@@ -63,9 +59,8 @@ export async function GET(request: NextRequest) {
         ...(phoneRes.data || []),
       ];
 
-      // Deduplicate by ID
       const uniqueCustomers = Array.from(
-        new Map(allResults.map((c) => [c.id, c])).values()
+        new Map(allResults.map((customer) => [customer.id, customer])).values(),
       ).slice(0, 10);
 
       return NextResponse.json({ success: true, customers: uniqueCustomers });
@@ -98,7 +93,6 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      // If duplicate, try to find the existing one
       if (error.code === "23505") {
         const { data: existing } = await supabase
           .from("customers")

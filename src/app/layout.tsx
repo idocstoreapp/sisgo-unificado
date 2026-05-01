@@ -4,7 +4,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "SISGO - Sistema de Gestión Unificado",
-  description: "Sistema de gestión unificado para empresas de servicio técnico, talleres, mueblerías y restaurantes",
+  description:
+    "Sistema de gestión unificado para empresas de servicio técnico, talleres, mueblerías y restaurantes",
 };
 
 export default function RootLayout({
@@ -14,7 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
-      <body className="antialiased font-sans">
+      <body className="font-sans antialiased">
         <Providers>{children}</Providers>
       </body>
     </html>

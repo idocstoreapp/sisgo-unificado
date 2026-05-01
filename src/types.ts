@@ -93,7 +93,7 @@ export interface WorkOrder {
   commitment_date?: string | null;
   created_at: string;
   updated_at: string;
-  status: 'en_proceso' | 'por_entregar' | 'entregada' | 'rechazada' | 'sin_solucion' | 'garantia';
+  status: 'pendiente' | 'en_reparacion' | 'en_proceso' | 'por_entregar' | 'entregada' | 'rechazada' | 'sin_solucion' | 'garantia';
   payment_method?: 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA' | null;
   receipt_number?: string | null;
   receipt_url?: string | null;
@@ -132,7 +132,7 @@ export interface OrderService {
 
 
 export type DeviceType = string; // Ahora permite cualquier tipo de dispositivo
-export type OrderStatus = 'en_proceso' | 'por_entregar' | 'entregada' | 'rechazada' | 'sin_solucion' | 'garantia';
+export type OrderStatus = 'pendiente' | 'en_reparacion' | 'en_proceso' | 'por_entregar' | 'entregada' | 'rechazada' | 'sin_solucion' | 'garantia';
 export type Priority = 'baja' | 'media' | 'urgente';
 export type PaymentMethod = 'EFECTIVO' | 'TARJETA' | 'TRANSFERENCIA';
 
@@ -267,4 +267,3 @@ export interface BranchExpensesSummary {
   total_pagos_tecnicos: number;
   total_pagos_encargados: number;
 }
-
