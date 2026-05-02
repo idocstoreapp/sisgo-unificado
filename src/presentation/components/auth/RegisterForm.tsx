@@ -6,7 +6,7 @@
 
 import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, Check, CreditCard, Users, Wrench } from "lucide-react";
+import { ArrowLeft, ArrowRight, Building2, Check, CreditCard, Users, Wrench } from "lucide-react";
 import { signUp } from "@/infrastructure/auth/authService";
 import { useCompany } from "@/presentation/hooks/useCompany";
 import { Button } from "@/presentation/components/ui/button";
@@ -230,13 +230,13 @@ export function RegisterForm() {
   }
 
   return (
-    <div className="border-border bg-card rounded-xl border p-5 shadow-sm md:p-6">
+    <div className="rounded-[22px] border border-[#e2e7f5] bg-white p-6 shadow-[0_30px_80px_rgba(44,52,112,0.12)] sm:p-9">
       <div className="mb-6">
-        <div className="text-muted-foreground mb-3 flex items-center justify-between text-xs font-medium">
+        <div className="mb-3 flex items-center justify-between text-xs font-black tracking-[0.16em] text-[#7a86a4] uppercase">
           <span>
             Paso {step} de {totalSteps}
           </span>
-          <span className="text-primary">{steps[step - 1]}</span>
+          <span className="text-[#4f58ff]">{steps[step - 1]}</span>
         </div>
         <div
           className="grid gap-2"
@@ -248,7 +248,11 @@ export function RegisterForm() {
             return (
               <div
                 key={label}
-                className={`h-2 rounded-full ${isDone || isActive ? "bg-primary" : "bg-muted"}`}
+                className={`h-2 rounded-full ${
+                  isDone || isActive
+                    ? "bg-[linear-gradient(90deg,#4f58ff,#8b56ff)]"
+                    : "bg-[#edf0f8]"
+                }`}
                 aria-label={label}
               />
             );
@@ -257,13 +261,19 @@ export function RegisterForm() {
       </div>
 
       <div className="mb-6">
-        <h2 className="text-card-foreground text-xl font-semibold">
+        <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-xl bg-black text-2xl font-black text-white shadow-[0_18px_44px_rgba(16,22,54,0.24)]">
+          S
+        </div>
+        <h1 className="text-center text-3xl font-black tracking-normal text-[#080d2a]">
+          Registra tu taller
+        </h1>
+        <h2 className="mt-5 text-xl font-black text-[#101733]">
           {step === 1 && "Crea tu acceso"}
           {step === 2 && "Configura tu taller"}
           {step === 3 && "Ajusta SISGO a tu operación"}
           {step === 4 && "Sucursal principal"}
         </h2>
-        <p className="text-muted-foreground mt-1 text-sm">
+        <p className="mt-2 text-sm leading-6 font-medium text-[#6d7899]">
           {companyMode === "solo_owner"
             ? "Modo simple: menos campos, foco en crear órdenes y cobrar."
             : companyMode === "multi_branch"
@@ -273,7 +283,7 @@ export function RegisterForm() {
       </div>
 
       {error && (
-        <div className="border-destructive/20 bg-destructive/10 text-destructive mb-6 rounded-lg border p-3 text-sm">
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-semibold text-red-700">
           {error}
         </div>
       )}
@@ -281,44 +291,56 @@ export function RegisterForm() {
       <form onSubmit={handleSubmit} className="space-y-5">
         {step === 1 && (
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nombre completo</Label>
+            <div className="space-y-3">
+              <Label htmlFor="name" className="font-black text-[#101733]">
+                Nombre completo
+              </Label>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Juan Pérez"
+                className="h-13 rounded-lg border-[#d9deec] bg-white text-base font-medium shadow-[0_8px_24px_rgba(47,56,118,0.05)] placeholder:text-[#8a94ad] focus-visible:border-[#5660ff] focus-visible:ring-[#5660ff]/18"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email-register">Email</Label>
+            <div className="space-y-3">
+              <Label htmlFor="email-register" className="font-black text-[#101733]">
+                Email
+              </Label>
               <Input
                 id="email-register"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="tu@email.com"
+                placeholder="ej: admin@taller.cl"
+                className="h-13 rounded-lg border-[#d9deec] bg-white text-base font-medium shadow-[0_8px_24px_rgba(47,56,118,0.05)] placeholder:text-[#8a94ad] focus-visible:border-[#5660ff] focus-visible:ring-[#5660ff]/18"
               />
             </div>
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="password-register">Contraseña</Label>
+              <div className="space-y-3">
+                <Label htmlFor="password-register" className="font-black text-[#101733]">
+                  Contraseña
+                </Label>
                 <Input
                   id="password-register"
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Mínimo 6 caracteres"
+                  className="h-13 rounded-lg border-[#d9deec] bg-white text-base font-medium shadow-[0_8px_24px_rgba(47,56,118,0.05)] placeholder:text-[#8a94ad] focus-visible:border-[#5660ff] focus-visible:ring-[#5660ff]/18"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirmar contraseña</Label>
+              <div className="space-y-3">
+                <Label htmlFor="confirm-password" className="font-black text-[#101733]">
+                  Confirmar contraseña
+                </Label>
                 <Input
                   id="confirm-password"
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Repite tu contraseña"
+                  className="h-13 rounded-lg border-[#d9deec] bg-white text-base font-medium shadow-[0_8px_24px_rgba(47,56,118,0.05)] placeholder:text-[#8a94ad] focus-visible:border-[#5660ff] focus-visible:ring-[#5660ff]/18"
                 />
               </div>
             </div>
@@ -327,22 +349,30 @@ export function RegisterForm() {
 
         {step === 2 && (
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="company-name">Nombre empresa</Label>
+            <div className="space-y-3">
+              <Label htmlFor="company-name" className="font-black text-[#101733]">
+                Nombre empresa
+              </Label>
               <Input
                 id="company-name"
                 value={companyName}
                 onChange={(e) => setCompanyName(e.target.value)}
                 placeholder="Servicio Técnico Central"
+                className="h-13 rounded-lg border-[#d9deec] bg-white text-base font-medium shadow-[0_8px_24px_rgba(47,56,118,0.05)] placeholder:text-[#8a94ad] focus-visible:border-[#5660ff] focus-visible:ring-[#5660ff]/18"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="business-type">Tipo de negocio</Label>
+            <div className="space-y-3">
+              <Label htmlFor="business-type" className="font-black text-[#101733]">
+                Tipo de negocio
+              </Label>
               <Select
                 value={businessType}
                 onValueChange={(value) => setBusinessType(value as BusinessType)}
               >
-                <SelectTrigger id="business-type">
+                <SelectTrigger
+                  id="business-type"
+                  className="h-13 rounded-lg border-[#d9deec] bg-white text-base font-medium shadow-[0_8px_24px_rgba(47,56,118,0.05)]"
+                >
                   <SelectValue placeholder="Selecciona un tipo" />
                 </SelectTrigger>
                 <SelectContent>
@@ -354,9 +384,9 @@ export function RegisterForm() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="border-border rounded-lg border border-dashed p-4">
+            <div className="rounded-lg border border-dashed border-[#d9deec] bg-[#fbfcff] p-4">
               <div className="flex items-start gap-3">
-                <div className="bg-muted flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg">
+                <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[#eef0ff] text-[#4f58ff]">
                   {logoPreview ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -365,13 +395,15 @@ export function RegisterForm() {
                       className="h-full w-full object-contain"
                     />
                   ) : (
-                    <Building2 className="text-muted-foreground size-5" />
+                    <Building2 className="size-5" />
                   )}
                 </div>
                 <div className="min-w-0 flex-1 space-y-3">
                   <div>
-                    <Label htmlFor="logo-file">Logo PNG</Label>
-                    <p className="text-muted-foreground mt-1 text-xs">
+                    <Label htmlFor="logo-file" className="font-black text-[#101733]">
+                      Logo PNG
+                    </Label>
+                    <p className="mt-1 text-xs font-medium text-[#6d7899]">
                       Recomendado: PNG transparente, cuadrado, hasta 1 MB. Podrás cambiarlo luego.
                     </p>
                   </div>
@@ -380,41 +412,52 @@ export function RegisterForm() {
                     type="file"
                     accept="image/png"
                     onChange={(e) => handleLogoFile(e.target.files?.[0] ?? null)}
+                    className="h-12 rounded-lg border-[#d9deec] bg-white text-sm font-medium file:text-[#4f58ff]"
                   />
                   <Input
                     value={logoUrl}
                     onChange={(e) => setLogoUrl(e.target.value)}
                     placeholder="URL del logo si ya está publicado"
+                    className="h-12 rounded-lg border-[#d9deec] bg-white font-medium placeholder:text-[#8a94ad] focus-visible:border-[#5660ff] focus-visible:ring-[#5660ff]/18"
                   />
                 </div>
               </div>
             </div>
             <div className="grid gap-4 md:grid-cols-3">
-              <div className="space-y-2">
-                <Label htmlFor="rut">RUT</Label>
+              <div className="space-y-3">
+                <Label htmlFor="rut" className="font-black text-[#101733]">
+                  RUT
+                </Label>
                 <Input
                   id="rut"
                   value={rut}
                   onChange={(e) => setRut(e.target.value)}
                   placeholder="12.345.678-9"
+                  className="h-12 rounded-lg border-[#d9deec] bg-white font-medium placeholder:text-[#8a94ad] focus-visible:border-[#5660ff] focus-visible:ring-[#5660ff]/18"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="company-phone">Teléfono</Label>
+              <div className="space-y-3">
+                <Label htmlFor="company-phone" className="font-black text-[#101733]">
+                  Teléfono
+                </Label>
                 <Input
                   id="company-phone"
                   value={companyPhone}
                   onChange={(e) => setCompanyPhone(e.target.value)}
                   placeholder="+56 9 1234 5678"
+                  className="h-12 rounded-lg border-[#d9deec] bg-white font-medium placeholder:text-[#8a94ad] focus-visible:border-[#5660ff] focus-visible:ring-[#5660ff]/18"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="company-address">Dirección</Label>
+              <div className="space-y-3">
+                <Label htmlFor="company-address" className="font-black text-[#101733]">
+                  Dirección
+                </Label>
                 <Input
                   id="company-address"
                   value={companyAddress}
                   onChange={(e) => setCompanyAddress(e.target.value)}
                   placeholder="Calle 123"
+                  className="h-12 rounded-lg border-[#d9deec] bg-white font-medium placeholder:text-[#8a94ad] focus-visible:border-[#5660ff] focus-visible:ring-[#5660ff]/18"
                 />
               </div>
             </div>
@@ -430,7 +473,11 @@ export function RegisterForm() {
                   <button
                     key={option.value}
                     type="button"
-                    className={`rounded-lg border p-4 text-left transition ${selected ? "border-primary bg-primary/10" : "border-border hover:bg-accent"}`}
+                    className={`rounded-lg border p-4 text-left transition ${
+                      selected
+                        ? "border-[#5660ff] bg-[#f4f5ff] shadow-[0_12px_28px_rgba(79,88,255,0.12)]"
+                        : "border-[#e2e7f5] bg-white hover:bg-[#fbfcff]"
+                    }`}
                     onClick={() => {
                       setCompanySize(option.value);
                       if (option.value === "solo") setUsageMode("owner_only");
@@ -438,10 +485,10 @@ export function RegisterForm() {
                     }}
                   >
                     <span className="flex items-center justify-between gap-3">
-                      <span className="font-medium">{option.title}</span>
-                      {selected && <Check className="text-primary size-4" />}
+                      <span className="font-black text-[#101733]">{option.title}</span>
+                      {selected && <Check className="size-4 text-[#4f58ff]" />}
                     </span>
-                    <span className="text-muted-foreground mt-1 block text-sm">
+                    <span className="mt-1 block text-sm font-medium text-[#6d7899]">
                       {option.description}
                     </span>
                   </button>
@@ -452,58 +499,66 @@ export function RegisterForm() {
             <div className="grid gap-3 md:grid-cols-2">
               <button
                 type="button"
-                className={`rounded-lg border p-4 text-left ${usageMode === "owner_only" ? "border-primary bg-primary/10" : "border-border hover:bg-accent"}`}
+                className={`rounded-lg border p-4 text-left transition ${
+                  usageMode === "owner_only"
+                    ? "border-[#5660ff] bg-[#f4f5ff]"
+                    : "border-[#e2e7f5] bg-white hover:bg-[#fbfcff]"
+                }`}
                 onClick={() => setUsageMode("owner_only")}
                 disabled={companySize === "multi_branch"}
               >
-                <Users className="text-primary mb-2 size-5" />
-                <span className="font-medium">Dueño solo</span>
-                <span className="text-muted-foreground mt-1 block text-sm">
+                <Users className="mb-2 size-5 text-[#4f58ff]" />
+                <span className="font-black text-[#101733]">Dueño solo</span>
+                <span className="mt-1 block text-sm font-medium text-[#6d7899]">
                   Menú corto y creación rápida de órdenes.
                 </span>
               </button>
               <button
                 type="button"
-                className={`rounded-lg border p-4 text-left ${usageMode === "team" ? "border-primary bg-primary/10" : "border-border hover:bg-accent"}`}
+                className={`rounded-lg border p-4 text-left transition ${
+                  usageMode === "team"
+                    ? "border-[#5660ff] bg-[#f4f5ff]"
+                    : "border-[#e2e7f5] bg-white hover:bg-[#fbfcff]"
+                }`}
                 onClick={() => setUsageMode("team")}
               >
-                <Users className="text-primary mb-2 size-5" />
-                <span className="font-medium">Equipo</span>
-                <span className="text-muted-foreground mt-1 block text-sm">
+                <Users className="mb-2 size-5 text-[#4f58ff]" />
+                <span className="font-black text-[#101733]">Equipo</span>
+                <span className="mt-1 block text-sm font-medium text-[#6d7899]">
                   Usuarios, responsables y permisos desde el inicio.
                 </span>
               </button>
             </div>
 
             <div className="grid gap-3 md:grid-cols-2">
-              <label className="border-border flex cursor-pointer items-start gap-3 rounded-lg border p-4">
+              <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-[#e2e7f5] bg-white p-4">
                 <input
                   type="checkbox"
-                  className="mt-1"
+                  className="mt-1 accent-[#4f58ff]"
                   checked={needsTechniciansModule}
                   onChange={(e) => setNeedsTechniciansModule(e.target.checked)}
                 />
                 <span>
-                  <span className="flex items-center gap-2 font-medium">
+                  <span className="flex items-center gap-2 font-black text-[#101733]">
                     <Wrench className="size-4" /> Técnicos y reparaciones
                   </span>
-                  <span className="text-muted-foreground mt-1 block text-sm">
+                  <span className="mt-1 block text-sm font-medium text-[#6d7899]">
                     Tomar órdenes, completar reparaciones y controlar estados.
                   </span>
                 </span>
               </label>
-              <label className="border-border flex cursor-pointer items-start gap-3 rounded-lg border p-4">
+              <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-[#e2e7f5] bg-white p-4">
                 <input
                   type="checkbox"
-                  className="mt-1"
+                  className="mt-1 accent-[#4f58ff]"
                   checked={needsTechnicianPayments}
                   onChange={(e) => setNeedsTechnicianPayments(e.target.checked)}
                 />
                 <span>
-                  <span className="flex items-center gap-2 font-medium">
+                  <span className="flex items-center gap-2 font-black text-[#101733]">
                     <CreditCard className="size-4" /> Pagos a técnicos
                   </span>
-                  <span className="text-muted-foreground mt-1 block text-sm">
+                  <span className="mt-1 block text-sm font-medium text-[#6d7899]">
                     Comisiones, comprobantes y liquidaciones semanales.
                   </span>
                 </span>
@@ -514,48 +569,60 @@ export function RegisterForm() {
 
         {step === 4 && (
           <div className="space-y-4">
-            <div className="bg-muted/50 text-muted-foreground rounded-lg p-4 text-sm">
+            <div className="rounded-lg border border-[#e2e7f5] bg-[#fbfcff] p-4 text-sm font-medium text-[#6d7899]">
               Esta será la primera sucursal. En modo multi sucursal podrás agregar más locales desde
               Configuración.
             </div>
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="branch-name">Nombre sucursal</Label>
+              <div className="space-y-3">
+                <Label htmlFor="branch-name" className="font-black text-[#101733]">
+                  Nombre sucursal
+                </Label>
                 <Input
                   id="branch-name"
                   value={branchName}
                   onChange={(e) => setBranchName(e.target.value)}
                   placeholder="Casa Matriz"
+                  className="h-12 rounded-lg border-[#d9deec] bg-white font-medium placeholder:text-[#8a94ad] focus-visible:border-[#5660ff] focus-visible:ring-[#5660ff]/18"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="branch-code">Código corto</Label>
+              <div className="space-y-3">
+                <Label htmlFor="branch-code" className="font-black text-[#101733]">
+                  Código corto
+                </Label>
                 <Input
                   id="branch-code"
                   value={branchCode}
                   maxLength={5}
                   onChange={(e) => setBranchCode(e.target.value.toUpperCase())}
                   placeholder="MAT"
+                  className="h-12 rounded-lg border-[#d9deec] bg-white font-medium placeholder:text-[#8a94ad] focus-visible:border-[#5660ff] focus-visible:ring-[#5660ff]/18"
                 />
               </div>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="branch-phone">Teléfono</Label>
+              <div className="space-y-3">
+                <Label htmlFor="branch-phone" className="font-black text-[#101733]">
+                  Teléfono
+                </Label>
                 <Input
                   id="branch-phone"
                   value={branchPhone}
                   onChange={(e) => setBranchPhone(e.target.value)}
                   placeholder="+56 9 1234 5678"
+                  className="h-12 rounded-lg border-[#d9deec] bg-white font-medium placeholder:text-[#8a94ad] focus-visible:border-[#5660ff] focus-visible:ring-[#5660ff]/18"
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="branch-address">Dirección</Label>
+              <div className="space-y-3">
+                <Label htmlFor="branch-address" className="font-black text-[#101733]">
+                  Dirección
+                </Label>
                 <Input
                   id="branch-address"
                   value={branchAddress}
                   onChange={(e) => setBranchAddress(e.target.value)}
                   placeholder="Dirección del local"
+                  className="h-12 rounded-lg border-[#d9deec] bg-white font-medium placeholder:text-[#8a94ad] focus-visible:border-[#5660ff] focus-visible:ring-[#5660ff]/18"
                 />
               </div>
             </div>
@@ -567,14 +634,19 @@ export function RegisterForm() {
             <Button
               type="button"
               variant="outline"
-              className="flex-1"
+              className="h-13 flex-1 rounded-lg border-[#d9deec] bg-white font-black text-[#101733] hover:bg-[#fbfcff]"
               onClick={() => setStep((current) => Math.max(current - 1, 1))}
               disabled={isSubmitting}
             >
+              <ArrowLeft className="h-4 w-4" />
               Atrás
             </Button>
           )}
-          <Button type="submit" className="flex-1" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            className="h-13 flex-1 rounded-lg bg-[linear-gradient(100deg,#030717_0%,#171950_58%,#2630d9_100%)] font-black text-white shadow-[0_18px_44px_rgba(45,50,150,0.25)] hover:opacity-95"
+            disabled={isSubmitting}
+          >
             {isSubmitting
               ? "Registrando..."
               : step === totalSteps
@@ -582,6 +654,7 @@ export function RegisterForm() {
                 : step === 3 && !shouldShowBranchStep
                   ? "Activar prueba"
                   : "Siguiente"}
+            <ArrowRight className="h-4 w-4" />
           </Button>
         </div>
       </form>
