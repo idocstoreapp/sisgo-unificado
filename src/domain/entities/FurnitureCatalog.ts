@@ -16,7 +16,7 @@ export interface FurnitureVariantProps {
 }
 
 export class FurnitureVariant {
-  private constructor(private props: FurnitureVariantProps) {}
+  constructor(private props: FurnitureVariantProps) {}
 
   get id(): string { return this.props.id; }
   get furnitureId(): string { return this.props.furnitureId; }
@@ -67,7 +67,7 @@ export interface FurnitureCatalogProps {
 }
 
 export class FurnitureCatalog {
-  private constructor(private props: FurnitureCatalogProps) {}
+  constructor(private props: FurnitureCatalogProps) {}
 
   get id(): string { return this.props.id; }
   get companyId(): string { return this.props.companyId; }

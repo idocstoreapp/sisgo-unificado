@@ -24,7 +24,7 @@ const POINT_RADIUS = 25;
 export default function PatternViewer({ pattern, size = 300 }: PatternViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const animationRef = useRef<number>();
+  const animationRef = useRef<number | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;

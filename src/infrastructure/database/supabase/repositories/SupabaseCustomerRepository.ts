@@ -4,7 +4,7 @@
 
 import { Result, NotFoundError, RepositoryError } from "@/shared/kernel";
 import type { ICustomerRepository } from "@/domain/repositories/ICustomerRepository";
-import type { Customer } from "@/domain/entities/Customer";
+import { Customer } from "@/domain/entities/Customer";
 import { getSupabaseAdmin } from "@/infrastructure/database/supabase/admin-client";
 import { toCustomer, fromCustomerToInsert, fromCustomerToUpdate } from "@/infrastructure/database/supabase/mappers";
 

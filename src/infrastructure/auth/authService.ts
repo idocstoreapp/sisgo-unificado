@@ -3,8 +3,7 @@
  */
 
 import { supabase } from "@/infrastructure/database/supabase/client";
-import { Result, UnexpectedError } from "@/shared/kernel";
-import type { ValidationError } from "@/shared/kernel/errors";
+import { Result, UnexpectedError, ValidationError } from "@/shared/kernel";
 
 export interface SignUpInput {
   email: string;

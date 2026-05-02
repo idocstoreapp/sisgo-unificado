@@ -15,6 +15,12 @@ import {
 } from "@/presentation/components/ui/select";
 import { ORDER_STATUS_LABELS, PRIORITY_LABELS } from "@/shared/constants";
 
+function isMissingColumnError(error: unknown, columnName: string) {
+  if (!error || typeof error !== "object") return false;
+  const err = error as { code?: string; message?: string };
+  return err.code === "42703" || err.message?.includes(columnName) || false;
+}
+
 interface OrderDetailViewProps {
   orderId: string;
 }

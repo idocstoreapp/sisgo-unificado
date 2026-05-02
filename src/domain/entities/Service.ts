@@ -19,7 +19,7 @@ export interface ServiceProps {
 }
 
 export class Service {
-  private constructor(private props: ServiceProps) {}
+  constructor(private props: ServiceProps) {}
 
   get id(): string { return this.props.id; }
   get companyId(): string { return this.props.companyId; }

@@ -4,6 +4,7 @@
 
 import { Result, ValidationError, BusinessRuleError } from "@/shared/kernel";
 import type { OrderStatus, Priority, PaymentMethod } from "@/shared/kernel/types";
+export type { OrderStatus } from "@/shared/kernel/types";
 
 export interface WorkOrderProps {
   id: string;
@@ -34,7 +35,7 @@ export interface WorkOrderProps {
 }
 
 export class WorkOrder {
-  private constructor(private props: WorkOrderProps) {}
+  constructor(private props: WorkOrderProps) {}
 
   // Getters
   get id(): string { return this.props.id; }
@@ -98,7 +99,7 @@ export class WorkOrder {
       return Result.fail(
         new BusinessRuleError(
           `Invalid status transition from "${this.props.status}" to "${newStatus}"`,
-          "INVALID_STATUS_TRANSITION"
+          { code: "INVALID_STATUS_TRANSITION" }
         )
       );
     }
@@ -220,7 +221,7 @@ export class WorkOrder {
   /**
    * Create a new work order with validation
    */
-  static create(props: Omit<WorkOrderProps, "createdAt" | "updatedAt" | "status" | "totalCost" | "metadata"> & Partial<Pick<WorkOrderProps, "createdAt" | "updatedAt" | "status" | "totalCost" | "metadata">>): Result<WorkOrder, ValidationError> {
+  static create(props: Omit<WorkOrderProps, "createdAt" | "updatedAt" | "status" | "priority" | "replacementCost" | "laborCost" | "totalCost" | "metadata" | "warrantyDays"> & Partial<Pick<WorkOrderProps, "createdAt" | "updatedAt" | "status" | "priority" | "replacementCost" | "laborCost" | "totalCost" | "metadata" | "warrantyDays">>): Result<WorkOrder, ValidationError> {
     // Validate customerId
     if (!props.customerId) {
       return Result.fail(new ValidationError("Customer is required", "CUSTOMER_REQUIRED"));
@@ -232,16 +233,16 @@ export class WorkOrder {
     }
 
     // Validate warranty days
-    if (props.warrantyDays < 0) {
+    if ((props.warrantyDays ?? 30) < 0) {
       return Result.fail(new ValidationError("Warranty days cannot be negative", "INVALID_WARRANTY"));
     }
 
     // Validate costs are non-negative
-    if (props.replacementCost < 0) {
+    if ((props.replacementCost ?? 0) < 0) {
       return Result.fail(new ValidationError("Replacement cost cannot be negative", "NEGATIVE_COST"));
     }
 
-    if (props.laborCost < 0) {
+    if ((props.laborCost ?? 0) < 0) {
       return Result.fail(new ValidationError("Labor cost cannot be negative", "NEGATIVE_COST"));
     }
 
@@ -252,6 +253,8 @@ export class WorkOrder {
         ...props,
         status: props.status ?? "pendiente",
         metadata: props.metadata ?? {},
+        replacementCost: props.replacementCost ?? 0,
+        laborCost: props.laborCost ?? 0,
         totalCost: props.totalCost ?? totalCost,
         totalPrice: props.totalPrice ?? 0,
         priority: props.priority ?? "media",

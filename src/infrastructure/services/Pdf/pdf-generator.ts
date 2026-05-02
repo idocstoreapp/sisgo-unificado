@@ -3,7 +3,7 @@ import type { WorkOrder, Service, Customer, Branch } from "./legacyTypes";
 import { formatCLP } from "./currency";
 import { formatDate } from "./date";
 
-interface OrderWithRelations extends WorkOrder {
+interface OrderWithRelations extends Omit<WorkOrder, "sucursal"> {
   customer?: Customer;
   sucursal?: Branch | null;
 }

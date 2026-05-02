@@ -20,7 +20,7 @@ export interface CustomerProps {
 }
 
 export class Customer {
-  private constructor(private props: CustomerProps) {}
+  constructor(private props: CustomerProps) {}
 
   // Getters
   get id(): string {

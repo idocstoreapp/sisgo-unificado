@@ -4,7 +4,7 @@
 
 import { Result, NotFoundError, RepositoryError } from "@/shared/kernel";
 import type { IEmployeePaymentRepository } from "@/domain/repositories/IEmployeePaymentRepository";
-import type { EmployeePayment } from "@/domain/entities/EmployeePayment";
+import { EmployeePayment } from "@/domain/entities/EmployeePayment";
 import type { PaymentType, PaymentStatus } from "@/domain/entities/EmployeePayment";
 import { getSupabaseAdmin } from "@/infrastructure/database/supabase/admin-client";
 import type { Database } from "@/infrastructure/database/supabase/database.types";

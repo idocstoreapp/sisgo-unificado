@@ -2,7 +2,7 @@
  * Use Cases for Quote module
  */
 
-import { Result, ValidationError, NotFoundError, RepositoryError, UnexpectedError } from "@/shared/kernel";
+import { Result, ValidationError, NotFoundError, BusinessRuleError, RepositoryError, UnexpectedError } from "@/shared/kernel";
 import { Quote, QuoteItem } from "@/domain/entities/Quote";
 import { Material } from "@/domain/entities/Material";
 import { Service } from "@/domain/entities/Service";
@@ -23,7 +23,7 @@ import type {
   FurnitureOutputDTO,
 } from "@/application/dtos/QuoteDTOs";
 
-type UseCaseError = ValidationError | NotFoundError | RepositoryError | UnexpectedError;
+type UseCaseError = ValidationError | NotFoundError | BusinessRuleError | RepositoryError | UnexpectedError;
 
 // ==================== CREATE QUOTE USE CASE ====================
 

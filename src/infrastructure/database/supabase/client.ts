@@ -3,7 +3,6 @@
  */
 
 import { createBrowserClient } from "@supabase/ssr";
-import type { Database } from "./database.types";
 
 function getSupabaseBrowserClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -13,7 +12,7 @@ function getSupabaseBrowserClient() {
     throw new Error("Missing Supabase environment variables");
   }
 
-  return createBrowserClient<Database>(supabaseUrl, supabaseAnonKey);
+  return createBrowserClient(supabaseUrl, supabaseAnonKey);
 }
 
 export const supabase = getSupabaseBrowserClient();

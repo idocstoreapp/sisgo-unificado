@@ -235,7 +235,7 @@ export default function GeneralExpenses({ sucursalId, refreshKey = 0, dateFilter
     setEditingExpense(expense);
     const tipoEsPersonalizado = !["arriendo", "internet", "luz", "agua", "facturas", "servicios"].includes(expense.tipo);
     setFormData({
-      branch_id: expense.branch_id,
+      branch_id: expense.branch_id ?? "",
       tipo: tipoEsPersonalizado ? "arriendo" : expense.tipo,
       tipoPersonalizado: tipoEsPersonalizado ? expense.tipo : "",
       usarTipoPersonalizado: tipoEsPersonalizado,

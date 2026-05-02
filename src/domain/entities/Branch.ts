@@ -20,7 +20,7 @@ export interface BranchProps {
 }
 
 export class Branch {
-  private constructor(private props: BranchProps) {}
+  constructor(private props: BranchProps) {}
 
   // Getters
   get id(): string {

@@ -1307,9 +1307,9 @@ export default function MetricsPage() {
                         ))}
                       </Pie>
                       <Tooltip 
-                        formatter={(value: number | undefined, name?: string) => [
-                          value !== undefined ? formatCLP(value) : "", 
-                          name ?? ""
+                        formatter={(value: unknown, name?: unknown) => [
+                          typeof value === "number" ? formatCLP(value) : "", 
+                          String(name ?? "")
                         ]}
                         labelFormatter={(label) => label ?? ""}
                       />
@@ -1633,9 +1633,9 @@ export default function MetricsPage() {
                   <YAxis yAxisId="left" orientation="left" label={{ value: 'Ganancias/Ventas/Pagado (CLP)', angle: -90, position: 'insideLeft' }} />
                   <YAxis yAxisId="right" orientation="right" label={{ value: 'Trabajos', angle: 90, position: 'insideRight' }} />
                   <Tooltip 
-                    formatter={(value: number | undefined, name?: string) => {
-                      const nameStr = name ?? "";
-                      if (value === undefined) return ["", nameStr];
+                    formatter={(value: unknown, name?: unknown) => {
+                      const nameStr = String(name ?? "");
+                      if (typeof value !== "number") return ["", nameStr];
                       if (nameStr.includes("Ganancias") || nameStr.includes("Ventas") || nameStr.includes("Pagado")) {
                         return [formatCLP(value), nameStr];
                       }

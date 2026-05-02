@@ -4,7 +4,7 @@
 
 import { Result, NotFoundError, RepositoryError } from "@/shared/kernel";
 import type { Database } from "@/infrastructure/database/supabase/database.types";
-import type {
+import {
   TableEntity,
   MenuCategory,
   MenuItem,
@@ -77,7 +77,7 @@ export class SupabaseTableRepository implements ITableRepository {
   }
 
   async findByStatus(companyId: string, status: string): Promise<Result<TableEntity[], RepositoryError>> {
-    return this.findByCompany(companyId, { status });
+    return this.findByCompany(companyId, { status: status as any });
   }
 
   async create(table: TableEntity): Promise<Result<TableEntity, RepositoryError>> {
@@ -968,7 +968,7 @@ export class SupabaseRecipeRepository implements IRecipeRepository {
       menu_item_id: entity.menuItemId,
       name: entity.name,
       description: entity.description,
-      cost_per_unit: entity.costPerUnit.toString(),
+      cost_per_unit: (entity.costPerUnit ?? 0).toString(),
     };
   }
 
@@ -977,7 +977,7 @@ export class SupabaseRecipeRepository implements IRecipeRepository {
       menu_item_id: entity.menuItemId,
       name: entity.name,
       description: entity.description,
-      cost_per_unit: entity.costPerUnit.toString(),
+      cost_per_unit: (entity.costPerUnit ?? 0).toString(),
       updated_at: new Date().toISOString(),
     };
   }

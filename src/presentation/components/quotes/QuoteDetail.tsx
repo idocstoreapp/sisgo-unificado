@@ -64,7 +64,7 @@ export function QuoteDetail({ quoteId }: { quoteId: string }) {
   const [isChangingStatus, setIsChangingStatus] = useState(false);
 
   // Placeholder data - will be replaced with real data from quoteRepository.findById()
-  const quote: QuoteDetail | null = null; // TODO: Fetch real data
+  const [quote] = useState<QuoteDetail | null>(null); // TODO: Fetch real data
 
   if (!quote) {
     return (

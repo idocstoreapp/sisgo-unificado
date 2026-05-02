@@ -2,7 +2,7 @@
  * Stock Movement repository interface
  */
 
-import { Result } from "@/shared/kernel";
+import { NotFoundError, Result } from "@/shared/kernel";
 import type { StockMovement, MovementReason } from "@/entities/Inventory";
 import type { RepositoryError } from "@/shared/kernel/errors";
 

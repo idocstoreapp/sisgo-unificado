@@ -187,7 +187,7 @@ export default function DeviceSelector({ onSelect, onClose }: DeviceSelectorProp
       
       if (data.success) {
         setVariants(data.variants || []);
-        if ((data.variants || []).length === 0) {
+        if ((data.variants || []).length === 0 && selectedModel) {
           // Si no hay variantes, seleccionar directamente
           handleModelSelect(selectedModel, undefined);
         }

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
 import { signOut } from "@/infrastructure/auth/authService";
 import {
   getCompanyCapabilities,
@@ -203,14 +204,14 @@ export default function DashboardShell({ user, children }: DashboardShellProps) 
 
         <nav className="flex-1 overflow-y-auto px-3 py-4">
           {canCreateOrders && (
-            <a
+            <Link
               href="/orders/new"
               className="mb-4 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-500 to-blue-600 px-3 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:opacity-95"
               onClick={() => setMobileMenuOpen(false)}
             >
               <Plus className="size-4" />
               Nueva Orden
-            </a>
+            </Link>
           )}
 
           <p className="text-muted-foreground mb-2 px-2 text-[10px] font-semibold tracking-wider uppercase">

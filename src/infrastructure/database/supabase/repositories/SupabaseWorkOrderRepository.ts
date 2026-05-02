@@ -4,7 +4,7 @@
 
 import { Result, NotFoundError, RepositoryError } from "@/shared/kernel";
 import type { IWorkOrderRepository, OrderFilters } from "@/domain/repositories/IWorkOrderRepository";
-import type { WorkOrder } from "@/domain/entities/WorkOrder";
+import { WorkOrder } from "@/domain/entities/WorkOrder";
 import { getSupabaseAdmin } from "@/infrastructure/database/supabase/admin-client";
 import type { Database } from "@/infrastructure/database/supabase/database.types";
 
@@ -303,7 +303,7 @@ export class SupabaseWorkOrderRepository implements IWorkOrderRepository {
       created_by: order.createdBy ?? null,
       order_number: order.orderNumber,
       business_type: order.businessType,
-      metadata: order.metadata,
+      metadata: order.metadata as Database["public"]["Tables"]["work_orders"]["Insert"]["metadata"],
       status: order.status,
       priority: order.priority,
       commitment_date: order.commitmentDate?.toISOString() ?? null,
@@ -329,7 +329,7 @@ export class SupabaseWorkOrderRepository implements IWorkOrderRepository {
       created_by: order.createdBy ?? null,
       order_number: order.orderNumber,
       business_type: order.businessType,
-      metadata: order.metadata,
+      metadata: order.metadata as Database["public"]["Tables"]["work_orders"]["Update"]["metadata"],
       status: order.status,
       priority: order.priority,
       commitment_date: order.commitmentDate?.toISOString() ?? null,

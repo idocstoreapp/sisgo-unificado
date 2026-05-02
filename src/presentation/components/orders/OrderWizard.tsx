@@ -89,7 +89,7 @@ export default function OrderWizard({ companyId, branchId, onSuccess, onCancel }
   }
 
   function getDeviceTotal(device: DeviceItem): number {
-    const servicesTotal = device.selectedServices.reduce((sum, s) => sum + s.price, 0);
+    const servicesTotal = device.selectedServices.reduce((sum, s) => sum + (s.price ?? s.default_price ?? 0), 0);
     return servicesTotal + device.replacementCost;
   }
 
@@ -145,7 +145,7 @@ export default function OrderWizard({ companyId, branchId, onSuccess, onCancel }
           priority,
           warrantyDays,
         },
-        totalCost: devices.reduce((sum, d) => sum + d.replacementCost, 0),
+        replacementCost: devices.reduce((sum, d) => sum + d.replacementCost, 0),
         totalPrice: getOrderTotal(),
         commitmentDate: commitmentDate ? new Date(commitmentDate) : undefined,
         warrantyDays,
@@ -281,8 +281,8 @@ export default function OrderWizard({ companyId, branchId, onSuccess, onCancel }
             <div className="mb-4 relative">
               <label className="block text-sm font-medium mb-2">Buscar Cliente</label>
               <CustomerSearch
-                selectedCustomer={selectedCustomer}
-                onCustomerSelect={(customer) => setSelectedCustomer(customer)}
+                selectedCustomer={selectedCustomer as any}
+                onCustomerSelect={(customer) => setSelectedCustomer(customer as Customer | null)}
               />
             </div>
 
@@ -582,11 +582,11 @@ function DeviceConfiguration({
           <div className="mt-2 p-3 bg-indigo-50 rounded">
             {device.selectedServices.map((s, i) => (
               <div key={i} className="text-sm">
-                {s.name} - ${s.price.toLocaleString("es-CL")}
+                {s.name} - ${(s.price ?? s.default_price ?? 0).toLocaleString("es-CL")}
               </div>
             ))}
             <div className="mt-2 font-bold">
-              Total: ${device.selectedServices.reduce((sum, s) => sum + s.price, 0).toLocaleString("es-CL")}
+              Total: ${device.selectedServices.reduce((sum, s) => sum + (s.price ?? s.default_price ?? 0), 0).toLocaleString("es-CL")}
             </div>
           </div>
         )}
@@ -658,8 +658,8 @@ function DeviceConfiguration({
               <button onClick={() => setShowServiceSelector(false)} className="text-gray-500 hover:text-gray-700 text-xl">✕</button>
             </div>
             <ServiceSelector
-              selectedServices={device.selectedServices}
-              onServicesChange={(services) => onUpdate({ selectedServices: services })}
+              selectedServices={device.selectedServices as any}
+              onServicesChange={(services) => onUpdate({ selectedServices: services as Service[] })}
               deviceType={device.deviceType}
               deviceModel={device.deviceModel}
             />

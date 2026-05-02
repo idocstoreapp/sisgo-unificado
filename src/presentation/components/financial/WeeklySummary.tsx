@@ -91,7 +91,7 @@ export default function WeeklySummary({ technicianId, refreshKey = 0 }: WeeklySu
       // Fallback para esquemas donde payout_week/payout_year no existen
       if (result1.error) {
         console.warn("Error en consulta por payout_week/payout_year, usando solo filtro por paid_at:", result1.error);
-        result1 = { data: [], error: null } as typeof result1;
+        result1 = { data: [], error: null } as unknown as typeof result1;
       }
 
       // Combinar resultados y eliminar duplicados

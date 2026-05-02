@@ -19,7 +19,7 @@ export interface QuoteItemProps {
 }
 
 export class QuoteItem {
-  private constructor(private props: QuoteItemProps) {}
+  constructor(private props: QuoteItemProps) {}
 
   get id(): string { return this.props.id; }
   get quoteId(): string { return this.props.quoteId; }
@@ -108,7 +108,7 @@ export interface QuoteProps {
 }
 
 export class Quote {
-  private constructor(private props: QuoteProps) {}
+  constructor(private props: QuoteProps) {}
 
   // Getters
   get id(): string { return this.props.id; }
@@ -152,10 +152,10 @@ export class Quote {
   /**
    * Add item to quote
    */
-  addItem(item: QuoteItem): Result<void, ValidationError> {
+  addItem(item: QuoteItem): Result<void, ValidationError | BusinessRuleError> {
     if (this.props.status !== "borrador") {
       return Result.fail(
-        new BusinessRuleError("Cannot add items to a non-draft quote", "QUOTE_NOT_DRAFT")
+        new BusinessRuleError("Cannot add items to a non-draft quote", { code: "QUOTE_NOT_DRAFT" })
       );
     }
 
@@ -167,10 +167,10 @@ export class Quote {
   /**
    * Remove item from quote
    */
-  removeItem(itemId: string): Result<void, ValidationError> {
+  removeItem(itemId: string): Result<void, ValidationError | BusinessRuleError> {
     if (this.props.status !== "borrador") {
       return Result.fail(
-        new BusinessRuleError("Cannot remove items from a non-draft quote", "QUOTE_NOT_DRAFT")
+        new BusinessRuleError("Cannot remove items from a non-draft quote", { code: "QUOTE_NOT_DRAFT" })
       );
     }
 
@@ -205,7 +205,7 @@ export class Quote {
       return Result.fail(
         new BusinessRuleError(
           `Invalid status transition from "${this.props.status}" to "${newStatus}"`,
-          "INVALID_STATUS_TRANSITION"
+          { code: "INVALID_STATUS_TRANSITION" }
         )
       );
     }

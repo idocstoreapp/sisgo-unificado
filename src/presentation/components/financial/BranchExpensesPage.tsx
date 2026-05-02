@@ -14,6 +14,8 @@ interface BranchExpensesPageProps {
   isAdmin?: boolean;
 }
 
+type FilterMode = "month" | "range";
+
 export default function BranchExpensesPage({ userRole = "admin", refreshKey = 0, isAdmin = false }: BranchExpensesPageProps) {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null);

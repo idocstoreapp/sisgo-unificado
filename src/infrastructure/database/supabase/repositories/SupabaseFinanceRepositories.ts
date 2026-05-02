@@ -5,8 +5,8 @@
 import { Result, NotFoundError, RepositoryError } from "@/shared/kernel";
 import type { ISavingsFundRepository } from "@/domain/repositories/ISavingsFundRepository";
 import type { ISalaryAdjustmentRepository } from "@/domain/repositories/ISalaryAdjustmentRepository";
-import type { SavingsFund } from "@/domain/entities/SavingsFund";
-import type { SalaryAdjustment, AdjustmentType } from "@/domain/entities/SalaryAdjustment";
+import { SavingsFund } from "@/domain/entities/SavingsFund";
+import { SalaryAdjustment, type AdjustmentType } from "@/domain/entities/SalaryAdjustment";
 import { getSupabaseAdmin } from "@/infrastructure/database/supabase/admin-client";
 import type { Database } from "@/infrastructure/database/supabase/database.types";
 

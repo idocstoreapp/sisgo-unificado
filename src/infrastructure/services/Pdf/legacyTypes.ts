@@ -77,6 +77,7 @@ export interface WorkOrder {
   customer_id: string;
   technician_id?: string | null;
   sucursal_id?: string | null;
+  branch_id?: string | null;
   responsible_user_name?: string | null; // Nombre del encargado responsable de recibir el equipo (texto libre)
   device_type: string; // Ahora permite cualquier tipo de dispositivo
   device_model: string;

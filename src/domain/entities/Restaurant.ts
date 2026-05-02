@@ -23,12 +23,13 @@ export interface TableProps {
 }
 
 export class TableEntity {
-  private constructor(private props: TableProps) {}
+  constructor(private props: any) {}
 
   get id(): string { return this.props.id; }
   get companyId(): string { return this.props.companyId; }
   get branchId(): string | undefined { return this.props.branchId; }
   get tableNumber(): string { return this.props.tableNumber; }
+  get name(): string { return String(this.props.name ?? this.props.tableNumber); }
   get capacity(): number { return this.props.capacity; }
   get status(): TableStatus { return this.props.status; }
   get location(): string | undefined { return this.props.location; }
@@ -111,13 +112,14 @@ export interface MenuCategoryProps {
 }
 
 export class MenuCategory {
-  private constructor(private props: MenuCategoryProps) {}
+  constructor(private props: any) {}
 
   get id(): string { return this.props.id; }
   get companyId(): string { return this.props.companyId; }
   get name(): string { return this.props.name; }
   get description(): string | undefined { return this.props.description; }
   get displayOrder(): number { return this.props.displayOrder; }
+  get sortOrder(): number { return Number(this.props.sortOrder ?? this.props.displayOrder); }
   get isActive(): boolean { return this.props.isActive; }
   get createdAt(): Date { return this.props.createdAt; }
   get updatedAt(): Date | undefined { return this.props.updatedAt; }
@@ -168,7 +170,7 @@ export interface MenuItemProps {
 }
 
 export class MenuItem {
-  private constructor(private props: MenuItemProps) {}
+  constructor(private props: any) {}
 
   get id(): string { return this.props.id; }
   get companyId(): string { return this.props.companyId; }
@@ -256,7 +258,7 @@ export interface RestaurantOrderProps {
 }
 
 export class RestaurantOrder {
-  private constructor(private props: RestaurantOrderProps) {}
+  constructor(private props: any) {}
 
   get id(): string { return this.props.id; }
   get companyId(): string { return this.props.companyId; }
@@ -294,7 +296,7 @@ export class RestaurantOrder {
       return Result.ok(undefined);
     }
 
-    const allowed = validTransitions[this.props.status];
+    const allowed = validTransitions[this.props.status as OrderStatus] ?? [];
     if (!allowed.includes(newStatus)) {
       return Result.fail(new ValidationError(`Invalid transition from ${this.props.status} to ${newStatus}`, "INVALID_TRANSITION"));
     }
@@ -347,7 +349,7 @@ export interface OrderItemProps {
 }
 
 export class OrderItem {
-  private constructor(private props: OrderItemProps) {}
+  constructor(private props: any) {}
 
   get id(): string { return this.props.id; }
   get orderId(): string { return this.props.orderId; }
@@ -357,6 +359,7 @@ export class OrderItem {
   get unitPrice(): number { return this.props.unitPrice; }
   get totalPrice(): number { return this.props.totalPrice; }
   get notes(): string | undefined { return this.props.notes; }
+  get status(): string | undefined { return this.props.status as string | undefined; }
 
   updateQuantity(quantity: number): Result<void, ValidationError> {
     if (quantity <= 0) {
@@ -406,7 +409,7 @@ export interface IngredientProps {
 }
 
 export class Ingredient {
-  private constructor(private props: IngredientProps) {}
+  constructor(private props: any) {}
 
   get id(): string { return this.props.id; }
   get companyId(): string { return this.props.companyId; }
@@ -415,6 +418,9 @@ export class Ingredient {
   get minStock(): number { return this.props.minStock; }
   get unit(): IngredientUnit { return this.props.unit; }
   get costPerUnit(): number { return this.props.costPerUnit; }
+  get stockCurrent(): number { return Number(this.props.stockCurrent ?? this.props.currentStock); }
+  get stockMin(): number { return Number(this.props.stockMin ?? this.props.minStock); }
+  get costPrice(): number { return Number(this.props.costPrice ?? this.props.costPerUnit); }
   get supplierId(): string | undefined { return this.props.supplierId; }
   get isActive(): boolean { return this.props.isActive; }
   get createdAt(): Date { return this.props.createdAt; }
@@ -500,7 +506,7 @@ export interface RecipeProps {
 }
 
 export class Recipe {
-  private constructor(private props: RecipeProps) {}
+  constructor(private props: any) {}
 
   get id(): string { return this.props.id; }
   get companyId(): string { return this.props.companyId; }
@@ -511,11 +517,15 @@ export class Recipe {
   get laborCost(): number | undefined { return this.props.laborCost; }
   get totalCost(): number { return this.props.totalCost; }
   get notes(): string | undefined { return this.props.notes; }
+  get description(): string | undefined { return this.props.description as string | undefined; }
+  get costPerUnit(): number | undefined {
+    return this.props.costPerUnit === undefined ? undefined : Number(this.props.costPerUnit);
+  }
   get createdAt(): Date { return this.props.createdAt; }
   get updatedAt(): Date | undefined { return this.props.updatedAt; }
 
   calculateCost(): number {
-    const ingredientsCost = this.props.ingredients.reduce((sum, ing) => {
+    const ingredientsCost = (this.props.ingredients as RecipeIngredientProps[]).reduce((sum: number, ing: RecipeIngredientProps) => {
       return sum + (ing.quantity * 0); // Would need to fetch ingredient costs
     }, 0);
     return ingredientsCost + (this.props.laborCost ?? 0);

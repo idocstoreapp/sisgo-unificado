@@ -34,7 +34,7 @@ export function toCompany(row: CompanyRow): Company {
     updatedAt: row.updated_at ? new Date(row.updated_at) : undefined,
   };
 
-  return new Company(props);
+  return Company.create(props).getValue();
 }
 
 /**
@@ -51,7 +51,7 @@ export function fromCompanyToInsert(company: Company): Database["public"]["Table
     phone: company.phone ?? null,
     address: company.address ?? null,
     logo_url: company.logoUrl ?? null,
-    config: company.config,
+    config: company.config as Database["public"]["Tables"]["companies"]["Insert"]["config"],
     iva_percentage: company.ivaPercentage,
     commission_percentage: company.commissionPercentage,
   };
@@ -70,7 +70,7 @@ export function fromCompanyToUpdate(company: Company): Database["public"]["Table
     phone: company.phone ?? null,
     address: company.address ?? null,
     logo_url: company.logoUrl ?? null,
-    config: company.config,
+    config: company.config as Database["public"]["Tables"]["companies"]["Update"]["config"],
     iva_percentage: company.ivaPercentage,
     commission_percentage: company.commissionPercentage,
     updated_at: company.updatedAt?.toISOString() ?? new Date().toISOString(),
@@ -96,7 +96,7 @@ export function toBranch(row: BranchRow): Branch {
     updatedAt: row.updated_at ? new Date(row.updated_at) : undefined,
   };
 
-  return new Branch(props);
+  return Branch.create(props).getValue();
 }
 
 /**
@@ -113,7 +113,7 @@ export function fromBranchToInsert(branch: Branch): Database["public"]["Tables"]
     email: branch.email ?? null,
     logo_url: branch.logoUrl ?? null,
     is_active: branch.isActive,
-    config: branch.config,
+    config: branch.config as Database["public"]["Tables"]["branches"]["Insert"]["config"],
   };
 }
 
@@ -129,7 +129,7 @@ export function fromBranchToUpdate(branch: Branch): Database["public"]["Tables"]
     email: branch.email ?? null,
     logo_url: branch.logoUrl ?? null,
     is_active: branch.isActive,
-    config: branch.config,
+    config: branch.config as Database["public"]["Tables"]["branches"]["Update"]["config"],
     updated_at: branch.updatedAt?.toISOString() ?? new Date().toISOString(),
   };
 }
@@ -156,7 +156,7 @@ export function toUser(row: UserRow): User {
     updatedAt: row.updated_at ? new Date(row.updated_at) : undefined,
   };
 
-  return new User(props);
+  return User.create(props).getValue();
 }
 
 /**
@@ -172,7 +172,7 @@ export function fromUserToInsert(user: User): Database["public"]["Tables"]["user
     email: user.email,
     phone: user.phone ?? null,
     avatar_url: user.avatarUrl ?? null,
-    permissions: user.permissions,
+    permissions: user.permissions as Database["public"]["Tables"]["users"]["Insert"]["permissions"],
     commission_percentage: user.commissionPercentage ?? null,
     sueldo_base: user.sueldoBase,
     sueldo_frecuencia: user.sueldoFrecuencia ?? null,
@@ -192,7 +192,7 @@ export function fromUserToUpdate(user: User): Database["public"]["Tables"]["user
     email: user.email,
     phone: user.phone ?? null,
     avatar_url: user.avatarUrl ?? null,
-    permissions: user.permissions,
+    permissions: user.permissions as Database["public"]["Tables"]["users"]["Update"]["permissions"],
     commission_percentage: user.commissionPercentage ?? null,
     sueldo_base: user.sueldoBase,
     sueldo_frecuencia: user.sueldoFrecuencia ?? null,
@@ -220,7 +220,7 @@ export function toCustomer(row: CustomerRow): Customer {
     updatedAt: row.updated_at ? new Date(row.updated_at) : undefined,
   };
 
-  return new Customer(props);
+  return Customer.create(props).getValue();
 }
 
 /**

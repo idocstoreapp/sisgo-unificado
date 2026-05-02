@@ -4,7 +4,7 @@
 
 import { Result, NotFoundError, RepositoryError } from "@/shared/kernel";
 import type { IProductRepository, ProductFilters } from "@/domain/repositories/IProductRepository";
-import type { Product } from "@/domain/entities/Product";
+import { Product } from "@/domain/entities/Product";
 import type {
   IStockMovementRepository,
   StockMovementFilters,
@@ -13,14 +13,14 @@ import type {
   IPurchaseRepository,
   PurchaseFilters,
 } from "@/domain/repositories/IInventoryRepository";
-import type { StockMovement, Supplier, Purchase } from "@/domain/entities/Inventory";
+import { StockMovement, Supplier, Purchase } from "@/domain/entities/Inventory";
 import { getSupabaseAdmin } from "@/infrastructure/database/supabase/admin-client";
 import type { Database } from "@/infrastructure/database/supabase/database.types";
 
-type ProductRow = Database["public"]["Tables"]["products"]["Row"];
-type StockMovementRow = Database["public"]["Tables"]["stock_movements"]["Row"];
-type SupplierRow = Database["public"]["Tables"]["suppliers"]["Row"];
-type PurchaseRow = Database["public"]["Tables"]["purchases"]["Row"];
+type ProductRow = Record<string, any>;
+type StockMovementRow = Record<string, any>;
+type SupplierRow = Record<string, any>;
+type PurchaseRow = Record<string, any>;
 
 // ==================== PRODUCT REPOSITORY ====================
 
@@ -139,14 +139,15 @@ export class SupabaseProductRepository implements IProductRepository {
         .from("products")
         .select("*")
         .eq("company_id", companyId)
-        .lte("stock", supabase.raw("min_stock"))
         .order("name");
 
       if (error) {
         return Result.fail(new RepositoryError(error.message, error.code));
       }
 
-      const products = (data || []).map((row) => this.toEntity(row));
+      const products = (data || [])
+        .filter((row) => Number(row.stock ?? 0) <= Number(row.min_stock ?? 0))
+        .map((row) => this.toEntity(row));
       return Result.ok(products);
     } catch (error) {
       return Result.fail(new RepositoryError("Unexpected error while fetching low stock products", "UNEXPECTED_ERROR", { originalError: error }));
@@ -285,7 +286,7 @@ export class SupabaseStockMovementRepository implements IStockMovementRepository
       }
 
       if (!data) {
-        return Result.fail(new NotFoundError("Stock movement not found"));
+        return Result.fail(new RepositoryError("Stock movement not found", "NOT_FOUND"));
       }
 
       return Result.ok(this.toEntity(data));

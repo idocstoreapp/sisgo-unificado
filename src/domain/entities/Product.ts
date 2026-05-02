@@ -27,7 +27,7 @@ export interface ProductProps {
 }
 
 export class Product {
-  private constructor(private props: ProductProps) {}
+  constructor(private props: ProductProps) {}
 
   get id(): string { return this.props.id; }
   get companyId(): string { return this.props.companyId; }

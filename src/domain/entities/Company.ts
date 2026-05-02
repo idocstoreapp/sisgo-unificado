@@ -23,7 +23,7 @@ export interface CompanyProps {
 }
 
 export class Company {
-  private constructor(private props: CompanyProps) {}
+  constructor(private props: CompanyProps) {}
 
   // Getters
   get id(): string {

@@ -18,7 +18,7 @@ export interface SavingsFundProps {
 }
 
 export class SavingsFund {
-  private constructor(private props: SavingsFundProps) {}
+  constructor(private props: SavingsFundProps) {}
 
   get id(): string { return this.props.id; }
   get companyId(): string { return this.props.companyId; }

@@ -26,7 +26,7 @@ export interface EmployeePaymentProps {
 }
 
 export class EmployeePayment {
-  private constructor(private props: EmployeePaymentProps) {}
+  constructor(private props: EmployeePaymentProps) {}
 
   // Getters
   get id(): string { return this.props.id; }

@@ -20,7 +20,7 @@ export interface SalaryAdjustmentProps {
 }
 
 export class SalaryAdjustment {
-  private constructor(private props: SalaryAdjustmentProps) {}
+  constructor(private props: SalaryAdjustmentProps) {}
 
   get id(): string { return this.props.id; }
   get companyId(): string { return this.props.companyId; }

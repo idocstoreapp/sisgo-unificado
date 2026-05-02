@@ -4,11 +4,11 @@
 
 import { Result, NotFoundError, RepositoryError } from "@/shared/kernel";
 import type { IMaterialRepository, MaterialFilters } from "@/domain/repositories/IMaterialRepository";
-import type { Material } from "@/domain/entities/Material";
+import { Material } from "@/domain/entities/Material";
 import type { ServiceRepository } from "@/domain/repositories/IServiceRepository";
-import type { Service } from "@/domain/entities/Service";
+import { Service } from "@/domain/entities/Service";
 import type { FurnitureCatalogRepository } from "@/domain/repositories/IFurnitureCatalogRepository";
-import type { FurnitureCatalog, FurnitureVariant } from "@/domain/entities/FurnitureCatalog";
+import { FurnitureCatalog, FurnitureVariant } from "@/domain/entities/FurnitureCatalog";
 import { getSupabaseAdmin } from "@/infrastructure/database/supabase/admin-client";
 import type { Database } from "@/infrastructure/database/supabase/database.types";
 
@@ -176,7 +176,7 @@ export class SupabaseMaterialRepository implements IMaterialRepository {
   }
 
   private toEntity(row: MaterialRow): Material {
-    return new Material({
+    return Material.create({
       id: row.id,
       companyId: row.company_id,
       name: row.name,
@@ -192,7 +192,7 @@ export class SupabaseMaterialRepository implements IMaterialRepository {
       isActive: row.is_active,
       createdAt: new Date(row.created_at),
       updatedAt: row.updated_at ? new Date(row.updated_at) : undefined,
-    });
+    }).getValue();
   }
 
   private toInsert(material: Material): Database["public"]["Tables"]["materials"]["Insert"] {
@@ -363,19 +363,19 @@ export class SupabaseServiceRepository implements ServiceRepository {
   }
 
   private toEntity(row: ServiceRow): Service {
-    return new Service({
+    return Service.create({
       id: row.id,
       companyId: row.company_id,
       name: row.name,
       description: row.description ?? undefined,
       category: row.category ?? undefined,
-      pricePerHour: Number(row.price_per_hour),
+      pricePerHour: Number(row.price_per_hour ?? row.default_price ?? 0),
       estimatedHours: row.estimated_hours ?? undefined,
       imageUrl: row.image_url ?? undefined,
       isActive: row.is_active,
       createdAt: new Date(row.created_at),
       updatedAt: row.updated_at ? new Date(row.updated_at) : undefined,
-    });
+    }).getValue();
   }
 
   private toInsert(service: Service): Database["public"]["Tables"]["services"]["Insert"] {
@@ -581,7 +581,7 @@ export class SupabaseFurnitureCatalogRepository implements FurnitureCatalogRepos
 
   private toEntity(row: FurnitureRow, variants: VariantRow[]): FurnitureCatalog {
     const variantEntities = variants.map((v) => {
-      return new FurnitureVariant({
+      return FurnitureVariant.create({
         id: v.id,
         furnitureId: v.furniture_id,
         name: v.name,
@@ -590,24 +590,24 @@ export class SupabaseFurnitureCatalogRepository implements FurnitureCatalogRepos
         material: v.material ?? undefined,
         additionalCost: Number(v.additional_cost),
         isActive: v.is_active,
-      });
+      }).getValue();
     });
 
-    return new FurnitureCatalog({
+    return FurnitureCatalog.create({
       id: row.id,
       companyId: row.company_id,
       name: row.name,
       description: row.description ?? undefined,
       category: row.category ?? undefined,
       basePrice: Number(row.base_price),
-      baseMaterialsCost: Number(row.base_materials_cost),
-      baseLaborHours: Number(row.base_labor_hours),
+      baseMaterialsCost: Number(row.base_materials_cost ?? 0),
+      baseLaborHours: Number(row.base_labor_hours ?? 0),
       imageUrl: row.image_url ?? undefined,
       variants: variantEntities,
       isActive: row.is_active,
       createdAt: new Date(row.created_at),
       updatedAt: row.updated_at ? new Date(row.updated_at) : undefined,
-    });
+    }).getValue();
   }
 
   private toInsert(furniture: FurnitureCatalog): Database["public"]["Tables"]["furniture_catalog"]["Insert"] {

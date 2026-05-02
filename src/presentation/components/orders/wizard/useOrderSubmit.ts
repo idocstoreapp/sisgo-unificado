@@ -535,7 +535,7 @@ async function handleSubmit(e: FormEvent<HTMLFormElement>) {
 
           // Generar PDF con el mismo diseño que se usa en la vista previa (todos los equipos)
           // Recopilar todos los servicios de todos los equipos
-          const allServices = devices.flatMap(device => device.selectedServices);
+          const allServices = devices.flatMap((device: { selectedServices: unknown[] }) => device.selectedServices);
           
           const pdfBlob = await generatePDFBlob(
             {

@@ -248,6 +248,7 @@ export default function SmallExpenses({ sucursalId, refreshKey = 0, dateFilter, 
         monto: "",
         fecha: new Date().toISOString().split("T")[0],
         descripcion: "",
+        payment_method: "EFECTIVO",
       });
       await loadData();
     } catch (err: any) {
@@ -268,7 +269,7 @@ export default function SmallExpenses({ sucursalId, refreshKey = 0, dateFilter, 
       monto: expense.amount.toString(),
       fecha: expense.expense_date,
       descripcion: expense.description || "",
-      payment_method: expense.payment_method || "EFECTIVO",
+      payment_method: (expense.payment_method || "EFECTIVO") as "EFECTIVO" | "TRANSFERENCIA" | "DEBITO" | "CREDITO",
     });
     setShowForm(true);
   }

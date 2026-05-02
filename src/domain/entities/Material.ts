@@ -25,7 +25,7 @@ export interface MaterialProps {
 }
 
 export class Material {
-  private constructor(private props: MaterialProps) {}
+  constructor(private props: MaterialProps) {}
 
   get id(): string { return this.props.id; }
   get companyId(): string { return this.props.companyId; }

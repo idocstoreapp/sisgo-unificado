@@ -6,7 +6,7 @@
 
 import { Result, NotFoundError, RepositoryError } from "@/shared/kernel";
 import type { ICompanyRepository } from "@/domain/repositories/ICompanyRepository";
-import type { Company } from "@/domain/entities/Company";
+import { Company } from "@/domain/entities/Company";
 import { getSupabaseAdmin } from "@/infrastructure/database/supabase/admin-client";
 import { toCompany, fromCompanyToInsert, fromCompanyToUpdate } from "@/infrastructure/database/supabase/mappers";
 

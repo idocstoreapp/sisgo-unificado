@@ -504,6 +504,214 @@ export interface Database {
           updated_at?: string | null;
         };
       };
+      materials: {
+        Row: {
+          id: string;
+          company_id: string;
+          name: string;
+          description: string | null;
+          category: string | null;
+          unit_type: string;
+          cost_price: number;
+          sale_price: number;
+          current_stock: number;
+          min_stock: number;
+          supplier_id: string | null;
+          image_url: string | null;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          name: string;
+          description?: string | null;
+          category?: string | null;
+          unit_type?: string;
+          cost_price?: number;
+          sale_price?: number;
+          current_stock?: number;
+          min_stock?: number;
+          supplier_id?: string | null;
+          image_url?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          company_id?: string;
+          name?: string;
+          description?: string | null;
+          category?: string | null;
+          unit_type?: string;
+          cost_price?: number;
+          sale_price?: number;
+          current_stock?: number;
+          min_stock?: number;
+          supplier_id?: string | null;
+          image_url?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string | null;
+        };
+      };
+      services: {
+        Row: {
+          id: string;
+          company_id: string;
+          name: string;
+          description: string | null;
+          category: string | null;
+          image_url: string | null;
+          category_image_url: string | null;
+          default_price: number;
+          price_per_hour: number | null;
+          estimated_hours: number | null;
+          is_active: boolean;
+          is_recommended: boolean;
+          created_at: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          name: string;
+          description?: string | null;
+          category?: string | null;
+          image_url?: string | null;
+          category_image_url?: string | null;
+          default_price?: number;
+          price_per_hour?: number | null;
+          estimated_hours?: number | null;
+          is_active?: boolean;
+          is_recommended?: boolean;
+          created_at?: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          company_id?: string;
+          name?: string;
+          description?: string | null;
+          category?: string | null;
+          image_url?: string | null;
+          category_image_url?: string | null;
+          default_price?: number;
+          price_per_hour?: number | null;
+          estimated_hours?: number | null;
+          is_active?: boolean;
+          is_recommended?: boolean;
+          created_at?: string;
+          updated_at?: string | null;
+        };
+      };
+      furniture_catalog: {
+        Row: {
+          id: string;
+          company_id: string;
+          name: string;
+          description: string | null;
+          category: string | null;
+          base_price: number;
+          base_materials_cost: number | null;
+          base_labor_hours: number | null;
+          image_url: string | null;
+          has_variants: boolean;
+          variants_config: Json;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          company_id: string;
+          name: string;
+          description?: string | null;
+          category?: string | null;
+          base_price?: number;
+          base_materials_cost?: number | null;
+          base_labor_hours?: number | null;
+          image_url?: string | null;
+          has_variants?: boolean;
+          variants_config?: Json;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          company_id?: string;
+          name?: string;
+          description?: string | null;
+          category?: string | null;
+          base_price?: number;
+          base_materials_cost?: number | null;
+          base_labor_hours?: number | null;
+          image_url?: string | null;
+          has_variants?: boolean;
+          variants_config?: Json;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string | null;
+        };
+      };
+      furniture_variants: {
+        Row: {
+          id: string;
+          furniture_id: string;
+          name: string;
+          dimensions: string | null;
+          color: string | null;
+          material: string | null;
+          additional_cost: number;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          furniture_id: string;
+          name: string;
+          dimensions?: string | null;
+          color?: string | null;
+          material?: string | null;
+          additional_cost?: number;
+          is_active?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          furniture_id?: string;
+          name?: string;
+          dimensions?: string | null;
+          color?: string | null;
+          material?: string | null;
+          additional_cost?: number;
+          is_active?: boolean;
+          created_at?: string;
+        };
+      };
+      products: {
+        Row: Record<string, Json>;
+        Insert: Record<string, Json | undefined>;
+        Update: Record<string, Json | undefined>;
+      };
+      stock_movements: {
+        Row: Record<string, Json>;
+        Insert: Record<string, Json | undefined>;
+        Update: Record<string, Json | undefined>;
+      };
+      suppliers: {
+        Row: Record<string, Json>;
+        Insert: Record<string, Json | undefined>;
+        Update: Record<string, Json | undefined>;
+      };
+      purchases: {
+        Row: Record<string, Json>;
+        Insert: Record<string, Json | undefined>;
+        Update: Record<string, Json | undefined>;
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;

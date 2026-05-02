@@ -7,7 +7,8 @@
 import { useState, useCallback } from "react";
 import { processPaymentUseCase, recordExpenseUseCase, savingsFundUseCase, createSalaryAdjustmentUseCase, getFinanceSummaryUseCase } from "@/application/di-container";
 import type { CreateEmployeePaymentDTO, CreateExpenseDTO, CreateSavingsFundDTO, CreateSalaryAdjustmentDTO } from "@/application/dtos/FinanceDTOs";
-import type { PaymentStatus, AdjustmentType } from "@/domain/entities/EmployeePayment";
+import type { PaymentStatus } from "@/domain/entities/EmployeePayment";
+import type { AdjustmentType } from "@/domain/entities/SalaryAdjustment";
 
 interface UseFinanceReturn {
   isLoading: boolean;

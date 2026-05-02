@@ -62,7 +62,7 @@ export default function OrdersTable({ technicianId, refreshKey = 0, onUpdate, is
   const [hasAdminSearched, setHasAdminSearched] = useState(!isAdmin);
   const [adminActiveFilters, setAdminActiveFilters] = useState<LoadFilters | null>(null);
   const [adminError, setAdminError] = useState<string | null>(null);
-  const [duplicates, setDuplicates] = useState<Record<string, { hasDuplicateReceipt: boolean }>>({});
+  const [duplicates, setDuplicates] = useState<Record<string, { hasDuplicateReceipt: boolean; hasDuplicateOrderNumber?: boolean }>>({});
   const [actionsMenuOpen, setActionsMenuOpen] = useState<string | null>(null);
   const [historyModalOpen, setHistoryModalOpen] = useState<string | null>(null);
   const [paymentMethodModalOpen, setPaymentMethodModalOpen] = useState<string | null>(null);
@@ -409,10 +409,10 @@ export default function OrdersTable({ technicianId, refreshKey = 0, onUpdate, is
         .eq("receipt_number", editReceipt.trim())
         .neq("id", orderId);
       
-      hasDuplicateReceipt = duplicateOrders && duplicateOrders.length > 0;
+      hasDuplicateReceipt = (duplicateOrders?.length ?? 0) > 0;
       
       if (hasDuplicateReceipt) {
-        const confirmMessage = `⚠️ Este número de recibo ya está registrado en ${duplicateOrders.length} otra(s) orden(es). ¿Deseas continuar de todas formas?`;
+        const confirmMessage = `⚠️ Este número de recibo ya está registrado en ${duplicateOrders?.length ?? 0} otra(s) orden(es). ¿Deseas continuar de todas formas?`;
         if (!window.confirm(confirmMessage)) {
           return;
         }

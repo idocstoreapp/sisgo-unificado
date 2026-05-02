@@ -4,7 +4,7 @@
 
 import { Result, NotFoundError, RepositoryError } from "@/shared/kernel";
 import type { IExpenseRepository, ExpenseFilters } from "@/domain/repositories/IExpenseRepository";
-import type { Expense } from "@/domain/entities/Expense";
+import { Expense } from "@/domain/entities/Expense";
 import { getSupabaseAdmin } from "@/infrastructure/database/supabase/admin-client";
 import type { Database } from "@/infrastructure/database/supabase/database.types";
 

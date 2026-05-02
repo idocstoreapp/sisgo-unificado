@@ -24,7 +24,7 @@ export interface UserProps {
 }
 
 export class User {
-  private constructor(private props: UserProps) {}
+  constructor(private props: UserProps) {}
 
   // Getters
   get id(): string {

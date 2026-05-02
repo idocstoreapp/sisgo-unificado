@@ -4,7 +4,6 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
-import type { Database } from "./database.types";
 
 /**
  * Get Supabase admin client with service role key
@@ -19,5 +18,5 @@ export function getSupabaseAdmin() {
     throw new Error("Missing Supabase service role configuration");
   }
 
-  return createClient<Database>(supabaseUrl, supabaseServiceKey);
+  return createClient(supabaseUrl, supabaseServiceKey);
 }

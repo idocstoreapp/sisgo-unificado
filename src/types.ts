@@ -176,6 +176,8 @@ export interface Profile {
   [key: string]: any;
 }
 
+export type Role = Profile["role"];
+
 export interface SalaryAdjustment {
   id: string;
   technician_id: string;
@@ -186,6 +188,15 @@ export interface SalaryAdjustment {
   created_at: string;
   remaining?: number;
   appliedTotal?: number;
+  [key: string]: any;
+}
+
+export interface SalaryAdjustmentApplication {
+  id?: string;
+  salary_adjustment_id?: string;
+  settlement_id?: string | null;
+  applied_amount?: number | null;
+  created_at?: string;
   [key: string]: any;
 }
 
@@ -221,17 +232,17 @@ export interface GeneralExpense {
   amount: number;
   expense_date: string;
   description?: string | null;
-  payment_method?: string | null;
+  payment_method: 'EFECTIVO' | 'TRANSFERENCIA' | 'DEBITO' | 'CREDITO' | null;
   receipt_url?: string | null;
   invoice_number?: string | null;
   created_at: string;
   branch?: Branch;
   user?: Profile;
   // Legacy fields (for compatibility)
-  tipo?: string;
-  monto?: number;
-  fecha?: string;
-  descripcion?: string;
+  tipo: string;
+  monto: number;
+  fecha: string;
+  descripcion: string;
   user_id?: string;
   [key: string]: any;
 }

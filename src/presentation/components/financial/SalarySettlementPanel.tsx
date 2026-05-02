@@ -549,7 +549,7 @@ export default function SalarySettlementPanel({
 
     if (returnedData) {
       setReturnedOrders(returnedData);
-      const total = returnedData.reduce((sum, order) => sum + (order.commission_amount ?? 0), 0);
+      const total = (returnedData as Array<{ commission_amount?: number | null }>).reduce((sum, order) => sum + (order.commission_amount ?? 0), 0);
       setReturnsTotal(total);
     }
 
@@ -1564,7 +1564,7 @@ export default function SalarySettlementPanel({
             {technicianName && <span className="text-xs text-blue-600">• {technicianName}</span>}
           </h5>
           <div className="text-xs text-blue-800 space-y-1">
-            <p><strong>Paso 1:</strong> Revisa el "Total a liquidar" (ganancias menos descuentos)</p>
+            <p><strong>Paso 1:</strong> Revisa el &quot;Total a liquidar&quot; (ganancias menos descuentos)</p>
             <p><strong>Paso 2:</strong> Si el técnico tiene adelantos pendientes, selecciona cuáles descontar</p>
             <p><strong>Paso 3:</strong> Puedes descontar el adelanto completo o solo una parte (pago parcial)</p>
             <p><strong>Paso 4:</strong> Selecciona el medio de pago y confirma el monto final</p>

@@ -22,7 +22,7 @@ export interface ExpenseProps {
 }
 
 export class Expense {
-  private constructor(private props: ExpenseProps) {}
+  constructor(private props: ExpenseProps) {}
 
   get id(): string { return this.props.id; }
   get companyId(): string { return this.props.companyId; }

@@ -22,7 +22,7 @@ export interface StockMovementProps {
 }
 
 export class StockMovement {
-  private constructor(private props: StockMovementProps) {}
+  constructor(private props: StockMovementProps) {}
 
   get id(): string { return this.props.id; }
   get companyId(): string { return this.props.companyId; }
@@ -114,7 +114,7 @@ export interface SupplierProps {
 }
 
 export class Supplier {
-  private constructor(private props: SupplierProps) {}
+  constructor(private props: SupplierProps) {}
 
   get id(): string { return this.props.id; }
   get companyId(): string { return this.props.companyId; }
@@ -192,7 +192,7 @@ export interface PurchaseProps {
 }
 
 export class Purchase {
-  private constructor(private props: PurchaseProps) {}
+  constructor(private props: PurchaseProps) {}
 
   get id(): string { return this.props.id; }
   get companyId(): string { return this.props.companyId; }
@@ -286,7 +286,7 @@ export interface PurchaseItemProps {
 }
 
 export class PurchaseItem {
-  private constructor(private props: PurchaseItemProps) {}
+  constructor(private props: PurchaseItemProps) {}
 
   get id(): string { return this.props.id; }
   get purchaseId(): string { return this.props.purchaseId; }

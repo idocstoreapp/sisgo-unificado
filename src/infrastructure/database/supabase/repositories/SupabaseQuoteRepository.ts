@@ -4,12 +4,11 @@
 
 import { Result, NotFoundError, RepositoryError } from "@/shared/kernel";
 import type { IQuoteRepository, QuoteFilters } from "@/domain/repositories/IQuoteRepository";
-import type { Quote, QuoteItem } from "@/domain/entities/Quote";
+import { Quote, QuoteItem } from "@/domain/entities/Quote";
 import { getSupabaseAdmin } from "@/infrastructure/database/supabase/admin-client";
-import type { Database } from "@/infrastructure/database/supabase/database.types";
 
-type QuoteRow = Database["public"]["Tables"]["quotes"]["Row"];
-type QuoteItemRow = Database["public"]["Tables"]["quote_items"]["Row"];
+type QuoteRow = Record<string, any>;
+type QuoteItemRow = Record<string, any>;
 
 export class SupabaseQuoteRepository implements IQuoteRepository {
   async findById(id: string): Promise<Result<Quote, NotFoundError | RepositoryError>> {
@@ -327,7 +326,7 @@ export class SupabaseQuoteRepository implements IQuoteRepository {
     return new Quote(props);
   }
 
-  private toInsert(quote: Quote): Database["public"]["Tables"]["quotes"]["Insert"] {
+  private toInsert(quote: Quote): Record<string, any> {
     return {
       id: quote.id,
       company_id: quote.companyId,
@@ -352,7 +351,7 @@ export class SupabaseQuoteRepository implements IQuoteRepository {
     };
   }
 
-  private toUpdate(quote: Quote): Database["public"]["Tables"]["quotes"]["Update"] {
+  private toUpdate(quote: Quote): Record<string, any> {
     return {
       branch_id: quote.branchId ?? null,
       customer_id: quote.customerId,
@@ -379,7 +378,7 @@ export class SupabaseQuoteRepository implements IQuoteRepository {
   private itemToInsert(
     item: QuoteItem,
     quoteId: string
-  ): Database["public"]["Tables"]["quote_items"]["Insert"] {
+  ): Record<string, any> {
     return {
       id: item.id,
       quote_id: quoteId,

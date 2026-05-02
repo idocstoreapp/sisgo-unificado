@@ -4,7 +4,7 @@
 
 import { Result, NotFoundError, RepositoryError } from "@/shared/kernel";
 import type { IBranchRepository } from "@/domain/repositories/IBranchRepository";
-import type { Branch } from "@/domain/entities/Branch";
+import { Branch } from "@/domain/entities/Branch";
 import { getSupabaseAdmin } from "@/infrastructure/database/supabase/admin-client";
 import { toBranch, fromBranchToInsert, fromBranchToUpdate } from "@/infrastructure/database/supabase/mappers";
 

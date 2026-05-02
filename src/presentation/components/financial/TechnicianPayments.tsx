@@ -240,7 +240,7 @@ export default function TechnicianPayments({ refreshKey = 0, branchId, technicia
             .eq("technician_id", tech.id)
             .eq("payment_status", "pending");
 
-          totalCommissions = legacyPendingCommissions.reduce(
+          totalCommissions = (legacyPendingCommissions ?? []).reduce(
             (s: number, c: any) => s + (c.commission_amount ?? 0),
             0
           );
