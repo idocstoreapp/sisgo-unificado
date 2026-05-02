@@ -26,7 +26,7 @@ export function useOrderSubmit(onSaved: () => void) {
   const getDeviceServiceTotal = (device: any): number => {
     if (!device) return 0;
     return (device.selectedServices || []).reduce((sum: number, service: any) => {
-      return sum + (device.servicePrices?.[service.id] || service.price || 0);
+      return sum + (device.servicePrices?.[service.id] || 0);
     }, 0);
   };
 

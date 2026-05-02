@@ -48,3 +48,31 @@ export function resolveTrialState(
 export function isTrialBlocked(config: Record<string, unknown> | null | undefined): boolean {
   return resolveTrialState(config)?.status === "expired";
 }
+
+export function isBillingPath(pathname: string): boolean {
+  return (
+    pathname.startsWith("/billing") ||
+    pathname.startsWith("/api/billing")
+  );
+}
+
+export const TRIAL_BLOCKED_PATHS = [
+  "/dashboard",
+  "/orders",
+  "/quotes",
+  "/inventory",
+  "/restaurant",
+  "/customers",
+  "/users",
+  "/branches",
+  "/finance",
+  "/reports",
+  "/settings",
+] as const;
+
+export function isTrialProtectedPath(pathname: string): boolean {
+  if (isBillingPath(pathname)) return false;
+  return TRIAL_BLOCKED_PATHS.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
+}

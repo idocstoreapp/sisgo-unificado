@@ -38,6 +38,7 @@ export interface DeviceCatalogCard {
 export interface OrderWizardContextType {
   technicianId: string;
   onSaved: () => void;
+  wizardPanelRef: React.RefObject<HTMLDivElement | null>;
   // Global form state
   selectedCustomer: Customer | null;
   setSelectedCustomer: (c: Customer | null) => void;
@@ -213,6 +214,8 @@ export function OrderWizardProvider({
   const [recentDeviceModels, setRecentDeviceModels] = useState<string[]>([]);
   const [deviceSuggestions, setDeviceSuggestions] = useState<Record<string, string[]>>({});
   const [showDeviceSuggestions, setShowDeviceSuggestions] = useState<Record<string, boolean>>({});
+
+  const wizardPanelRef = useRef<HTMLDivElement | null>(null);
 
   // --- Effects ---
   useEffect(() => {
@@ -450,6 +453,7 @@ export function OrderWizardProvider({
   const contextValue: OrderWizardContextType = {
     technicianId,
     onSaved,
+    wizardPanelRef,
     selectedCustomer, setSelectedCustomer,
     devices, priority, setPriority, commitmentDate, setCommitmentDate, warrantyDays, setWarrantyDays, responsibleUserName, setResponsibleUserName,
     updateDevice, resetDevice, addNewDevice, removeDevice,

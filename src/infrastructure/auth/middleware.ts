@@ -1,12 +1,14 @@
 /**
- * Supabase middleware for session management
- * Place this in src/middleware.ts at the root level
+ * Supabase middleware for session management and trial gating
  */
 
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { isTrialBlocked, isTrialProtectedPath } from "@/lib/trial-gating";
+
+const WRITE_METHODS = new Set(["POST", "PUT", "DELETE", "PATCH"]);
 
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next({
@@ -36,7 +38,6 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  // Refresh session if expired - required for Server Components
   const { data: { user } } = await supabase.auth.getUser();
 
   // Protect routes that require authentication
@@ -45,16 +46,47 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith(route)
   );
 
-  // Redirect to login if no session and route is protected
   if (isProtectedRoute && !user) {
     const redirectUrl = new URL("/login", request.url);
     redirectUrl.searchParams.set("redirect", request.nextUrl.pathname);
     return NextResponse.redirect(redirectUrl);
   }
 
-  // Redirect to dashboard if already logged in and accessing login
   if (request.nextUrl.pathname === "/login" && user) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
+  }
+
+  if (user && WRITE_METHODS.has(request.method) && isTrialProtectedPath(request.nextUrl.pathname)) {
+    const { data: profile } = await supabase
+      .from("users")
+      .select("company_id")
+      .eq("id", user.id)
+      .single();
+
+    if (profile?.company_id) {
+      const { data: company } = await supabase
+        .from("companies")
+        .select("config")
+        .eq("id", profile.company_id)
+        .single();
+
+      const companyConfig = (company as { config?: Record<string, unknown> } | null)?.config;
+
+      if (isTrialBlocked(companyConfig)) {
+        const isApiRoute = request.nextUrl.pathname.startsWith("/api/");
+
+        if (isApiRoute) {
+          return NextResponse.json(
+            { success: false, error: "trial_expired", message: "Tu periodo de prueba ha expirado. Activa un plan para continuar." },
+            { status: 402 },
+          );
+        }
+
+        const redirectUrl = new URL("/billing/activate", request.url);
+        redirectUrl.searchParams.set("reason", "trial_expired");
+        return NextResponse.redirect(redirectUrl);
+      }
+    }
   }
 
   return response;

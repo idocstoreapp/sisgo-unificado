@@ -6,7 +6,7 @@
 
 import { useMemo, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Building2, Check, CreditCard, Users, Wrench } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CreditCard, Users, Wrench } from "lucide-react";
 import { signUp } from "@/infrastructure/auth/authService";
 import { useCompany } from "@/presentation/hooks/useCompany";
 import { Button } from "@/presentation/components/ui/button";
@@ -72,11 +72,6 @@ export function RegisterForm() {
 
   const [companyName, setCompanyName] = useState("");
   const [businessType, setBusinessType] = useState<BusinessType>("servicio_tecnico");
-  const [logoUrl, setLogoUrl] = useState("");
-  const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [rut, setRut] = useState("");
-  const [companyPhone, setCompanyPhone] = useState("");
-  const [companyAddress, setCompanyAddress] = useState("");
 
   const [companySize, setCompanySize] = useState<CompanySize>("solo");
   const [usageMode, setUsageMode] = useState<CompanyUsageMode>("owner_only");
@@ -86,7 +81,6 @@ export function RegisterForm() {
   const [branchName, setBranchName] = useState("Casa Matriz");
   const [branchCode, setBranchCode] = useState("MAT");
   const [branchAddress, setBranchAddress] = useState("");
-  const [branchPhone, setBranchPhone] = useState("");
 
   const companyMode = useMemo(
     () => getCompanyMode(companySize, usageMode),
@@ -151,23 +145,6 @@ export function RegisterForm() {
     setStep((current) => Math.min(current + 1, totalSteps));
   }
 
-  function handleLogoFile(file: File | null) {
-    setError(null);
-    setLogoPreview(null);
-
-    if (!file) return;
-    if (file.type !== "image/png") {
-      setError("El logo debe ser PNG para mantener buena calidad en documentos.");
-      return;
-    }
-    if (file.size > 1024 * 1024) {
-      setError("Usa un PNG de hasta 1 MB.");
-      return;
-    }
-
-    setLogoPreview(URL.createObjectURL(file));
-  }
-
   async function submitRegistration() {
     if (!validateStep1() || !validateStep2() || !validateStep3() || !validateStep4()) return;
 
@@ -185,23 +162,17 @@ export function RegisterForm() {
       const companyResult = await registerCompany(userResult.value.userId, userResult.value.email, {
         name: companyName,
         businessType,
-        logoUrl: logoUrl || undefined,
         companySize,
         usageMode,
         companyMode,
         needsTechniciansModule,
         needsTechnicianPayments,
-        rut: rut || undefined,
-        email,
-        phone: companyPhone || undefined,
-        address: companyAddress || undefined,
         ivaPercentage: 19,
         commissionPercentage: needsTechnicianPayments ? 40 : 0,
         mainBranch: {
           name: shouldShowBranchStep ? branchName : "Casa Matriz",
           code: shouldShowBranchStep ? branchCode : "MAT",
-          phone: branchPhone || companyPhone || undefined,
-          address: branchAddress || companyAddress || undefined,
+          address: branchAddress || undefined,
           email,
         },
       });
@@ -384,82 +355,8 @@ export function RegisterForm() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="rounded-lg border border-dashed border-[#d9deec] bg-[#fbfcff] p-4">
-              <div className="flex items-start gap-3">
-                <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-[#eef0ff] text-[#4f58ff]">
-                  {logoPreview ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={logoPreview}
-                      alt="Vista previa del logo"
-                      className="h-full w-full object-contain"
-                    />
-                  ) : (
-                    <Building2 className="size-5" />
-                  )}
-                </div>
-                <div className="min-w-0 flex-1 space-y-3">
-                  <div>
-                    <Label htmlFor="logo-file" className="font-black text-[#101733]">
-                      Logo PNG
-                    </Label>
-                    <p className="mt-1 text-xs font-medium text-[#6d7899]">
-                      Recomendado: PNG transparente, cuadrado, hasta 1 MB. Podrás cambiarlo luego.
-                    </p>
-                  </div>
-                  <Input
-                    id="logo-file"
-                    type="file"
-                    accept="image/png"
-                    onChange={(e) => handleLogoFile(e.target.files?.[0] ?? null)}
-                    className="h-12 rounded-lg border-[#d9deec] bg-white text-sm font-medium file:text-[#4f58ff]"
-                  />
-                  <Input
-                    value={logoUrl}
-                    onChange={(e) => setLogoUrl(e.target.value)}
-                    placeholder="URL del logo si ya está publicado"
-                    className="h-12 rounded-lg border-[#d9deec] bg-white font-medium placeholder:text-[#8a94ad] focus-visible:border-[#5660ff] focus-visible:ring-[#5660ff]/18"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              <div className="space-y-3">
-                <Label htmlFor="rut" className="font-black text-[#101733]">
-                  RUT
-                </Label>
-                <Input
-                  id="rut"
-                  value={rut}
-                  onChange={(e) => setRut(e.target.value)}
-                  placeholder="12.345.678-9"
-                  className="h-12 rounded-lg border-[#d9deec] bg-white font-medium placeholder:text-[#8a94ad] focus-visible:border-[#5660ff] focus-visible:ring-[#5660ff]/18"
-                />
-              </div>
-              <div className="space-y-3">
-                <Label htmlFor="company-phone" className="font-black text-[#101733]">
-                  Teléfono
-                </Label>
-                <Input
-                  id="company-phone"
-                  value={companyPhone}
-                  onChange={(e) => setCompanyPhone(e.target.value)}
-                  placeholder="+56 9 1234 5678"
-                  className="h-12 rounded-lg border-[#d9deec] bg-white font-medium placeholder:text-[#8a94ad] focus-visible:border-[#5660ff] focus-visible:ring-[#5660ff]/18"
-                />
-              </div>
-              <div className="space-y-3">
-                <Label htmlFor="company-address" className="font-black text-[#101733]">
-                  Dirección
-                </Label>
-                <Input
-                  id="company-address"
-                  value={companyAddress}
-                  onChange={(e) => setCompanyAddress(e.target.value)}
-                  placeholder="Calle 123"
-                  className="h-12 rounded-lg border-[#d9deec] bg-white font-medium placeholder:text-[#8a94ad] focus-visible:border-[#5660ff] focus-visible:ring-[#5660ff]/18"
-                />
-              </div>
+            <div className="rounded-lg border border-dashed border-[#d9deec] bg-[#fbfcff] p-4 text-sm font-medium text-[#6d7899]">
+              RUT, logo, teléfono y dirección se pueden configurar después desde Ajustes.
             </div>
           </div>
         )}
@@ -600,31 +497,17 @@ export function RegisterForm() {
                 />
               </div>
             </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-3">
-                <Label htmlFor="branch-phone" className="font-black text-[#101733]">
-                  Teléfono
-                </Label>
-                <Input
-                  id="branch-phone"
-                  value={branchPhone}
-                  onChange={(e) => setBranchPhone(e.target.value)}
-                  placeholder="+56 9 1234 5678"
-                  className="h-12 rounded-lg border-[#d9deec] bg-white font-medium placeholder:text-[#8a94ad] focus-visible:border-[#5660ff] focus-visible:ring-[#5660ff]/18"
-                />
-              </div>
-              <div className="space-y-3">
-                <Label htmlFor="branch-address" className="font-black text-[#101733]">
-                  Dirección
-                </Label>
-                <Input
-                  id="branch-address"
-                  value={branchAddress}
-                  onChange={(e) => setBranchAddress(e.target.value)}
-                  placeholder="Dirección del local"
-                  className="h-12 rounded-lg border-[#d9deec] bg-white font-medium placeholder:text-[#8a94ad] focus-visible:border-[#5660ff] focus-visible:ring-[#5660ff]/18"
-                />
-              </div>
+            <div className="space-y-3">
+              <Label htmlFor="branch-address" className="font-black text-[#101733]">
+                Dirección (opcional)
+              </Label>
+              <Input
+                id="branch-address"
+                value={branchAddress}
+                onChange={(e) => setBranchAddress(e.target.value)}
+                placeholder="Dirección del local"
+                className="h-12 rounded-lg border-[#d9deec] bg-white font-medium placeholder:text-[#8a94ad] focus-visible:border-[#5660ff] focus-visible:ring-[#5660ff]/18"
+              />
             </div>
           </div>
         )}
