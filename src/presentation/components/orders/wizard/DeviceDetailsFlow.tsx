@@ -128,6 +128,7 @@ export default function DeviceDetailsFlow({
                     setSavingDeviceId(null);
                     setFinalizedDeviceById((prev) => ({ ...prev, [device.id]: true }));
                     setDetailsOpenByDevice((prev) => ({ ...prev, [device.id]: false }));
+                    setOrderStep(5);
                   }, 1200);
                 }}
                 disabled={device.selectedServices.length === 0}
